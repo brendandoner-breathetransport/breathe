@@ -1,0 +1,9 @@
+ipyleaflet
+numpy
+pandas
+pathlib
+plotly
+polars
+shiny
+shinylive
+shinywidgets
