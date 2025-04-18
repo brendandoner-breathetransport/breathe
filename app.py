@@ -34,6 +34,13 @@ workers_ratio = read_data(folder='economy', file_name="workers_ratio.csv")
 healthcare_cost_per_capita = read_data(folder='healthcare', file_name='healthcare_cost_per_capita.csv')
 healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcare_life_expectancy.csv')
 
+#-----------------------------------------------------------------------------------------
+# American Dream Data
+#-----------------------------------------------------------------------------------------
+american_dream_kids = read_data(folder='american_dream', file_name='american_dream_kids.csv')
+
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
 axis_title_income = "<b>income</b>/yr average"
 axis_title_income_format = ',.2s'
 
@@ -49,7 +56,7 @@ group_names = {
 }
 
 def get_source(name, link):
-    return f"<br><a href='{link}'>{name}</a>"
+    return f"<a href='{link}'>{name}</a>"
 
 
 sources = {
@@ -58,6 +65,8 @@ sources = {
     'irs': get_source(name='Source: Internal Revenue Service', link='https://www.irs.gov/statistics/soi-tax-stats-historical-table-23'),
     '1619': get_source(name='Source: The 1619 Project', link='https://www.nytimes.com/interactive/2019/08/14/magazine/1619-america-slavery.html'),
     'american_character': get_source(name='Source: American Character', link='https://colinwoodard.com/books/american-character/'),
+    'american_dream': get_source(name='Sources', link='https://github.com/brendandoner-breathetransport/breathe/wiki/American-Dream'),
+    'healthcare': get_source(name='Sources', link='https://github.com/brendandoner-breathetransport/breathe/wiki/Healthcare'),
 }
 
 colors = [
@@ -106,8 +115,8 @@ colors_tax_changes = {
 }
 
 color_light_dark = {
-    'light': 'rgba(0,0,0,0.5)',
-    'dark': 'rgba(255,255,255,0.5)',
+    'light': 'rgba(0,0,0,0.7)',
+    'dark': 'rgba(255,255,255,0.7)',
 }
 
 
@@ -247,7 +256,7 @@ def get_income_mean(group, data):
     return income_mean
 
 
-def plot_timeseries_multiple_countries(data, title, yaxis_title):
+def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, dark_mode):
     last = (
         data
         .join(
@@ -264,6 +273,8 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title):
     )
 
     countries = [
+        'costa rica',
+        'mexico',
         'australia',
         'france',
         'switzerland',
@@ -287,6 +298,7 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title):
                         mode='lines',
                         x=data.filter(pl.col('country') == country)['year'],
                         y=data.filter(pl.col('country') == country)['value'],
+                        line=dict(color=color_light_dark[dark_mode], width=3) if country=='united states' else dict(color="rgba(0,0,0,0.2)", width=1),
                     ) for country in countries
                 ] + [
                     go.Scatter(
@@ -306,12 +318,13 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title):
             text=f"<b>{title}</b>",
         ),
         yaxis_title=f"{yaxis_title}",
+        xaxis_title=xaxis_title,
         xaxis=dict(
             range=[2000, 2026],
         ),
         showlegend=False,
-        # template=get_color_template(input.dark_mode()),
-        # paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+        template=get_color_template(dark_mode),
+        paper_bgcolor=get_background_color_plotly(dark_mode),
     )
 
     for trace in fig['data']:
@@ -380,6 +393,16 @@ app_ui = ui.page_fillable(
         ui.nav_panel(
             "American Dream",
             # education, sick care, justice, laws/rules,
+            ui.row(ui.h1(ui.span(
+                HTML("How healthy is the American Dream?"),
+                style="color:rgba(255,255,255,0.9)"))),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(output_widget("plot_american_dream_kids")),
+                    # ui.card(output_widget("")),
+                    col_widths=(6, 6,),
+                )
+            ),
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
@@ -819,22 +842,22 @@ def server(input, output, session):
 
         fig.add_vrect(
             x0=1938,
-            x1=1979,
+            x1=1976,
             line_width=0,
             fillcolor='green',
             opacity=0.05,
             annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
-            annotation_position='bottom left',
+            annotation_position='bottom right',
         )
 
         fig.add_vrect(
-            x0=1980,
-            x1=2024,
+            x0=1977,
+            x1=2020,
             line_width=0,
             fillcolor='black',
             opacity=0.05,
             annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
-            annotation_position='bottom left',
+            annotation_position='bottom right',
         )
 
         fig.update_layout(
@@ -976,11 +999,70 @@ def server(input, output, session):
 
     @output
     @render_widget
+    def plot_american_dream_kids():
+
+        fig = go.Figure(
+            data=[
+                go.Scatter(
+                    name=f"probability",
+                    mode='lines',
+                    x=american_dream_kids['cohort_work_year'],
+                    y=american_dream_kids['probability'],
+                    line=dict(color=color_light_dark[input.dark_mode()], width=3),
+                )
+            ]
+        )
+
+        fig.add_vrect(
+            x0=1938,
+            x1=1976,
+            line_width=0,
+            fillcolor='green',
+            opacity=0.05,
+            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
+            annotation_position='bottom right',
+        )
+
+        fig.add_vrect(
+            x0=1977,
+            x1=2020,
+            line_width=0,
+            fillcolor='black',
+            opacity=0.05,
+            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
+            annotation_position='bottom right',
+        )
+
+        fig.update_layout(
+            title=dict(
+                text=f"<b>What is the probability Americans earn more than their parents?</b>",
+            ),
+            yaxis_title=f"probability",
+            xaxis_title=f"{sources['american_dream']}",
+            yaxis=dict(
+                # range=[2000, 2026],
+                tickformat='.0%',
+            ),
+            showlegend=False,
+            template=get_color_template(input.dark_mode()),
+            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+        )
+
+        for trace in fig['data']:
+            if 'NONE' in trace['name']:
+                trace['showlegend'] = False
+
+        return fig
+
+    @output
+    @render_widget
     def plot_healthcare_cost_per_capita():
         fig = plot_timeseries_multiple_countries(
             data=healthcare_cost_per_capita,
             title="What do we spend on healthcare per person?",
             yaxis_title='cost per person',
+            xaxis_title=f"{sources['healthcare']}",
+            dark_mode=input.dark_mode(),
         )
         return fig
 
@@ -989,10 +1071,13 @@ def server(input, output, session):
     def plot_healthcare_life_expectancy():
         fig = plot_timeseries_multiple_countries(
             data=healthcare_life_expectancy,
-            title="What do American's get for their highest spend?",
+            title="What do American's get for their high healthcare spend?",
             yaxis_title="life expectancy",
+            dark_mode=input.dark_mode(),
+            xaxis_title=f"{sources['healthcare']}",
         )
         return fig
+
 
     @render.image
     def img_freedom_scale():
