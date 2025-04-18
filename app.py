@@ -1037,7 +1037,7 @@ def server(input, output, session):
             title=dict(
                 text=f"<b>What is the probability Americans earn more than their parents?</b>",
             ),
-            yaxis_title=f"probability",
+            yaxis_title=f"probability<br><sup>that you earn more than your parents at age 30</sup>",
             xaxis_title=f"{sources['american_dream']}",
             yaxis=dict(
                 # range=[2000, 2026],
