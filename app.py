@@ -27,6 +27,7 @@ tax = read_data(folder='economy', file_name="tax.csv")
 income_total = read_data(folder='economy', file_name="income_total.csv")
 population = read_data(folder='economy', file_name="population.csv")
 workers_ratio = read_data(folder='economy', file_name="workers_ratio.csv")
+f150 = read_data(folder='economy', file_name="f150.csv")
 
 #-----------------------------------------------------------------------------------------
 # Healthcare Data
@@ -46,11 +47,13 @@ axis_title_income_format = ',.2s'
 
 income_levels = {
     "Main Street": "income_mean_bottom",
+    "Upper": "income_mean_upper",
     "Top 1%": "income_mean_top",
     "Gap": 'income_mean_gap',
 }
 group_names = {
     "income_mean_bottom": "Main Street (bottom 50%)",
+    "income_mean_upper": "Upper (51-99%)",
     'income_mean_top': "Top 1%",
     "income_mean_gap": "Gap (Top 1% - Main Street)",
 }
@@ -60,7 +63,8 @@ def get_source(name, link):
 
 
 sources = {
-    'money': get_source(name='Sources', link='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy'),
+    'economy': get_source(name='Sources', link='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy'),
+    'economy_f150': get_source(name='Sources', link='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#ford-f-seriesf-150-historical-msrp-1950-2025'),
     'wid': get_source(name='Source: World Inequality Database', link='https://wid.world/wid-world/'),
     'irs': get_source(name='Source: Internal Revenue Service', link='https://www.irs.gov/statistics/soi-tax-stats-historical-table-23'),
     '1619': get_source(name='Source: The 1619 Project', link='https://www.nytimes.com/interactive/2019/08/14/magazine/1619-america-slavery.html'),
@@ -94,6 +98,11 @@ colors_auth = [
     'rgba(220, 88,  57,   0.7)',
     'rgba(225, 82,  62,   0.7)',
 ]
+color_light_dark = {
+    # 'light': 'rgba(0,0,0,0.5)',
+    'light': 'rgba(68, 122, 219, 0.5)',
+    'dark': 'rgba(255,255,255,0.5)',
+}
 colors_by_country = {
     'australia': 'rgba( 90, 185, 111,   0.3)',
     'france': 'rgba( 90, 185, 111,   0.3)',
@@ -107,18 +116,12 @@ colors_by_country = {
     'uk':'rgba( 90, 185, 111,   0.3)',
     'russia':'rgba(230, 78, 67,    0.7)',
     'china':'rgba(230, 78, 67,    0.7)',
-    'usa':'rgba(0, 0,  0,   0.7)'
+    'usa':color_light_dark['light'],
 }
 colors_tax_changes = {
     'up': 'rgba( 90, 185, 111,   0.3)',
     'down': 'rgba(230, 78, 67,    0.7)',
 }
-
-color_light_dark = {
-    'light': 'rgba(0,0,0,0.7)',
-    'dark': 'rgba(255,255,255,0.7)',
-}
-
 
 def read_data():
     df = pd.read_csv(
@@ -333,11 +336,111 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, da
 
     return fig
 
+def get_text(text, prefix, suffix, format, context):
+    """
+    rgb(68, 122, 219)=blue used for links
+    :param text:
+    :param prefix:
+    :param suffix:
+    :param format:
+    :return:
+    """
+    return f"<span style='color:rgb(0, 0, 0)'><b>{prefix}{text:{format}}{suffix}</b><br>{context}</span>"
+
+def get_highlights(data, col, number_type,):
+    format = {
+        'thousands': ".0f",
+        'percentage': ".0%",
+    }[number_type]
+    prefix = {
+        'thousands': "$",
+        'percentage': "",
+    }[number_type]
+    suffix = {
+        'thousands': "k",
+        'percentage': "",
+    }[number_type]
+    divide_by = {
+        'thousands': 1000,
+        'percentage': 1,
+    }[number_type]
+    
+    data_latest = data.filter(pl.col('year') == data['year'].max())
+    data_min = data.filter(pl.col(col) == data[col].min())
+    data_max = data.filter(pl.col(col) == data[col].max())
+
+    highlight_latest = [
+        go.Scatter(
+            # highlight the most recent value
+            name='NONE',
+            mode='markers+text',
+            x=data_latest['year'],
+            y=data_latest[col],
+            marker=dict(color='orange', size=10),
+            text=get_text(
+                text=data_latest[col].to_numpy().flatten()[0] / divide_by,
+                prefix=prefix,
+                suffix=suffix,
+                format=format,
+                context='latest'
+            ),
+            textposition='middle center',
+        ),
+    ]
+    
+    highlight_min = [
+        go.Scatter(
+            # highlight the max of the metric
+            name='NONE',
+            mode='markers+text',
+            x=data_min['year'],
+            y=data_min[col],
+            marker=dict(color='orange', size=10),
+            text=get_text(
+                text=data_min[col].to_numpy().flatten()[0] / divide_by,
+                prefix=prefix,
+                suffix=suffix,
+                format=format,
+                context='min',
+            ),
+            textposition='middle center',
+        ),
+    ]
+    highlight_max = [
+        go.Scatter(
+            # highlight the max of the metric
+            name='NONE',
+            mode='markers+text',
+            x=data_max['year'],
+            y=data_max[col],
+            marker=dict(color='orange', size=10),
+            text=get_text(
+                text=data_max[col].to_numpy().flatten()[0] / divide_by,
+                prefix=prefix,
+                suffix=suffix,
+                format=format,
+                context='max',
+            ),
+            textposition='middle center',
+        ),
+    ]
+
+    highlights = highlight_latest
+    if data_latest[col].to_numpy().flatten()[0] != data_min[col].to_numpy().flatten()[0]:
+        highlights = highlights + highlight_min
+    if data_latest[col].to_numpy().flatten()[0] != data_max[col].to_numpy().flatten()[0]:
+        highlights = highlights + highlight_max
+
+    return highlights
+
+
 app_ui = ui.page_fillable(
     ui.page_navbar(
         ui.nav_panel(
             "Economy",
             ui.row(ui.h1(ui.span(HTML("How healthy is the economy for Main Street Americans?"), style="color:rgba(255,255,255,0.9)"))),
+            ui.row(ui.h5(ui.span("Main Street Americans are defined as Americans in the bottom 50% of earnings for full-time employment.", style="color:rgba(200,200,200,0.9)"))),
+
             # Income
             ui.row(
                 ui.layout_columns(
@@ -346,6 +449,7 @@ app_ui = ui.page_fillable(
                         label=None,
                         choices={
                             "Main Street": ui.span("Main Street", style=f"color:rgba(255,255,255,0.6)"),
+                            "Upper": ui.span("Upper", style=f"color:rgba(255,255,255,0.6)"),
                             "Top 1%": ui.span("Top 1%", style=f"color:rgba(255,255,255,0.6)"),
                             "Gap": ui.span("Gap", style=f"color:rgba(255,255,255,0.6)"),
                         },
@@ -357,7 +461,7 @@ app_ui = ui.page_fillable(
             ),
             ui.row(
                 ui.layout_columns(
-                    ui.card(output_widget("plot_timeseries_income")),
+                    ui.card(output_widget("plot_economy_timeseries_income")),
                     ui.card(output_widget("plot_barchart_income_countries")),
                     col_widths=(6, 6,),
                 )
@@ -370,6 +474,15 @@ app_ui = ui.page_fillable(
                     col_widths=(6, 6,),
                 )
             ),
+            ui.row(ui.h2(ui.span(HTML("What does the cost of living look like for Main Street Americans?"), style="color:rgba(255,255,255,0.9)"))),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(output_widget("plot_economy_f150")),
+                    # ui.card(output_widget("plot_timeseries_income_taxes")),
+                    col_widths=(6, 6,),
+                )
+            ),
+
             # Cost of Living
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
             ui.row(ui.h2(ui.span("Food & Shelter", style="color:rgba(255,255,255,0.9)"))),
@@ -459,6 +572,19 @@ app_ui = ui.page_fillable(
             ),
         ),
         ui.nav_panel(
+            "Environment",
+            # Air & Water
+            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+                    ui.card(ui.h3(ui.span("water (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+                    ui.card(ui.h3(ui.span("soil (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+                    col_widths=(4, 4, 4),
+                )
+            ),
+        ),
+        ui.nav_panel(
             "Immigration",
             # Air & Water
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
@@ -467,6 +593,14 @@ app_ui = ui.page_fillable(
             "Freedom",
             # Air & Water
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(ui.h3(ui.span("story of the 100 years after civil war", style="color:rgba(0,0,0,0.9)"))),
+                    ui.card(ui.h3(ui.span("incarceration rates", style="color:rgba(0,0,0,0.9)"))),
+                    ui.card(ui.h3(ui.span("rape convictions based on race of victim", style="color:rgba(0,0,0,0.9)"))),
+                    col_widths=(4, 4, 4),
+                )
+            ),
         ),
         ui.nav_panel(
             "Money in Politics",
@@ -522,19 +656,20 @@ app_ui = ui.page_fillable(
             "About Us",
             ui.row(ui.span(
                 ui.markdown("""
+                    # Breathe
                     We are a grassroots community group that has come together to support 
                     each other, pool our<br>diverse backgrounds, and bring 
                     truth, understanding, and togetherness<br>into today's conversations.
                     
                     &ndash; Founded February, 2025
                     
-                    # Purpose
+                    ### Purpose
                     Improve the lives of Americans and make our democracy stronger.
                     
                     ##### How
                     * **Dashboard**
                     
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Simple and reproducible, weave together data and history.
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Simple and reproducible, bring together data and history.
                     
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Diagnose problems, see the health of the country in the context of our past and the world.
                     
@@ -549,9 +684,10 @@ app_ui = ui.page_fillable(
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Expand impact, expand resources.
     
                     
-                    # Values
-                    * **Balance** (public good vs personal freedom)
-                    * **Fairness** (equal opportunity, equal justice, fair markets, stop explotation )
+                    ### Values
+                    * **Balance** (public good vs individualism)
+                    * **Fairness** (equal opportunity, equal justice, fair markets, no exploitation)
+                    * **Diversity** (team strength and learning come from diverse ideas, backgrounds, races, gender, etc.)
                     * **Evidence** (learn from history and data)
 
                 """),
@@ -638,7 +774,7 @@ app_ui = ui.page_fillable(
 def server(input, output, session):
     @output
     @render_widget
-    def plot_timeseries_income():
+    def plot_economy_timeseries_income():
         """
         Source: https://wid.world/country/usa/
         Share of total,
@@ -680,32 +816,14 @@ def server(input, output, session):
                     line=dict(color=color_light_dark[input.dark_mode()], width=3),
                     text=f"<b>U.S.</b>",
                 ),
-                go.Scatter(
-                    name='NONE',
-                    mode='markers+text',
-                    x=usa.filter(pl.col(income_level) == usa[income_level].max())['year'],
-                    y=usa.filter(pl.col(income_level) == usa[income_level].max())[income_level],
-                    marker=dict(color='orange', size=10),
-                    text=f"<b>${usa.filter(pl.col(income_level) == usa[income_level].max())[income_level].to_numpy().flatten()[0] / 1000:.0f}k</b>",
-                    textposition='top center',
-                ),
-                go.Scatter(
-                    name='NONE',
-                    mode='markers+text',
-                    x=usa.filter(pl.col('year') == usa['year'].max())['year'],
-                    y=usa.filter(pl.col('year') == usa['year'].max())[income_level],
-                    marker=dict(color='orange', size=10),
-                    text=f"<b>${usa.filter(pl.col('year') == usa['year'].max())[income_level].to_numpy().flatten()[0] / 1000:.0f}k</b>",
-                    textposition='top center',
-                ),
-            ]
+            ] + get_highlights(data=usa, col=income_level, number_type='thousands',)
         ))
 
         get_period_shading(fig=fig)
 
         fig.update_layout(
             title=dict(
-                text=f"<b>Where has {input.income_level()} income been in the past?</b><br><sup>Based on {year_max} dollars</sup>",
+                text=f"<b>Where has {input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of'} income been in the past?</b><br><sup>Based on {year_max} dollars</sup>",
                 #
             ),
             title_x=0.5,
@@ -715,7 +833,7 @@ def server(input, output, session):
                 tickprefix="$",
                 tickformat=axis_title_income_format,
             ),
-            xaxis_title=f"{sources['money']}",
+            xaxis_title=f"{sources['economy']}",
             xaxis=dict(
                 range=[1880, 2030],
                 tickmode='array',
@@ -753,14 +871,18 @@ def server(input, output, session):
                 x=income_latest['country'],
                 y=income_latest[income_level],
                 text=income_latest[income_level],
-                texttemplate='%{text:.2s}',
+                texttemplate='<b>%{text:.3s}</b>',
+                textfont=dict(
+                    size=12,
+                ),
+                textangle=0,
                 marker_color=colors,
             )
         ])
 
         fig.update_layout(
             title=dict(
-                text=f"<b>How does U.S. Main Street income compare to other countries?</b><br><sup>Based on {year_max} U.S. total income and each country's income share for the selected group</sup>",
+                text=f"<b>How does {'U.S. ' + input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of U.S.'} income compare to other countries?</b><br><sup>Based on {year_max} U.S. total income and each country's income share for the selected group</sup>",
             ),
             title_x=0.5,
             yaxis_title=axis_title_income + f"<br>{group_name}",
@@ -769,7 +891,7 @@ def server(input, output, session):
                 tickprefix="$",
                 tickformat=axis_title_income_format,
             ),
-            xaxis_title=f"{sources['money']}",
+            xaxis_title=f"{sources['economy']}",
             xaxis_tickangle=-45,
             showlegend=False,
             template=get_color_template(input.dark_mode()),
@@ -819,30 +941,12 @@ def server(input, output, session):
                     line=dict(color=color_light_dark[input.dark_mode()], width=3),
                     text=f"<b>U.S.</b>",
                 ),
-                go.Scatter(
-                    name='NONE',
-                    mode='markers+text',
-                    x=usa.filter(pl.col(income_level) == usa[income_level].max())['year'],
-                    y=usa.filter(pl.col(income_level) == usa[income_level].max())[income_level],
-                    marker=dict(color='orange', size=10),
-                    text=f"<b>${usa.filter(pl.col(income_level) == usa[income_level].max())[income_level].to_numpy().flatten()[0] / 1000:.0f}k</b>",
-                    textposition='top center',
-                ),
-                go.Scatter(
-                    name='NONE',
-                    mode='markers+text',
-                    x=usa.filter(pl.col('year') == usa['year'].max())['year'],
-                    y=usa.filter(pl.col('year') == usa['year'].max())[income_level],
-                    marker=dict(color='orange', size=10),
-                    text=f"<b>${usa.filter(pl.col('year') == usa['year'].max())[income_level].to_numpy().flatten()[0] / 1000:.0f}k</b>",
-                    textposition='top center',
-                ),
-            ]
+            ] + get_highlights(data=usa, col=income_level, number_type='thousands',)
         ))
 
         fig.add_vrect(
             x0=1938,
-            x1=1976,
+            x1=1979,
             line_width=0,
             fillcolor='green',
             opacity=0.05,
@@ -851,7 +955,7 @@ def server(input, output, session):
         )
 
         fig.add_vrect(
-            x0=1977,
+            x0=1980,
             x1=2020,
             line_width=0,
             fillcolor='black',
@@ -862,7 +966,7 @@ def server(input, output, session):
 
         fig.update_layout(
             title=dict(
-                text=f"<b>Do federal policies impact income?</b><br><sup>Based on {year_max} dollars</sup>",
+                text=f"<b>Do federal policies impact {input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of'} income?</b><br><sup>Based on {year_max} dollars</sup>",
                 #
             ),
             title_x=0.5,
@@ -872,7 +976,7 @@ def server(input, output, session):
                 tickprefix="$",
                 tickformat=axis_title_income_format,
             ),
-            xaxis_title=f"{sources['money']}",
+            xaxis_title=f"{sources['economy']}",
             xaxis=dict(
                 range=[1880, 2030],
                 tickmode='array',
@@ -958,7 +1062,27 @@ def server(input, output, session):
             secondary_y=True,
         )
 
-        get_period_shading(fig=fig)
+        # get_period_shading(fig=fig)
+
+        fig.add_vrect(
+            x0=1938,
+            x1=1979,
+            line_width=0,
+            fillcolor='green',
+            opacity=0.05,
+            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
+            annotation_position='bottom right',
+        )
+
+        fig.add_vrect(
+            x0=1980,
+            x1=2020,
+            line_width=0,
+            fillcolor='black',
+            opacity=0.05,
+            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
+            annotation_position='bottom right',
+        )
 
         fig.update_layout(
             title=dict(
@@ -979,7 +1103,102 @@ def server(input, output, session):
                 side='right',
                 tickformat='+.0%',
             ),
-            xaxis_title=f"{sources['money']}",
+            xaxis_title=f"{sources['economy']}",
+            xaxis=dict(
+                range=[1880, 2030],
+                tickmode='array',
+                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
+                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+            ),
+            showlegend=True,
+            template=get_color_template(input.dark_mode()),
+            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+            legend=dict(
+                x=0.01,  # x position (0 = left, 1 = right)
+                y=0.99,  # y position (0 = bottom, 1 = top)
+                xanchor='left',  # anchor point x position ('left', 'center', 'right')
+                yanchor='top',  # anchor point y position ('top', 'middle', 'bottom')
+            )
+        )
+
+        for trace in fig['data']:
+            if ('NONE' in trace['name']):
+                trace['showlegend'] = False
+
+        return fig
+
+    @output
+    @render_widget
+    def plot_economy_f150():
+        """
+        Source: claude.ai compiling of prices
+
+        :return:
+        """
+        income_level = income_levels[input.income_level()]
+        group_name = group_names[income_level]
+        usa = (
+            shares_data.filter(pl.col('country') == 'usa')
+            .filter(pl.col('year') >= 1880)
+        )
+        data = (
+            f150
+            .join(
+                other=usa,
+                on=['year'],
+                how='inner',
+            )
+            .with_columns(
+                price_ratio = pl.col('price')/pl.col(income_level)
+            )
+        )
+
+        fig = go.Figure(data=(
+            [
+                go.Scatter(
+                    name='NONE',
+                    x=data['year'],
+                    y=data['price_ratio'],
+                    line=dict(color=color_light_dark[input.dark_mode()], width=3),
+                    text=f"<b>U.S.</b>",
+                ),
+            ] + get_highlights(data=data, col='price_ratio', number_type='percentage',)
+        ))
+
+        # get_period_shading(fig=fig)
+
+        fig.add_vrect(
+            x0=1938,
+            x1=1979,
+            line_width=0,
+            fillcolor='green',
+            opacity=0.05,
+            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
+            annotation_position='bottom right',
+        )
+
+        fig.add_vrect(
+            x0=1980,
+            x1=2020,
+            line_width=0,
+            fillcolor='black',
+            opacity=0.05,
+            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
+            annotation_position='bottom right',
+        )
+
+        fig.update_layout(
+            title=dict(
+                text=f"<b>What is the price of a new Ford F-150 as a percent of {input.income_level() if input.income_level() != 'Gap' else 'the ' + input.income_level() + ' of'} income?</b><br><sup>Based on {year_max} dollars</sup>",
+            ),
+            title_x=0.5,
+            yaxis_title="ratio of Ford F-150 price to " + f"<br>{group_name} income/yr average",
+            yaxis=dict(
+                # range=[0, 3000000],
+                # tickprefix="$",
+                tickformat=',.0%',
+            ),
+            xaxis_title=f"{sources['economy_f150']}",
             xaxis=dict(
                 range=[1880, 2030],
                 tickmode='array',
@@ -992,7 +1211,7 @@ def server(input, output, session):
         )
 
         for trace in fig['data']:
-            if ('NONE' in trace['name']):
+            if ('min' in trace['name']) | ('NONE' in trace['name']):
                 trace['showlegend'] = False
 
         return fig
@@ -1015,7 +1234,7 @@ def server(input, output, session):
 
         fig.add_vrect(
             x0=1938,
-            x1=1976,
+            x1=1979,
             line_width=0,
             fillcolor='green',
             opacity=0.05,
@@ -1024,7 +1243,7 @@ def server(input, output, session):
         )
 
         fig.add_vrect(
-            x0=1977,
+            x0=1980,
             x1=2020,
             line_width=0,
             fillcolor='black',
@@ -1071,7 +1290,7 @@ def server(input, output, session):
     def plot_healthcare_life_expectancy():
         fig = plot_timeseries_multiple_countries(
             data=healthcare_life_expectancy,
-            title="What do American's get for their high healthcare spend?",
+            title="Do American's get longer lives from their high spending on healthcare?",
             yaxis_title="life expectancy",
             dark_mode=input.dark_mode(),
             xaxis_title=f"{sources['healthcare']}",
