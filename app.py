@@ -347,7 +347,7 @@ def get_text(text, prefix, suffix, format, context):
     """
     return f"<span style='color:rgb(0, 0, 0)'><b>{prefix}{text:{format}}{suffix}</b><br>{context}</span>"
 
-def get_highlights(data, col, number_type,):
+def get_highlights(data, col_date, col_metric, number_type, ):
     format = {
         'thousands': ".0f",
         'percentage': ".0%",
@@ -365,20 +365,20 @@ def get_highlights(data, col, number_type,):
         'percentage': 1,
     }[number_type]
     
-    data_latest = data.filter(pl.col('year') == data['year'].max())
-    data_min = data.filter(pl.col(col) == data[col].min())
-    data_max = data.filter(pl.col(col) == data[col].max())
+    data_latest = data.filter(pl.col(col_date) == data[col_date].max())
+    data_min = data.filter(pl.col(col_metric) == data[col_metric].min())
+    data_max = data.filter(pl.col(col_metric) == data[col_metric].max())
 
     highlight_latest = [
         go.Scatter(
             # highlight the most recent value
             name='NONE',
             mode='markers+text',
-            x=data_latest['year'],
-            y=data_latest[col],
-            marker=dict(color='orange', size=10),
+            x=data_latest[col_date],
+            y=data_latest[col_metric],
+            marker=dict(color='orange', size=8),
             text=get_text(
-                text=data_latest[col].to_numpy().flatten()[0] / divide_by,
+                text=data_latest[col_metric].to_numpy().flatten()[0] / divide_by,
                 prefix=prefix,
                 suffix=suffix,
                 format=format,
@@ -393,11 +393,11 @@ def get_highlights(data, col, number_type,):
             # highlight the max of the metric
             name='NONE',
             mode='markers+text',
-            x=data_min['year'],
-            y=data_min[col],
-            marker=dict(color='orange', size=10),
+            x=data_min[col_date],
+            y=data_min[col_metric],
+            marker=dict(color='orange', size=8),
             text=get_text(
-                text=data_min[col].to_numpy().flatten()[0] / divide_by,
+                text=data_min[col_metric].to_numpy().flatten()[0] / divide_by,
                 prefix=prefix,
                 suffix=suffix,
                 format=format,
@@ -411,11 +411,11 @@ def get_highlights(data, col, number_type,):
             # highlight the max of the metric
             name='NONE',
             mode='markers+text',
-            x=data_max['year'],
-            y=data_max[col],
-            marker=dict(color='orange', size=10),
+            x=data_max[col_date],
+            y=data_max[col_metric],
+            marker=dict(color='orange', size=8),
             text=get_text(
-                text=data_max[col].to_numpy().flatten()[0] / divide_by,
+                text=data_max[col_metric].to_numpy().flatten()[0] / divide_by,
                 prefix=prefix,
                 suffix=suffix,
                 format=format,
@@ -426,9 +426,9 @@ def get_highlights(data, col, number_type,):
     ]
 
     highlights = highlight_latest
-    if data_latest[col].to_numpy().flatten()[0] != data_min[col].to_numpy().flatten()[0]:
+    if data_latest[col_metric].to_numpy().flatten()[0] != data_min[col_metric].to_numpy().flatten()[0]:
         highlights = highlights + highlight_min
-    if data_latest[col].to_numpy().flatten()[0] != data_max[col].to_numpy().flatten()[0]:
+    if data_latest[col_metric].to_numpy().flatten()[0] != data_max[col_metric].to_numpy().flatten()[0]:
         highlights = highlights + highlight_max
 
     return highlights
@@ -459,6 +459,7 @@ app_ui = ui.page_fillable(
                     col_widths=(12,),
                 )
             ),
+            ui.row(ui.h3(ui.span(HTML("Income"), style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_economy_timeseries_income")),
@@ -474,7 +475,7 @@ app_ui = ui.page_fillable(
                     col_widths=(6, 6,),
                 )
             ),
-            ui.row(ui.h2(ui.span(HTML("What does the cost of living look like for Main Street Americans?"), style="color:rgba(255,255,255,0.9)"))),
+            ui.row(ui.h3(ui.span(HTML("Living"), style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_economy_f150")),
@@ -603,12 +604,12 @@ app_ui = ui.page_fillable(
             ),
         ),
         ui.nav_panel(
-            "Money in Politics",
+            "Corruption",
             # Air & Water
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
         ),
         ui.nav_panel(
-            "Government Efficiency",
+            "Efficiency",
             # Air & Water
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
         ),
@@ -816,7 +817,12 @@ def server(input, output, session):
                     line=dict(color=color_light_dark[input.dark_mode()], width=3),
                     text=f"<b>U.S.</b>",
                 ),
-            ] + get_highlights(data=usa, col=income_level, number_type='thousands',)
+            ] + get_highlights(
+                data=usa,
+                col_date='year',
+                col_metric=income_level,
+                number_type='thousands',
+            )
         ))
 
         get_period_shading(fig=fig)
@@ -941,7 +947,12 @@ def server(input, output, session):
                     line=dict(color=color_light_dark[input.dark_mode()], width=3),
                     text=f"<b>U.S.</b>",
                 ),
-            ] + get_highlights(data=usa, col=income_level, number_type='thousands',)
+            ] + get_highlights(
+                data=usa,
+                col_date='year',
+                col_metric=income_level,
+                number_type='thousands',
+            )
         ))
 
         fig.add_vrect(
@@ -1162,7 +1173,12 @@ def server(input, output, session):
                     line=dict(color=color_light_dark[input.dark_mode()], width=3),
                     text=f"<b>U.S.</b>",
                 ),
-            ] + get_highlights(data=data, col='price_ratio', number_type='percentage',)
+            ] + get_highlights(
+            data=data,
+            col_date='year',
+            col_metric='price_ratio',
+            number_type='percentage',
+        )
         ))
 
         # get_period_shading(fig=fig)
@@ -1229,7 +1245,12 @@ def server(input, output, session):
                     y=american_dream_kids['probability'],
                     line=dict(color=color_light_dark[input.dark_mode()], width=3),
                 )
-            ]
+            ] + get_highlights(
+                data=american_dream_kids,
+                col_date='cohort_work_year',
+                col_metric='probability',
+                number_type='percentage',
+            )
         )
 
         fig.add_vrect(
@@ -1256,7 +1277,7 @@ def server(input, output, session):
             title=dict(
                 text=f"<b>What is the probability Americans earn more than their parents?</b>",
             ),
-            yaxis_title=f"probability<br><sup>that you earn more than your parents at age 30</sup>",
+            yaxis_title=f"probability<br><sup>that 30 year olds earn more than their parents at age 30</sup>",
             xaxis_title=f"{sources['american_dream']}",
             yaxis=dict(
                 # range=[2000, 2026],
