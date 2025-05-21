@@ -1,0 +1,46 @@
+| Year | Model | Original MSRP (USD) | MSRP in 2023 Dollars | Notes |
+| 1981 | Dodge D-Series | $5,936 | $18,932 | Pre-Ram branding D-150 model |
+| 1982 | Dodge D-Series | $6,434 | $19,313 | |
+| 1983 | Dodge D-Series | $6,852 | $19,936 | |
+| 1984 | Dodge D-Series | $7,313 | $20,409 | |
+| 1985 | Dodge Ram | $7,890 | $21,260 | Ram name officially adopted |
+| 1986 | Dodge Ram | $8,245 | $21,774 | |
+| 1987 | Dodge Ram | $8,637 | $22,044 | |
+| 1988 | Dodge Ram | $9,079 | $22,253 | |
+| 1989 | Dodge Ram | $9,503 | $22,230 | |
+| 1990 | Dodge Ram | $9,988 | $22,159 | |
+| 1991 | Dodge Ram | $10,475 | $22,302 | Final year of first-gen Ram |
+| 1992 | Dodge Ram | $10,893 | $22,513 | |
+| 1993 | Dodge Ram | $11,342 | $22,745 | |
+| 1994 | Dodge Ram 1500 | $14,156 | $27,688 | Second generation begins |
+| 1995 | Dodge Ram 1500 | $14,667 | $27,899 | |
+| 1996 | Dodge Ram 1500 | $15,200 | $28,096 | |
+| 1997 | Dodge Ram 1500 | $15,685 | $28,369 | |
+| 1998 | Dodge Ram 1500 | $16,135 | $28,687 | |
+| 1999 | Dodge Ram 1500 | $16,605 | $28,920 | |
+| 2000 | Dodge Ram 1500 | $17,225 | $29,039 | |
+| 2001 | Dodge Ram 1500 | $17,875 | $29,328 | Final year of second-gen Ram |
+| 2002 | Dodge Ram 1500 | $18,945 | $30,541 | Third generation begins |
+| 2003 | Dodge Ram 1500 | $19,385 | $30,595 | |
+| 2004 | Dodge Ram 1500 | $20,045 | $30,816 | |
+| 2005 | Dodge Ram 1500 | $20,555 | $30,549 | |
+| 2006 | Dodge Ram 1500 | $21,215 | $30,515 | |
+| 2007 | Dodge Ram 1500 | $22,175 | $31,012 | |
+| 2008 | Dodge Ram 1500 | $22,780 | $30,710 | Final year of third-gen Ram |
+| 2009 | Dodge Ram 1500 | $23,335 | $31,561 | Fourth generation begins |
+| 2010 | Ram 1500 | $24,255 | $32,312 | Ram becomes separate brand from Dodge |
+| 2011 | Ram 1500 | $25,060 | $32,329 | |
+| 2012 | Ram 1500 | $25,835 | $32,650 | |
+| 2013 | Ram 1500 | $27,485 | $34,251 | Mid-cycle refresh |
+| 2014 | Ram 1500 | $28,295 | $34,718 | |
+| 2015 | Ram 1500 | $29,320 | $35,895 | |
+| 2016 | Ram 1500 | $30,485 | $36,850 | |
+| 2017 | Ram 1500 | $31,695 | $37,327 | |
+| 2018 | Ram 1500 | $32,895 | $37,640 | Final year of fourth-gen Ram |
+| 2019 | Ram 1500 | $35,390 | $39,604 | Fifth generation begins (DT platform) |
+| 2020 | Ram 1500 | $36,540 | $39,644 | |
+| 2021 | Ram 1500 | $37,990 | $39,840 | |
+| 2022 | Ram 1500 | $39,350 | $39,743 | |
+| 2023 | Ram 1500 | $41,800 | $41,800 | |
+| 2024 | Ram 1500 | $43,540 | $42,276* | *Projected based on estimated inflation |
+| 2025 | Ram 1500 | $45,750 | $43,145* | *Projected based on estimated inflation |

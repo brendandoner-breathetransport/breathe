@@ -716,7 +716,7 @@ app_ui = ui.page_fillable(
             ),
         ),
         ui.nav_control(
-            ui.a("Support Our Work", href="https://gofund.me/d7238719")
+            ui.a("Support Us", href="https://gofund.me/d7238719")
         ),
         title=ui.img(src="images/logo_street.png", style="max-width:100px;width:45%"),
         # title=ui.img(src="www/logo_street.png", style="max-width:100px;width:50%"),

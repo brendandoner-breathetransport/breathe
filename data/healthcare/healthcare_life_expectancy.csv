@@ -1,0 +1,331 @@
+metric,country,year,sex,value,low,high,date_modified
+Life expectancy at birth (years),australia,2021,Both sexes,83.1,83.07,83.19,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2020,Both sexes,83.37,83.35,83.44,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2019,Both sexes,82.64,82.63,82.72,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2018,Both sexes,83.02,83.02,83.09,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2017,Both sexes,82.68,82.68,82.75,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2016,Both sexes,82.59,82.59,82.66,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2015,Both sexes,82.29,82.29,82.35,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2014,Both sexes,82.37,82.37,82.44,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2013,Both sexes,82.46,82.46,82.53,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2012,Both sexes,82.27,82.21,82.34,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2011,Both sexes,81.93,81.93,82.01,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2010,Both sexes,81.91,81.91,81.99,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2009,Both sexes,81.75,81.74,81.83,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2008,Both sexes,81.32,81.32,81.4,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2007,Both sexes,81.37,81.3,81.44,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2006,Both sexes,81.04,81.04,81.12,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2005,Both sexes,80.84,80.83,80.92,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2004,Both sexes,80.76,80.76,80.84,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2003,Both sexes,80.57,80.56,80.64,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2002,Both sexes,80.19,80.18,80.26,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2001,Both sexes,80.13,80.12,80.2,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),australia,2000,Both sexes,79.7,79.7,79.77,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2021,Both sexes,81.58,81.53,81.68,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2020,Both sexes,81.3,81.29,81.38,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2019,Both sexes,82.02,82.01,82.09,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2018,Both sexes,81.73,81.73,81.81,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2017,Both sexes,81.71,81.71,81.78,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2016,Both sexes,81.74,81.74,81.81,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2015,Both sexes,81.65,81.63,81.73,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2014,Both sexes,81.59,81.58,81.66,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2013,Both sexes,81.56,81.55,81.63,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2012,Both sexes,81.49,81.49,81.56,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2011,Both sexes,81.4,81.34,81.47,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2010,Both sexes,81.14,81.07,81.21,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2009,Both sexes,80.88,80.88,80.95,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2008,Both sexes,80.56,80.56,80.63,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2007,Both sexes,80.38,80.31,80.45,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2006,Both sexes,80.37,80.36,80.44,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2005,Both sexes,79.95,79.88,80.02,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2004,Both sexes,79.85,79.83,79.92,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2003,Both sexes,79.58,79.57,79.65,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2002,Both sexes,79.42,79.42,79.49,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2001,Both sexes,79.31,79.3,79.38,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),canada,2000,Both sexes,79.09,79.08,79.16,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2021,Both sexes,77.62,77.07,78.3,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2020,Both sexes,77.48,76.95,78.26,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2019,Both sexes,77.31,76.75,77.92,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2018,Both sexes,77.14,76.64,77.88,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2017,Both sexes,76.95,76.57,77.51,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2016,Both sexes,76.72,76.29,77.28,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2015,Both sexes,76.51,76.23,77.0,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2014,Both sexes,76.2,75.83,76.66,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2013,Both sexes,75.84,75.51,76.28,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2012,Both sexes,75.48,75.19,75.89,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2011,Both sexes,75.04,74.71,75.42,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2010,Both sexes,74.65,74.29,75.03,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2009,Both sexes,74.39,74.09,74.74,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2008,Both sexes,74.0,73.72,74.36,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2007,Both sexes,73.84,73.59,74.19,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2006,Both sexes,73.29,73.05,73.63,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2005,Both sexes,72.44,72.18,72.85,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2004,Both sexes,71.93,71.66,72.29,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2003,Both sexes,71.69,71.39,72.03,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2002,Both sexes,71.45,71.07,71.84,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2001,Both sexes,71.13,70.73,71.58,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),china,2000,Both sexes,70.84,70.45,71.28,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2021,Both sexes,78.63,78.55,78.8,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2020,Both sexes,79.99,79.91,80.14,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2019,Both sexes,80.3,80.2,80.42,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2018,Both sexes,80.29,80.21,80.44,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2017,Both sexes,80.2,80.13,80.33,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2016,Both sexes,80.11,80.04,80.25,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2015,Both sexes,80.57,80.5,80.72,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2014,Both sexes,80.48,80.42,80.62,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2013,Both sexes,80.6,80.54,80.75,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2012,Both sexes,80.42,80.34,80.57,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2011,Both sexes,80.26,80.18,80.4,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2010,Both sexes,79.51,79.42,79.66,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2009,Both sexes,80.61,80.53,80.76,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2008,Both sexes,80.29,80.22,80.45,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2007,Both sexes,80.23,80.14,80.38,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2006,Both sexes,79.36,79.29,79.5,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2005,Both sexes,79.72,79.63,79.87,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2004,Both sexes,78.68,78.58,78.84,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2003,Both sexes,78.71,78.64,78.86,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2002,Both sexes,78.86,78.78,79.03,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2001,Both sexes,78.07,78.01,78.2,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),costa rica,2000,Both sexes,78.17,78.07,78.3,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2021,Both sexes,81.92,81.91,82.0,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2020,Both sexes,81.87,81.87,81.94,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2019,Both sexes,82.53,82.52,82.6,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2018,Both sexes,82.38,82.36,82.44,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2017,Both sexes,82.17,82.17,82.24,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2016,Both sexes,82.13,82.11,82.21,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2015,Both sexes,81.91,81.89,81.97,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2014,Both sexes,82.25,82.2,82.3,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2013,Both sexes,81.82,81.76,81.88,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2012,Both sexes,81.58,81.51,81.64,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2011,Both sexes,81.58,81.52,81.64,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2010,Both sexes,81.22,81.16,81.28,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2009,Both sexes,81.04,80.98,81.1,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2008,Both sexes,80.87,80.82,80.93,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2007,Both sexes,80.8,80.74,80.86,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2006,Both sexes,80.53,80.46,80.59,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2005,Both sexes,80.0,79.95,80.06,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2004,Both sexes,80.0,79.94,80.06,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2003,Both sexes,79.09,79.04,79.15,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2002,Both sexes,79.14,79.08,79.2,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2001,Both sexes,79.01,78.96,79.07,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),france,2000,Both sexes,78.91,78.85,78.97,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2021,Both sexes,80.49,80.49,80.56,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2020,Both sexes,80.8,80.74,80.86,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2019,Both sexes,80.97,80.91,81.03,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2018,Both sexes,80.65,80.59,80.7,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2017,Both sexes,80.75,80.69,80.81,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2016,Both sexes,80.69,80.63,80.74,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2015,Both sexes,80.43,80.37,80.48,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2014,Both sexes,80.76,80.7,80.82,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2013,Both sexes,80.29,80.23,80.34,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2012,Both sexes,80.59,80.53,80.65,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2011,Both sexes,80.46,80.41,80.52,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2010,Both sexes,80.18,80.12,80.24,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2009,Both sexes,79.99,79.93,80.06,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2008,Both sexes,79.88,79.82,79.94,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2007,Both sexes,79.79,79.73,79.85,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2006,Both sexes,79.6,79.54,79.67,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2005,Both sexes,79.21,79.15,79.27,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2004,Both sexes,79.03,78.97,79.09,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2003,Both sexes,78.46,78.4,78.52,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2002,Both sexes,78.46,78.4,78.53,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2001,Both sexes,78.44,78.38,78.5,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),germany,2000,Both sexes,78.11,78.05,78.16,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2021,Both sexes,82.2,82.2,82.26,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2020,Both sexes,81.94,81.88,82.0,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2019,Both sexes,82.99,82.93,83.04,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2018,Both sexes,82.78,82.72,82.83,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2017,Both sexes,82.52,82.47,82.58,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2016,Both sexes,82.87,82.81,82.93,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2015,Both sexes,82.2,82.15,82.26,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2014,Both sexes,82.61,82.55,82.67,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2013,Both sexes,82.29,82.23,82.34,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2012,Both sexes,81.84,81.78,81.89,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2011,Both sexes,81.83,81.78,81.88,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2010,Both sexes,81.9,81.84,81.95,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2009,Both sexes,81.52,81.47,81.58,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2008,Both sexes,81.37,81.31,81.43,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2007,Both sexes,81.18,81.12,81.23,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2006,Both sexes,81.06,81.0,81.13,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2005,Both sexes,80.51,80.46,80.56,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2004,Both sexes,80.53,80.47,80.59,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2003,Both sexes,79.82,79.76,79.88,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2002,Both sexes,79.96,79.9,80.01,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2001,Both sexes,79.68,79.62,79.73,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),italy,2000,Both sexes,79.37,79.31,79.43,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2021,Both sexes,84.46,84.46,84.52,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2020,Both sexes,84.66,84.61,84.72,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2019,Both sexes,84.47,84.41,84.52,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2018,Both sexes,84.35,84.3,84.4,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2017,Both sexes,84.26,84.21,84.31,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2016,Both sexes,84.16,84.11,84.21,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2015,Both sexes,84.0,83.95,84.05,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2014,Both sexes,83.79,83.75,83.84,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2013,Both sexes,83.56,83.51,83.61,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2012,Both sexes,83.33,83.28,83.38,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2011,Both sexes,82.83,82.77,82.89,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2010,Both sexes,83.08,83.03,83.13,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2009,Both sexes,83.16,83.11,83.21,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2008,Both sexes,82.83,82.78,82.89,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2007,Both sexes,82.76,82.71,82.81,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2006,Both sexes,82.59,82.54,82.64,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2005,Both sexes,82.24,82.19,82.29,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2004,Both sexes,82.37,82.32,82.42,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2003,Both sexes,82.14,82.09,82.19,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2002,Both sexes,82.1,82.05,82.16,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2001,Both sexes,81.84,81.79,81.89,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),japan,2000,Both sexes,81.53,81.47,81.59,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2021,Both sexes,70.83,70.67,71.06,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2020,Both sexes,70.95,70.79,71.16,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2019,Both sexes,75.83,75.66,76.11,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2018,Both sexes,75.92,75.76,76.13,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2017,Both sexes,75.87,75.7,76.08,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2016,Both sexes,75.76,75.6,76.0,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2015,Both sexes,75.94,75.8,76.13,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2014,Both sexes,75.91,75.78,76.11,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2013,Both sexes,75.93,75.8,76.14,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2012,Both sexes,75.64,75.51,75.83,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2011,Both sexes,75.43,75.28,75.61,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2010,Both sexes,74.95,74.82,75.14,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2009,Both sexes,75.14,75.01,75.31,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2008,Both sexes,75.09,74.95,75.31,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2007,Both sexes,75.52,75.4,75.7,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2006,Both sexes,75.34,75.19,75.53,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2005,Both sexes,74.93,74.81,75.12,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2004,Both sexes,75.04,74.89,75.23,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2003,Both sexes,74.63,74.47,74.86,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2002,Both sexes,74.59,74.46,74.8,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2001,Both sexes,74.55,74.37,74.77,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),mexico,2000,Both sexes,74.22,74.06,74.44,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2021,Both sexes,82.2,82.17,82.31,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2020,Both sexes,82.5,82.48,82.6,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2019,Both sexes,81.81,81.78,81.92,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2018,Both sexes,81.76,81.73,81.84,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2017,Both sexes,81.16,81.15,81.26,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2016,Both sexes,81.73,81.71,81.81,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2015,Both sexes,81.31,81.29,81.4,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2014,Both sexes,81.19,81.16,81.29,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2013,Both sexes,81.36,81.33,81.46,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2012,Both sexes,81.09,81.06,81.18,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2011,Both sexes,80.75,80.72,80.84,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2010,Both sexes,80.94,80.92,81.05,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2009,Both sexes,80.56,80.54,80.66,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2008,Both sexes,80.31,80.28,80.4,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2007,Both sexes,80.04,80.01,80.13,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2006,Both sexes,79.89,79.86,79.99,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2005,Both sexes,79.94,79.91,80.03,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2004,Both sexes,79.15,79.13,79.25,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2003,Both sexes,79.06,79.02,79.15,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2002,Both sexes,78.66,78.63,78.76,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2001,Both sexes,78.47,78.44,78.56,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),new zealand,2000,Both sexes,78.58,78.54,78.67,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2021,Both sexes,82.88,82.85,82.99,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2020,Both sexes,82.84,82.82,82.93,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2019,Both sexes,82.66,82.63,82.76,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2018,Both sexes,82.44,82.42,82.54,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2017,Both sexes,82.33,82.31,82.42,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2016,Both sexes,82.11,82.09,82.2,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2015,Both sexes,81.99,81.98,82.08,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2014,Both sexes,81.83,81.81,81.92,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2013,Both sexes,81.43,81.42,81.52,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2012,Both sexes,81.23,81.22,81.33,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2011,Both sexes,80.97,80.95,81.06,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2010,Both sexes,80.87,80.84,80.96,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2009,Both sexes,80.75,80.73,80.84,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2008,Both sexes,80.49,80.47,80.58,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2007,Both sexes,80.35,80.34,80.44,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2006,Both sexes,80.28,80.25,80.38,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2005,Both sexes,80.05,80.03,80.14,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2004,Both sexes,79.82,79.8,79.92,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2003,Both sexes,79.4,79.37,79.49,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2002,Both sexes,78.86,78.84,78.95,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2001,Both sexes,78.75,78.73,78.83,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),norway,2000,Both sexes,78.54,78.49,78.63,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2021,Both sexes,70.02,69.96,70.07,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2020,Both sexes,71.38,71.33,71.43,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2019,Both sexes,73.22,73.16,73.27,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2018,Both sexes,72.66,72.61,72.72,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2017,Both sexes,72.5,72.45,72.55,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2016,Both sexes,71.62,71.56,71.67,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2015,Both sexes,71.3,71.29,71.36,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2014,Both sexes,70.69,70.68,70.75,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2013,Both sexes,70.7,70.69,70.76,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2012,Both sexes,70.19,70.18,70.25,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2011,Both sexes,69.77,69.76,69.83,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2010,Both sexes,68.83,68.82,68.89,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2009,Both sexes,68.56,68.54,68.62,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2008,Both sexes,67.79,67.78,67.86,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2007,Both sexes,67.42,67.4,67.49,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2006,Both sexes,66.49,66.47,66.56,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2005,Both sexes,65.19,65.17,65.25,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2004,Both sexes,65.14,65.12,65.21,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2003,Both sexes,64.72,64.7,64.79,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2002,Both sexes,64.86,64.82,64.95,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2001,Both sexes,65.1,65.05,65.19,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),russia,2000,Both sexes,65.16,65.11,65.26,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2021,Both sexes,83.33,83.3,83.42,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2020,Both sexes,82.74,82.72,82.83,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2019,Both sexes,83.48,83.46,83.56,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2018,Both sexes,83.29,83.27,83.37,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2017,Both sexes,83.14,83.12,83.23,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2016,Both sexes,83.17,83.15,83.25,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2015,Both sexes,82.59,82.57,82.69,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2014,Both sexes,82.85,82.82,82.93,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2013,Both sexes,82.48,82.46,82.55,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2012,Both sexes,82.39,82.38,82.47,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2011,Both sexes,82.37,82.34,82.45,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2010,Both sexes,82.2,82.17,82.28,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2009,Both sexes,81.89,81.87,81.98,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2008,Both sexes,81.86,81.84,81.95,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2007,Both sexes,81.6,81.59,81.68,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2006,Both sexes,81.41,81.4,81.51,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2005,Both sexes,81.11,81.1,81.2,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2004,Both sexes,80.94,80.92,81.03,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2003,Both sexes,80.4,80.38,80.49,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2002,Both sexes,80.41,80.39,80.5,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2001,Both sexes,80.1,80.09,80.18,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),switzerland,2000,Both sexes,79.71,79.69,79.8,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2021,Both sexes,80.1,80.1,80.17,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2020,Both sexes,80.14,80.14,80.2,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2019,Both sexes,81.22,81.16,81.29,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2018,Both sexes,80.62,80.57,80.68,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2017,Both sexes,80.92,80.87,80.98,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2016,Both sexes,80.81,80.75,80.87,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2015,Both sexes,80.66,80.6,80.72,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2014,Both sexes,80.94,80.88,80.99,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2013,Both sexes,80.69,80.63,80.74,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2012,Both sexes,80.64,80.58,80.7,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2011,Both sexes,80.64,80.58,80.7,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2010,Both sexes,80.25,80.2,80.31,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2009,Both sexes,80.03,79.97,80.09,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2008,Both sexes,79.54,79.48,79.59,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2007,Both sexes,79.42,79.36,79.47,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2006,Both sexes,79.23,79.17,79.28,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2005,Both sexes,78.91,78.86,78.97,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2004,Both sexes,78.68,78.61,78.74,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2003,Both sexes,78.15,78.09,78.2,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2002,Both sexes,78.08,78.02,78.13,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2001,Both sexes,77.95,77.9,78.01,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united kingdom,2000,Both sexes,77.86,77.79,77.93,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2021,Both sexes,76.37,76.33,76.48,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2020,Both sexes,76.89,76.84,76.94,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2019,Both sexes,78.74,78.69,78.79,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2018,Both sexes,78.63,78.58,78.67,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2017,Both sexes,78.5,78.45,78.55,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2016,Both sexes,78.56,78.51,78.6,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2015,Both sexes,78.61,78.56,78.66,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2014,Both sexes,78.8,78.75,78.85,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2013,Both sexes,78.76,78.71,78.81,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2012,Both sexes,78.77,78.72,78.82,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2011,Both sexes,78.65,78.61,78.7,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2010,Both sexes,78.61,78.56,78.65,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2009,Both sexes,78.42,78.38,78.47,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2008,Both sexes,78.05,78.0,78.1,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2007,Both sexes,77.94,77.89,77.99,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2006,Both sexes,77.68,77.63,77.73,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2005,Both sexes,77.38,77.34,77.43,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2004,Both sexes,77.4,77.35,77.45,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2003,Both sexes,76.99,76.94,77.04,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2002,Both sexes,76.85,76.8,76.9,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2001,Both sexes,76.75,76.7,76.8,2024-08-02T06:00:00.000Z
+Life expectancy at birth (years),united states,2000,Both sexes,76.66,76.61,76.7,2024-08-02T06:00:00.000Z
