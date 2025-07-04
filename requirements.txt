@@ -7,3 +7,5 @@ polars
 shiny
 shinylive
 shinywidgets
+pyarrow
+matplotlib
