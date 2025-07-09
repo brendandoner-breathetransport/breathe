@@ -58,6 +58,12 @@ group_names = {
     "income_mean_gap": "Gap (Top 1% - Main Street)",
 }
 
+layout_economy = {
+    'range':[1905, 2030],
+    'tickvals':[1902, 1945, 1969, 1980, 2023, 2032],
+    'ticktext':[1902, 1945, 1969, 1980, 2023, ''],
+}
+
 def get_source(name, link):
     return f"<a href='{link}'>{name}</a>"
 
@@ -438,8 +444,7 @@ app_ui = ui.page_fillable(
     ui.page_navbar(
         ui.nav_panel(
             "Economy",
-            ui.row(ui.h1(ui.span(HTML("How healthy is the economy for Main Street Americans?"), style="color:rgba(255,255,255,0.9)"))),
-            ui.row(ui.h5(ui.span("Main Street Americans are defined as Americans in the bottom 50% of earnings for full-time employment.", style="color:rgba(200,200,200,0.9)"))),
+            ui.row(ui.h1(ui.span(HTML("How healthy is the economy for Americans?"), style="color:rgba(255,255,255,0.9)"))),
 
             # Income
             ui.row(
@@ -448,8 +453,8 @@ app_ui = ui.page_fillable(
                         id='income_level',
                         label=None,
                         choices={
-                            "Main Street": ui.span("Main Street", style=f"color:rgba(255,255,255,0.6)"),
-                            "Upper": ui.span("Upper", style=f"color:rgba(255,255,255,0.6)"),
+                            "Main Street": ui.span("Main Street (bottom 50%)", style=f"color:rgba(255,255,255,0.6)"),
+                            "Upper": ui.span("Upper (51-99%)", style=f"color:rgba(255,255,255,0.6)"),
                             "Top 1%": ui.span("Top 1%", style=f"color:rgba(255,255,255,0.6)"),
                             "Gap": ui.span("Gap", style=f"color:rgba(255,255,255,0.6)"),
                         },
@@ -463,15 +468,15 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_economy_timeseries_income")),
-                    ui.card(output_widget("plot_barchart_income_countries")),
+                    ui.card(output_widget("plot_economy_barchart_income_countries")),
                     col_widths=(6, 6,),
                 )
             ),
 
             ui.row(
                 ui.layout_columns(
-                    ui.card(output_widget("plot_timeseries_income_policies")),
-                    ui.card(output_widget("plot_timeseries_income_taxes")),
+                    ui.card(output_widget("plot_economy_timeseries_income_policies")),
+                    ui.card(output_widget("plot_economy_timeseries_income_taxes")),
                     col_widths=(6, 6,),
                 )
             ),
@@ -479,7 +484,7 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_economy_f150")),
-                    # ui.card(output_widget("plot_timeseries_income_taxes")),
+                    # ui.card(output_widget("plot_economy_timeseries_income_taxes")),
                     col_widths=(6, 6,),
                 )
             ),
@@ -560,17 +565,17 @@ app_ui = ui.page_fillable(
             ),
         ),
         ui.nav_panel(
-            "Energy",
+            "Justice",
             # Air & Water
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("water (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("soil (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
-                )
-            ),
+            # ui.row(
+            #     ui.layout_columns(
+            #         ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+            #         ui.card(ui.h3(ui.span("water (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+            #         ui.card(ui.h3(ui.span("soil (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+            #         col_widths=(4, 4, 4),
+            #     )
+            # ),
         ),
         ui.nav_panel(
             "Environment",
@@ -585,139 +590,140 @@ app_ui = ui.page_fillable(
                 )
             ),
         ),
-        ui.nav_panel(
-            "Immigration",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-        ),
-        ui.nav_panel(
-            "Freedom",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(ui.h3(ui.span("story of the 100 years after civil war", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("incarceration rates", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("rape convictions based on race of victim", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
-                )
-            ),
-        ),
-        ui.nav_panel(
-            "Corruption",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-        ),
-        ui.nav_panel(
-            "Efficiency",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-        ),
-        ui.nav_panel(
-            "MisInformation",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-        ),
-        ui.nav_panel(
-            "Spotlight",
-            # education, sick care, justice, laws/rules,
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(ui.h6(ui.span("Replace below with data driven plots...", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.output_image("img_freedom_scale")
-            ),
-            ui.row(ui.h1(ui.span("Disruptions", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(ui.h3(ui.span("Climate Change", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("AI",
-                                          style="color:rgba(0,0,0,0.9)"))),
-                    # ui.card(ui.h3(ui.span("crime (by state, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(6, 6,),
-                )
-            ),
-            ui.row(ui.h1(ui.span("Wants", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(
-                        ui.h3(ui.span("regional cultures and government preferences", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(12,),
-                )
-            ),
-            ui.row(ui.h1(ui.span("Voter supression", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(
-                        ui.h3(ui.span("Voter turn out vs laws that restrict voting", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(12,),
-                )
-            ),
-        ),
-        ui.nav_panel(
-            "About Us",
-            ui.row(ui.span(
-                ui.markdown("""
-                    # Breathe
-                    We are a grassroots community group that has come together to support 
-                    each other, pool our<br>diverse backgrounds, and bring 
-                    truth, understanding, and togetherness<br>into today's conversations.
-                    
-                    &ndash; Founded February, 2025
-                    
-                    ### Purpose
-                    Improve the lives of Americans and make our democracy stronger.
-                    
-                    ##### How
-                    * **Dashboard**
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Simple and reproducible, bring together data and history.
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Diagnose problems, see the health of the country in the context of our past and the world.
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Understand causes.
-                    
-                    * **Community**
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ideas, collaborate, support, expand impact.
-                    
-                    * **Outreach**
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Expand impact, expand resources.
-    
-                    
-                    ### Values
-                    * **Balance** (public good vs individualism)
-                    * **Fairness** (equal opportunity, equal justice, fair markets, no exploitation)
-                    * **Diversity** (team strength and learning come from diverse ideas, backgrounds, races, gender, etc.)
-                    * **Evidence** (learn from history and data)
-
-                """),
-                style="color:rgba(255,255,255,0.9)")),
-            ui.row(ui.h1(ui.span("Books Recommendations", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.tags.a(
-                        ui.output_image("img_american_character"),
-                        href='https://colinwoodard.com/books/american-character/',
-                        target="_blank"
-                    ),
-                    col_widths=(12),
-                )
-            ),
-            ui.row(
-                ui.layout_columns(
-                    ui.tags.a(
-                        ui.output_image("img_1619"),
-                        href='https://www.nytimes.com/interactive/2019/08/14/magazine/1619-america-slavery.html',
-                        target="_blank"
-                    ),
-                    col_widths=(12,),
-                )
-            ),
-        ),
-        ui.nav_control(
-            ui.a("Support Us", href="https://gofund.me/d7238719")
-        ),
+        # ui.nav_panel(
+        #     "Immigration",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        # ),
+        # ui.nav_panel(
+        #     "Freedom",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.card(ui.h3(ui.span("story of the 100 years after civil war", style="color:rgba(0,0,0,0.9)"))),
+        #             ui.card(ui.h3(ui.span("incarceration rates", style="color:rgba(0,0,0,0.9)"))),
+        #             ui.card(ui.h3(ui.span("rape convictions based on race of victim", style="color:rgba(0,0,0,0.9)"))),
+        #             col_widths=(4, 4, 4),
+        #         )
+        #     ),
+        # ),
+        #
+        # ui.nav_panel(
+        #     "Efficiency",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        # ),
+        # ui.nav_panel(
+        #     "Money in Politics",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        # ),
+        # ui.nav_panel(
+        #     "MisInformation",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        # ),
+        # ui.nav_panel(
+        #     "Spotlight",
+        #     # education, sick care, justice, laws/rules,
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(ui.h6(ui.span("Replace below with data driven plots...", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.output_image("img_freedom_scale")
+        #     ),
+        #     ui.row(ui.h1(ui.span("Disruptions", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.card(ui.h3(ui.span("Climate Change", style="color:rgba(0,0,0,0.9)"))),
+        #             ui.card(ui.h3(ui.span("AI",
+        #                                   style="color:rgba(0,0,0,0.9)"))),
+        #             # ui.card(ui.h3(ui.span("crime (by state, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+        #             col_widths=(6, 6,),
+        #         )
+        #     ),
+        #     ui.row(ui.h1(ui.span("Wants", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.card(
+        #                 ui.h3(ui.span("regional cultures and government preferences", style="color:rgba(0,0,0,0.9)"))),
+        #             col_widths=(12,),
+        #         )
+        #     ),
+        #     ui.row(ui.h1(ui.span("Voter supression", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.card(
+        #                 ui.h3(ui.span("Voter turn out vs laws that restrict voting", style="color:rgba(0,0,0,0.9)"))),
+        #             col_widths=(12,),
+        #         )
+        #     ),
+        # ),
+        # ui.nav_panel(
+        #     "About Us",
+        #     ui.row(ui.span(
+        #         ui.markdown("""
+        #             # Breathe
+        #             We are a grassroots community group that has come together to support
+        #             each other, pool our<br>diverse backgrounds, and bring
+        #             truth, understanding, and togetherness<br>into today's conversations.
+        #
+        #             &ndash; Founded February, 2025
+        #
+        #             ### Purpose
+        #             Improve the lives of Americans and make our democracy stronger.
+        #
+        #             ##### How
+        #             * **Dashboard**
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Simple and reproducible, bring together data and history.
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Diagnose problems, see the health of the country in the context of our past and the world.
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Understand causes.
+        #
+        #             * **Community**
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ideas, collaborate, support, expand impact.
+        #
+        #             * **Outreach**
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Expand impact, expand resources.
+        #
+        #
+        #             ### Values
+        #             * **Balance** (public good vs individualism)
+        #             * **Fairness** (equal opportunity, equal justice, fair markets, no exploitation)
+        #             * **Diversity** (team strength and learning come from diverse ideas, backgrounds, races, gender, etc.)
+        #             * **Evidence** (learn from history and data)
+        #
+        #         """),
+        #         style="color:rgba(255,255,255,0.9)")),
+        #     ui.row(ui.h1(ui.span("Books Recommendations", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.tags.a(
+        #                 ui.output_image("img_american_character"),
+        #                 href='https://colinwoodard.com/books/american-character/',
+        #                 target="_blank"
+        #             ),
+        #             col_widths=(12),
+        #         )
+        #     ),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.tags.a(
+        #                 ui.output_image("img_1619"),
+        #                 href='https://www.nytimes.com/interactive/2019/08/14/magazine/1619-america-slavery.html',
+        #                 target="_blank"
+        #             ),
+        #             col_widths=(12,),
+        #         )
+        #     ),
+        # ),
+        # ui.nav_control(
+        #     ui.a("Support Us", href="https://gofund.me/d7238719")
+        # ),
         title=ui.img(src="images/logo_street.png", style="max-width:100px;width:45%"),
         # title=ui.img(src="www/logo_street.png", style="max-width:100px;width:50%"),
         # title = ui.img(src=f"www/logo_street.png", style="max-width:100px;width:50%"),
@@ -841,10 +847,10 @@ def server(input, output, session):
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
-                range=[1880, 2030],
+                range=layout_economy['range'],
                 tickmode='array',
-                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
-                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
@@ -859,7 +865,7 @@ def server(input, output, session):
 
     @output
     @render_widget
-    def plot_barchart_income_countries():
+    def plot_economy_barchart_income_countries():
 
         income_level=income_levels[input.income_level()]
         group_name = group_names[income_level]
@@ -908,7 +914,7 @@ def server(input, output, session):
 
     @output
     @render_widget
-    def plot_timeseries_income_policies():
+    def plot_economy_timeseries_income_policies():
         """
         Source: https://wid.world/country/usa/
         Share of total,
@@ -989,10 +995,10 @@ def server(input, output, session):
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
-                range=[1880, 2030],
+                range=layout_economy['range'],
                 tickmode='array',
-                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
-                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
@@ -1007,7 +1013,7 @@ def server(input, output, session):
 
     @output
     @render_widget
-    def plot_timeseries_income_taxes():
+    def plot_economy_timeseries_income_taxes():
         """
         Source: https://wid.world/country/usa/
         Share of total,
@@ -1023,15 +1029,23 @@ def server(input, output, session):
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        fig.add_traces([
-            go.Scatter(
-                name='NONE',
-                x=usa['year'],
-                y=usa[income_level],
-                line=dict(color=color_light_dark[input.dark_mode()], width=3),
-                text="<b>U.S.</b>",
-            ),
-        ])
+        fig.add_traces(
+            [
+                go.Scatter(
+                    name='NONE',
+                    x=usa['year'],
+                    y=usa[income_level],
+                    line=dict(color=color_light_dark[input.dark_mode()], width=3),
+                    text="<b>U.S.</b>",
+                ),
+            ] + get_highlights(
+                data=usa,
+                col_date='year',
+                col_metric=income_level,
+                number_type='thousands',
+            )
+        )
+
         # ---------------------------------------------------
         # tax changes
         data = tax.filter(pl.col('change_top_bracket') != 0).sort(['year'])
@@ -1097,7 +1111,7 @@ def server(input, output, session):
 
         fig.update_layout(
             title=dict(
-                text=f"<b>Do taxes on the Top 1% influence the gap?</b><br><sup>Based on {year_max} dollars</sup>",
+                text=f"<b>Do taxes on the Top 1% influence income?</b><br><sup>Based on {year_max} dollars</sup>",
             ),
             title_x=0.5,
             yaxis_title=axis_title_income + f"<br>{group_name}",
@@ -1116,10 +1130,10 @@ def server(input, output, session):
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
-                range=[1880, 2030],
+                range=layout_economy['range'],
                 tickmode='array',
-                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
-                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
@@ -1216,10 +1230,10 @@ def server(input, output, session):
             ),
             xaxis_title=f"{sources['economy_f150']}",
             xaxis=dict(
-                range=[1880, 2030],
+                range=layout_economy['range'],
                 tickmode='array',
-                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
-                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
