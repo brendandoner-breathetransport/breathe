@@ -1095,7 +1095,7 @@ def server(input, output, session):
             line_width=0,
             fillcolor='green',
             opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
+            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Democratic Capitalism</a></b>",
             annotation_position='bottom right',
         )
 
@@ -1105,7 +1105,7 @@ def server(input, output, session):
             line_width=0,
             fillcolor='black',
             opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
+            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Feudal Capitalism</a></b>",
             annotation_position='bottom right',
         )
 
