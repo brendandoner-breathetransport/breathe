@@ -2,10 +2,10 @@
     "https://api.shinyapps.io": {
         "server_url": "https://api.shinyapps.io",
         "filename": "/Users/brentondickerson/git/breathe",
-        "app_url": "https://breathe-brenton-dickerson.shinyapps.io/test1/",
-        "app_id": 15019582,
+        "app_url": "https://breathe-brenton-dickerson.shinyapps.io/breathe-fix-test/",
+        "app_id": 14793770,
         "app_guid": null,
-        "title": "test",
+        "title": "breathe-fix-test",
         "app_mode": "python-shiny",
         "app_store_version": 1
     }
