@@ -1,20 +1,67 @@
-from shiny import App, reactive, ui, render
-from shinywidgets import output_widget, render_widget
 import numpy as np
 import pandas as pd
 import polars as pl
 import plotly.graph_objects as go
+import pickle
+from urllib.request import urlopen
+import json
+
 from plotly.subplots import make_subplots
 from pathlib import Path
 from htmltools import HTML, div
+from shiny import App, reactive, ui, render
+from shinywidgets import output_widget, render_widget
 
+
+def get_path(folder, file_name):
+    path = str(Path(__file__).parent / f"data/{folder}/{file_name}")
+    return path
 
 def read_data(folder, file_name):
     data = pl.from_pandas(pd.read_csv(
-        str(Path(__file__).parent / f"data/{folder}/{file_name}"), delimiter=","
+        get_path(folder=folder, file_name=file_name),
+        delimiter=","
     ))
     return data
 
+config = dict(
+    fixedrange=True,
+    plotly_mobile={
+        'staticPlot': False,
+        'responsive': True,
+        'displayModeBar': False,
+        'scrollZoom': False,
+        'doubleClick': False,
+    },
+    colorscale={
+        'upward_mobility':[
+            [0.0, '#8B0000'],      # 0.00 - Dark red
+            [0.167, '#CC0000'],    # 0.10 - Red
+            [0.417, '#FF8C00'],    # 0.25 - Orange
+            [0.5, '#FFD700'],      # 0.30 - Gold/Yellow
+            [0.583, '#FFFF00'],    # 0.35 - Bright yellow
+            [0.667, '#ADFF2F'],    # 0.40 - Yellow-green
+            [0.833, '#32CD32'],    # 0.50 - Lime green
+            [1.0, '#006400'],      # 0.60 - Dark green
+        ],
+        'jail':[
+            [0.0, '#006400'],      # 0.00 - Dark green
+            [0.02, '#228B22'],     # 0.03 - Forest green
+            [0.05, '#32CD32'],      # 0.06 - Lime green
+            [0.08, '#9ACD32'],     # 0.09 - Yellow-green
+            [0.10, '#ADFF2F'],      # 0.12 - Green-yellow
+            [0.12, '#FFD700'],     # 0.15 - Gold/Yellow
+            [0.15, '#CC0000'],    # 0.375 - Red
+            [1.0, '#8B0000'],      # 0.60 - Dark red
+        ],
+    }
+)
+#-----------------------------------------------------------------------------------------
+# Race Data
+#-----------------------------------------------------------------------------------------
+outcomes_upward_mobility_jail = read_data(folder='race', file_name='outcomes_upward_mobility_jail.csv')
+with open(get_path(folder='race', file_name='counties_json.pickle'), 'rb') as f:
+    counties_json = pickle.load(f)
 #-----------------------------------------------------------------------------------------
 # Economy Data
 #-----------------------------------------------------------------------------------------
@@ -46,16 +93,16 @@ axis_title_income = "<b>income</b>/yr average"
 axis_title_income_format = ',.2s'
 
 income_levels = {
-    "Main Street": "income_mean_bottom",
-    "Upper": "income_mean_upper",
+    "Bottom 50%": "income_mean_bottom",
+    "Upper 51-99%": "income_mean_upper",
     "Top 1%": "income_mean_top",
-    "Gap": 'income_mean_gap',
+    "Bottom 50% to Top 1% Gap": 'income_mean_gap',
 }
 group_names = {
-    "income_mean_bottom": "Main Street (bottom 50%)",
-    "income_mean_upper": "Upper (51-99%)",
+    "income_mean_bottom": "Bottom 50%",
+    "income_mean_upper": "Upper 51-99%",
     'income_mean_top': "Top 1%",
-    "income_mean_gap": "Gap (Top 1% - Main Street)",
+    "income_mean_gap": "Bottom 50% to Top 1% Gap",
 }
 
 layout_economy = {
@@ -129,12 +176,6 @@ colors_tax_changes = {
     'down': 'rgba(230, 78, 67,    0.7)',
 }
 
-def read_data():
-    df = pd.read_csv(
-        Path(__file__).parent / "data/anonymized_cb_data.csv", delimiter=";"
-    )
-    df["cohort"] = df["cohort"].astype(str)
-    return df
 
 
 def get_color_template(mode):
@@ -149,18 +190,6 @@ def get_background_color_plotly(mode):
         return "white"
     else:
         return "rgb(29, 32, 33)"
-
-def get_period_shading(fig):
-
-    fig.add_vrect(
-        x0=1929,
-        x1=1939,
-        line_width=0,
-        fillcolor='black',
-        opacity=0.05,
-        annotation_text='<b>Great Depression</b>',
-        annotation_position='bottom left',
-    )
 
 
 def plot_stick_figure(fig, x, y, add_hat=False):
@@ -326,10 +355,15 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, da
         title=dict(
             text=f"<b>{title}</b>",
         ),
+        title_x=0.5,
         yaxis_title=f"{yaxis_title}",
+        yaxis=dict(
+            fixedrange=config['fixedrange'],  # This prevents zooming
+        ),
         xaxis_title=xaxis_title,
         xaxis=dict(
             range=[2000, 2026],
+            fixedrange=config['fixedrange'],  # This prevents zooming
         ),
         showlegend=False,
         template=get_color_template(dark_mode),
@@ -340,6 +374,8 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, da
         if 'NONE' in trace['name']:
             trace['showlegend'] = False
 
+    fig = go.FigureWidget(fig)
+    fig._config = fig._config | config['plotly_mobile']
     return fig
 
 def get_text(text, prefix, suffix, format, context):
@@ -370,7 +406,7 @@ def get_highlights(data, col_date, col_metric, number_type, ):
         'thousands': 1000,
         'percentage': 1,
     }[number_type]
-    
+
     data_latest = data.filter(pl.col(col_date) == data[col_date].max())
     data_min = data.filter(pl.col(col_metric) == data[col_metric].min())
     data_max = data.filter(pl.col(col_metric) == data[col_metric].max())
@@ -393,7 +429,7 @@ def get_highlights(data, col_date, col_metric, number_type, ):
             textposition='middle center',
         ),
     ]
-    
+
     highlight_min = [
         go.Scatter(
             # highlight the max of the metric
@@ -439,8 +475,159 @@ def get_highlights(data, col_date, col_metric, number_type, ):
 
     return highlights
 
+def plot_period_shading(fig):
+    # fig.add_vrect(
+    #     x0=1929,
+    #     x1=1939,
+    #     line_width=0,
+    #     fillcolor='darkblue',
+    #     opacity=0.05,
+    #     annotation_text='<b>Great Depression</b>',
+    #     annotation_position='top left',
+    # )
+    fig.add_vline(
+        x=1980,
+        line=dict(color='rgba(0,0,0,0.9)', width=2, dash='dash', ),
+        # secondary_y=True,
+        annotation_text="1980",
+        annotation_position="top right",
+        annotation_font_color="black",
+    )
+
+def plot_economic_policy_shading(fig):
+    fig.add_vrect(
+        x0=1938,
+        x1=1979,
+        line_width=0,
+        fillcolor='green',
+        opacity=0.05,
+        annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Competition & Fairness<br>Friendly Policies</a></b>",
+        annotation_position='bottom right',
+    )
+    fig.add_vrect(
+        x0=1980,
+        x1=2020,
+        line_width=0,
+        fillcolor='black',
+        opacity=0.05,
+        annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Big Business & Exploitation<br>Friendly Policies</a></b>",
+        annotation_position='bottom right',
+    )
+
+# config['plotly_mobile'] = {
+#     'responsive': True,
+#     'displayModeBar': True,
+#     'displaylogo': False,
+#     'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'select2d'],
+#     'toImageButtonOptions': {
+#         'format': 'png',
+#         'filename': 'custom_image',
+#         'height': 500,
+#         'width': 700,
+#         'scale': 1
+#     }
+# }
+
+config['plotly_mobile'] = {
+    # 'staticPlot': True,
+    'responsive': True,
+    'displayModeBar': False,
+    'displaylogo': False,
+    'scrollZoom': False,        # Disable scroll wheel zoom
+    'doubleClick': 'reset',     # Double click resets instead of zooms
+    'showTips': False,          # Hide zoom tips
+    'modeBarButtonsToRemove': [
+        'pan2d', 'lasso2d', 'select2d', 'autoScale2d',
+        'resetScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian',
+        'zoom2d', 'zoomIn2d', 'zoomOut2d',  # Remove zoom buttons
+        'autoScale2d', 'resetScale2d'        # Remove scale buttons
+    ],
+    'toImageButtonOptions': {
+        'format': 'png',
+        'filename': 'income_timeseries',
+        'height': 400,
+        'width': 700,
+        'scale': 1
+    }
+}
+
+def plot_county_heatmap(
+        data: pl.DataFrame,
+        counties_json,
+        race: str,
+        metric: str,
+        title: str,
+        colorscale,
+        dark_mode,
+):
+    """
+    Create a county-level heatmap for the US
+    """
+    start = data.filter(pl.col('metric') == metric)['value'].min()
+    stop = data.filter(pl.col('metric') == metric)['value'].max()
+
+    data_filtered = (
+        data
+        .filter(pl.col('metric') == metric)
+        .filter(pl.col('race') == race)
+        .to_pandas()
+        .dropna()
+    )
+    fig = go.Figure(
+        go.Choropleth(
+            locations=data_filtered['fips_county'],  # You'll need county FIPS codes
+            z=data_filtered['value'],
+            locationmode='geojson-id',
+            geojson=counties_json,
+            colorscale=colorscale,
+            zmin=start,
+            zmax=stop,
+            hovertemplate='<b>%{text}</b><br>' +
+                          f'{title}: %{{z:.2f}}<br>' +
+                          '<extra></extra>',
+            text=data_filtered['county'] + ', ' + data_filtered['state'],
+            colorbar=dict(
+                title=metric + ' % of cohort',
+                orientation="h",  # horizontal orientation
+                # x=0.0,  # center horizontally
+                # xanchor="center",
+                y=-0.1,  # position below the plot
+                yanchor="top",
+                thickness=10,  # adjust thickness as needed
+                len=0.80  # adjust length (0.8 = 80% of plot width)
+            ),
+        )
+    )
+
+    fig.update_layout(
+        title=dict(
+            text=f"<b>{title}</b>",
+        ),
+        showlegend=False,
+        template=get_color_template(dark_mode),
+        paper_bgcolor=get_background_color_plotly(dark_mode),
+        geo=dict(
+            scope='usa',
+            projection=go.layout.geo.Projection(type='albers usa'),
+            showlakes=True,
+            lakecolor='rgb(255, 255, 255)'
+        ),
+        # width=1000,
+        # height=600,
+    )
+
+    # for trace in fig['data']:
+    #     if 'NONE' in trace['name']:
+    #         trace['showlegend'] = False
+    fig = go.FigureWidget(fig)
+    fig._config = fig._config | config['plotly_mobile']
+
+    return fig
 
 app_ui = ui.page_fillable(
+    ui.tags.head(
+        ui.tags.meta(name="viewport", content="width=device-width, initial-scale=1.0"),
+    ),
     ui.page_navbar(
         ui.nav_panel(
             "Economy",
@@ -453,12 +640,12 @@ app_ui = ui.page_fillable(
                         id='income_level',
                         label=None,
                         choices={
-                            "Main Street": ui.span("Main Street (bottom 50%)", style=f"color:rgba(255,255,255,0.6)"),
-                            "Upper": ui.span("Upper (51-99%)", style=f"color:rgba(255,255,255,0.6)"),
+                            "Bottom 50%": ui.span("Bottom 50%", style=f"color:rgba(255,255,255,0.6)"),
+                            "Upper 51-99%": ui.span("Upper 51-99%", style=f"color:rgba(255,255,255,0.6)"),
                             "Top 1%": ui.span("Top 1%", style=f"color:rgba(255,255,255,0.6)"),
-                            "Gap": ui.span("Gap", style=f"color:rgba(255,255,255,0.6)"),
+                            # "Bottom 50% to Top 1% Gap": ui.span("Bottom 50% to Top 1% Gap", style=f"color:rgba(255,255,255,0.6)"),
                         },
-                        selected="Main Street",
+                        selected="Bottom 50%",
                         inline=True,
                     ),
                     col_widths=(12,),
@@ -469,35 +656,40 @@ app_ui = ui.page_fillable(
                 ui.layout_columns(
                     ui.card(output_widget("plot_economy_timeseries_income")),
                     ui.card(output_widget("plot_economy_barchart_income_countries")),
-                    col_widths=(6, 6,),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
                 )
             ),
 
             ui.row(
                 ui.layout_columns(
-                    ui.card(output_widget("plot_economy_timeseries_income_policies")),
                     ui.card(output_widget("plot_economy_timeseries_income_taxes")),
-                    col_widths=(6, 6,),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
                 )
             ),
-            ui.row(ui.h3(ui.span(HTML("Living"), style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(output_widget("plot_economy_f150")),
-                    # ui.card(output_widget("plot_economy_timeseries_income_taxes")),
-                    col_widths=(6, 6,),
-                )
-            ),
+            # ui.row(ui.h3(ui.span(HTML("Living"), style="color:rgba(255,255,255,0.9)"))),
+            # ui.row(
+            #     ui.layout_columns(
+            #         ui.card(output_widget("plot_economy_f150")),
+            #         # ui.card(output_widget("plot_economy_timeseries_income_taxes")),
+            #         col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
+            #     )
+            # ),
 
             # Cost of Living
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
             ui.row(ui.h2(ui.span("Food & Shelter", style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
+                    ui.card(output_widget("plot_economy_f150")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
                     ui.card(ui.h3(ui.span("main_street_income_avg vs rent/mortgage, over time", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("main_street_income_avg vs energy bills (gas, mileage, utilities, i.e. ENERGY), over time",
                                           style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(6, 6),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
                 )
             ),
             ui.row(
@@ -505,7 +697,7 @@ app_ui = ui.page_fillable(
                     ui.card(ui.h3(ui.span("main_street_income_avg vs childcare, over time", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("main_street_income_avg vs cost of living, over time", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("main_street_income_avg vs college/trade school, over time", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
         ),
@@ -518,8 +710,16 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_american_dream_kids")),
-                    # ui.card(output_widget("")),
-                    col_widths=(6, 6,),
+                    # ui.card(output_widget("plot_black_upward_mobility")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(output_widget("plot_white_upward_mobility")),
+                    ui.card(output_widget("plot_black_upward_mobility")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                    # Stack on mobile, side-by-side on desktop
                 )
             ),
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
@@ -530,7 +730,7 @@ app_ui = ui.page_fillable(
                     ui.card(ui.h3(ui.span("likelihood rates for education levels (race, time) vs countries",
                                           style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("loan approval rates (race, time)", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
             ui.row(ui.h2(ui.span("Justice", style="color:rgba(255,255,255,0.9)"))),
@@ -539,7 +739,7 @@ app_ui = ui.page_fillable(
                     ui.card(ui.h3(ui.span("stop and frisk rates (by race, by state)", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("immigration (crime rate, race, time) vs benchmarks & countries", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("crime (by state, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
         ),
@@ -552,7 +752,7 @@ app_ui = ui.page_fillable(
                 ui.layout_columns(
                     ui.card(output_widget("plot_healthcare_cost_per_capita")),
                     ui.card(output_widget("plot_healthcare_life_expectancy")),
-                    col_widths=(6,6,),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
                 )
             ),
 
@@ -560,12 +760,20 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(ui.h3(ui.span("infant mortality rate vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
         ),
         ui.nav_panel(
             "Justice",
+            ui.row(
+                ui.layout_columns(
+                    ui.card(output_widget("plot_white_jail")),
+                    ui.card(output_widget("plot_black_jail")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                    # Stack on mobile, side-by-side on desktop
+                )
+            ),
             # Air & Water
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
             # ui.row(
@@ -573,7 +781,7 @@ app_ui = ui.page_fillable(
             #         ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
             #         ui.card(ui.h3(ui.span("water (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
             #         ui.card(ui.h3(ui.span("soil (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-            #         col_widths=(4, 4, 4),
+            #         col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
             #     )
             # ),
         ),
@@ -586,7 +794,7 @@ app_ui = ui.page_fillable(
                     ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("water (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("soil (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
         ),
@@ -604,7 +812,7 @@ app_ui = ui.page_fillable(
         #             ui.card(ui.h3(ui.span("story of the 100 years after civil war", style="color:rgba(0,0,0,0.9)"))),
         #             ui.card(ui.h3(ui.span("incarceration rates", style="color:rgba(0,0,0,0.9)"))),
         #             ui.card(ui.h3(ui.span("rape convictions based on race of victim", style="color:rgba(0,0,0,0.9)"))),
-        #             col_widths=(4, 4, 4),
+        #             col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
         #         )
         #     ),
         # ),
@@ -639,7 +847,7 @@ app_ui = ui.page_fillable(
         #             ui.card(ui.h3(ui.span("AI",
         #                                   style="color:rgba(0,0,0,0.9)"))),
         #             # ui.card(ui.h3(ui.span("crime (by state, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-        #             col_widths=(6, 6,),
+        #             col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
         #         )
         #     ),
         #     ui.row(ui.h1(ui.span("Wants", style="color:rgba(255,255,255,0.9)"))),
@@ -745,6 +953,7 @@ app_ui = ui.page_fillable(
     ),
     ui.tags.style(
         """
+        /* Your existing styles */
         .leaflet-popup-content {
             width: 600px !important;
         }
@@ -756,20 +965,55 @@ app_ui = ui.page_fillable(
             color: #FD9902 !important;
         }
         .main {
-            /* Background image */
             background-image: url("images/background_dark_full.jpg");
             height: 100%;
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
         }
-        div#map_full.html-fill-container {
-            height: -webkit-fill-available !important;
-            min-height: 850px !important;
-            max-height: 2000px !important;
+
+        /* NEW MOBILE-SPECIFIC STYLES */
+        @media (max-width: 768px) {
+            /* Make text larger and more readable on mobile */
+            h1 { font-size: 1.8rem !important; }
+            h2 { font-size: 1.5rem !important; }
+            h3 { font-size: 1.2rem !important; }
+
+            /* Stack radio buttons vertically on mobile */
+            .form-check-inline {
+                display: block !important;
+                margin-bottom: 0.5rem;
+            }
+
+            /* Make cards full width with proper spacing */
+            .card {
+                margin-bottom: 1rem;
+                width: 100% !important;
+            }
+
+            /* Adjust navbar for mobile */
+            .navbar-nav {
+                text-align: center;
+            }
+
+            /* Make plots responsive */
+            .js-plotly-plot {
+                width: 100% !important;
+            }
+
+            /* Reduce padding on mobile */
+            .container-fluid {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
         }
-        div#main_panel.html-fill-container {
-            height: -webkit-fill-available !important;
+
+        /* For very small screens */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem !important; }
+            .navbar-brand img {
+                max-width: 80px !important;
+            }
         }
         """
     ),
@@ -831,11 +1075,12 @@ def server(input, output, session):
             )
         ))
 
-        get_period_shading(fig=fig)
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
 
         fig.update_layout(
             title=dict(
-                text=f"<b>Where has {input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of'} income been in the past?</b><br><sup>Based on {year_max} dollars</sup>",
+                text=f"<b>{input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of'} Paycheck</b><br><sup>Based on {year_max} dollars</sup>",
                 #
             ),
             title_x=0.5,
@@ -844,23 +1089,27 @@ def server(input, output, session):
                 # range=[0, 3000000],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
                 range=layout_economy['range'],
                 tickmode='array',
+                fixedrange=config['fixedrange'],  # This prevents zooming
                 # tickvals=layout_economy['tickvals'],
                 # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
             paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+            # dragmode=False,  # ← This disables drag interactions
         )
 
         for trace in fig['data']:
             if ('min' in trace['name']) | ('NONE' in trace['name']):
                 trace['showlegend'] = False
-
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
@@ -878,12 +1127,18 @@ def server(input, output, session):
         countries = income_latest.select('country').to_numpy().flatten()
         colors = [colors_by_country[country] for country in countries]
 
+        texttemplate = {
+            'income_mean_bottom': "<b>%{text:.2s}</b>",
+            'income_mean_upper': "<b>%{text:.3s}</b>",
+            'income_mean_top': "<b>%{text:.3s}</b>",
+        }
+
         fig = go.Figure(data=[
             go.Bar(
                 x=income_latest['country'],
                 y=income_latest[income_level],
                 text=income_latest[income_level],
-                texttemplate='<b>%{text:.3s}</b>',
+                texttemplate=texttemplate[income_level],
                 textfont=dict(
                     size=12,
                 ),
@@ -894,7 +1149,7 @@ def server(input, output, session):
 
         fig.update_layout(
             title=dict(
-                text=f"<b>How does {'U.S. ' + input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of U.S.'} income compare to other countries?</b><br><sup>Based on {year_max} U.S. total income and each country's income share for the selected group</sup>",
+                text=f"<b>{input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of U.S.'} Country Comparison</b><br><sup>Based on {year_max} U.S. total income and each country's income share for the selected group</sup>",
             ),
             title_x=0.5,
             yaxis_title=axis_title_income + f"<br>{group_name}",
@@ -902,14 +1157,20 @@ def server(input, output, session):
                 # range=[0, 3000000],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis_tickangle=-45,
+            xaxis=dict(
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
             showlegend=False,
             template=get_color_template(input.dark_mode()),
             paper_bgcolor=get_background_color_plotly(input.dark_mode()),
         )
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
@@ -961,25 +1222,9 @@ def server(input, output, session):
             )
         ))
 
-        fig.add_vrect(
-            x0=1938,
-            x1=1979,
-            line_width=0,
-            fillcolor='green',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
+        plot_period_shading(fig)
+        plot_economic_policy_shading(fig=fig)
 
-        fig.add_vrect(
-            x0=1980,
-            x1=2020,
-            line_width=0,
-            fillcolor='black',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
 
         fig.update_layout(
             title=dict(
@@ -992,11 +1237,13 @@ def server(input, output, session):
                 # range=[0, 3000000],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
                 range=layout_economy['range'],
                 tickmode='array',
+                fixedrange=config['fixedrange'],  # This prevents zooming
                 # tickvals=layout_economy['tickvals'],
                 # ticktext=layout_economy['ticktext'],
             ),
@@ -1009,6 +1256,8 @@ def server(input, output, session):
             if ('min' in trace['name']) | ('NONE' in trace['name']):
                 trace['showlegend'] = False
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
@@ -1087,27 +1336,8 @@ def server(input, output, session):
             secondary_y=True,
         )
 
-        # get_period_shading(fig=fig)
-
-        fig.add_vrect(
-            x0=1938,
-            x1=1979,
-            line_width=0,
-            fillcolor='green',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Democratic Capitalism</a></b>",
-            annotation_position='bottom right',
-        )
-
-        fig.add_vrect(
-            x0=1980,
-            x1=2020,
-            line_width=0,
-            fillcolor='black',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Feudal Capitalism</a></b>",
-            annotation_position='bottom right',
-        )
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
 
         fig.update_layout(
             title=dict(
@@ -1119,6 +1349,7 @@ def server(input, output, session):
                 # range=[0, 3000000],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             yaxis2=dict(
                 title='top tax bracket changes',
@@ -1127,11 +1358,13 @@ def server(input, output, session):
                 overlaying='y',
                 side='right',
                 tickformat='+.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
                 range=layout_economy['range'],
                 tickmode='array',
+                fixedrange=config['fixedrange'],  # This prevents zooming
                 # tickvals=layout_economy['tickvals'],
                 # ticktext=layout_economy['ticktext'],
             ),
@@ -1150,6 +1383,8 @@ def server(input, output, session):
             if ('NONE' in trace['name']):
                 trace['showlegend'] = False
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
@@ -1195,27 +1430,8 @@ def server(input, output, session):
         )
         ))
 
-        # get_period_shading(fig=fig)
-
-        fig.add_vrect(
-            x0=1938,
-            x1=1979,
-            line_width=0,
-            fillcolor='green',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
-
-        fig.add_vrect(
-            x0=1980,
-            x1=2020,
-            line_width=0,
-            fillcolor='black',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
 
         fig.update_layout(
             title=dict(
@@ -1227,11 +1443,13 @@ def server(input, output, session):
                 # range=[0, 3000000],
                 # tickprefix="$",
                 tickformat=',.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy_f150']}",
             xaxis=dict(
                 range=layout_economy['range'],
                 tickmode='array',
+                fixedrange=config['fixedrange'],  # This prevents zooming
                 # tickvals=layout_economy['tickvals'],
                 # ticktext=layout_economy['ticktext'],
             ),
@@ -1244,6 +1462,8 @@ def server(input, output, session):
             if ('min' in trace['name']) | ('NONE' in trace['name']):
                 trace['showlegend'] = False
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
@@ -1267,35 +1487,23 @@ def server(input, output, session):
             )
         )
 
-        fig.add_vrect(
-            x0=1938,
-            x1=1979,
-            line_width=0,
-            fillcolor='green',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
-
-        fig.add_vrect(
-            x0=1980,
-            x1=2020,
-            line_width=0,
-            fillcolor='black',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
 
         fig.update_layout(
             title=dict(
-                text=f"<b>What is the probability Americans earn more than their parents?</b>",
+                text=f"<b>Earning More than Parents</b>",
             ),
+            title_x=0.5,
             yaxis_title=f"probability<br><sup>that 30 year olds earn more than their parents at age 30</sup>",
             xaxis_title=f"{sources['american_dream']}",
+            xaxis=dict(
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
             yaxis=dict(
                 # range=[2000, 2026],
                 tickformat='.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             showlegend=False,
             template=get_color_template(input.dark_mode()),
@@ -1306,6 +1514,68 @@ def server(input, output, session):
             if 'NONE' in trace['name']:
                 trace['showlegend'] = False
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
+        return fig
+
+    @output
+    @render_widget
+    def plot_black_upward_mobility():
+        metric = 'upward_mobility'
+        fig = plot_county_heatmap(
+            data=outcomes_upward_mobility_jail,
+            counties_json=counties_json,
+            race='black',
+            metric=metric,
+            title=f"Black Male Upward Mobility<br>(parents in 25th percentile of income)",
+            colorscale=config['colorscale'][metric],
+            dark_mode=input.dark_mode(),
+            )
+        return fig
+
+    @output
+    @render_widget
+    def plot_white_upward_mobility():
+        metric = 'upward_mobility'
+        fig = plot_county_heatmap(
+            data=outcomes_upward_mobility_jail,
+            counties_json=counties_json,
+            race='white',
+            metric=metric,
+            title=f"White Male Upward Mobility<br>(parents in 25th percentile of income)",
+            colorscale=config['colorscale'][metric],
+            dark_mode=input.dark_mode(),
+            )
+        return fig
+
+    @output
+    @render_widget
+    def plot_black_jail():
+        metric = 'jail'
+        fig = plot_county_heatmap(
+            data=outcomes_upward_mobility_jail,
+            counties_json=counties_json,
+            race='black',
+            metric=metric,
+            title=f"Black Male in Jail Rate<br>(parents in 25th percentile of income)",
+            colorscale=config['colorscale'][metric],
+            dark_mode=input.dark_mode(),
+        )
+        return fig
+
+    @output
+    @render_widget
+    def plot_white_jail():
+        metric = 'jail'
+        fig = plot_county_heatmap(
+            data=outcomes_upward_mobility_jail,
+            counties_json=counties_json,
+            race='white',
+            metric=metric,
+            title=f"White Male in Jail Rate<br>(parents in 25th percentile of income)",
+            colorscale=config['colorscale'][metric],
+            dark_mode=input.dark_mode(),
+        )
         return fig
 
     @output
@@ -1318,6 +1588,7 @@ def server(input, output, session):
             xaxis_title=f"{sources['healthcare']}",
             dark_mode=input.dark_mode(),
         )
+
         return fig
 
     @output
@@ -1330,6 +1601,7 @@ def server(input, output, session):
             dark_mode=input.dark_mode(),
             xaxis_title=f"{sources['healthcare']}",
         )
+
         return fig
 
 
