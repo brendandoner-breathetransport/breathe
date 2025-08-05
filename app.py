@@ -1,12 +1,19 @@
 import numpy as np
 import pandas as pd
 import polars as pl
+import plotly
 import plotly.graph_objects as go
-import pickle
-from urllib.request import urlopen
-import json
-
 from plotly.subplots import make_subplots
+import pickle
+import logging
+# Configure basic logging to display INFO messages and above
+logging.basicConfig(level=logging.INFO)
+# Get a logger instance for the current module
+logger = logging.getLogger(__name__)
+logger.info(f"plotly.__version__: {plotly.__version__}")
+logger.info(f"pl.__version__: {pl.__version__}")
+logger.info(f"pd.__version__: {pd.__version__}")
+
 from pathlib import Path
 from htmltools import HTML, div
 from shiny import App, reactive, ui, render
@@ -17,11 +24,22 @@ def get_path(folder, file_name):
     path = str(Path(__file__).parent / f"data/{folder}/{file_name}")
     return path
 
-def read_data(folder, file_name):
-    data = pl.from_pandas(pd.read_csv(
-        get_path(folder=folder, file_name=file_name),
-        delimiter=","
-    ))
+def read_data(folder, file_name, dtype=None):
+    if dtype is None:
+        data = pl.from_pandas(
+            pd.read_csv(
+                get_path(folder=folder, file_name=file_name),
+                delimiter=",",
+            )
+        )
+    else:
+        data = pl.from_pandas(
+            pd.read_csv(
+                get_path(folder=folder, file_name=file_name),
+                delimiter=",",
+                dtype=dtype,
+            )
+        )
     return data
 
 config = dict(
@@ -60,7 +78,16 @@ config = dict(
 #-----------------------------------------------------------------------------------------
 # Race Data
 #-----------------------------------------------------------------------------------------
-outcomes_upward_mobility_jail = read_data(folder='race', file_name='outcomes_upward_mobility_jail.csv')
+outcomes_upward_mobility_jail = read_data(
+    folder='race',
+    file_name='outcomes_upward_mobility_jail.csv',
+    dtype={
+        'fips_county': str,
+        'fips_state': str,
+        'value': float,
+        'state': str
+    },
+)
 with open(get_path(folder='race', file_name='counties_json.pickle'), 'rb') as f:
     counties_json = pickle.load(f)
 #-----------------------------------------------------------------------------------------
@@ -571,9 +598,11 @@ def plot_county_heatmap(
         data
         .filter(pl.col('metric') == metric)
         .filter(pl.col('race') == race)
+        # .filter(pl.col('state') == "CA")
         .to_pandas()
-        # .dropna()
     )
+    # logger.info(
+    #     f"outcomes_upward_mobility_jail CA shape: {data_filtered.query("state=='CA'").dropna().shape}")
     fig = go.Figure(
         go.Choropleth(
             locations=data_filtered['fips_county'],  # You'll need county FIPS codes
@@ -614,13 +643,8 @@ def plot_county_heatmap(
             showlakes=True,
             lakecolor='rgb(255, 255, 255)'
         ),
-        # width=1000,
-        # height=600,
     )
 
-    # for trace in fig['data']:
-    #     if 'NONE' in trace['name']:
-    #         trace['showlegend'] = False
     fig = go.FigureWidget(fig)
     fig._config = fig._config | config['plotly_mobile']
 
