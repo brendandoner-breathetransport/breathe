@@ -26,6 +26,7 @@ def read_data(folder, file_name):
 
 config = dict(
     fixedrange=True,
+    yaxis_range_pct=0.25,
     plotly_mobile={
         'staticPlot': False,
         'responsive': True,
@@ -36,8 +37,8 @@ config = dict(
     colorscale={
         'upward_mobility':[
             [0.0, '#8B0000'],      # 0.00 - Dark red
-            [0.167, '#CC0000'],    # 0.10 - Red
-            [0.417, '#FF8C00'],    # 0.25 - Orange
+            [0.40, '#CC0000'],    # 0.10 - Red
+            [0.45, '#FF8C00'],    # 0.25 - Orange
             [0.5, '#FFD700'],      # 0.30 - Gold/Yellow
             [0.583, '#FFFF00'],    # 0.35 - Bright yellow
             [0.667, '#ADFF2F'],    # 0.40 - Yellow-green
@@ -571,7 +572,7 @@ def plot_county_heatmap(
         .filter(pl.col('metric') == metric)
         .filter(pl.col('race') == race)
         .to_pandas()
-        .dropna()
+        # .dropna()
     )
     fig = go.Figure(
         go.Choropleth(
@@ -603,6 +604,7 @@ def plot_county_heatmap(
         title=dict(
             text=f"<b>{title}</b>",
         ),
+        title_x=0.5,
         showlegend=False,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color_plotly(dark_mode),
@@ -623,6 +625,23 @@ def plot_county_heatmap(
     fig._config = fig._config | config['plotly_mobile']
 
     return fig
+
+def get_yaxis_range(y_data):
+    if ~isinstance(y_data, np.ndarray):
+        try:
+            # polars
+            y_data = y_data.to_numpy()
+        except:
+            # pandas
+            y_data = y_data.values
+
+    min = np.min(y_data)
+    max = np.max(y_data)
+    range = max - min
+    yaxis_min = min - (range * config['yaxis_range_pct'])
+    yaxis_max = max + (range * config['yaxis_range_pct'])
+
+    return yaxis_min, yaxis_max
 
 app_ui = ui.page_fillable(
     ui.tags.head(
@@ -1033,30 +1052,9 @@ def server(input, output, session):
         Pre-tax national income Top 1% share
         :return:
         """
-        # todo: add selector for country comparison and dem/auth means
         income_level = income_levels[input.income_level()]
         group_name = group_names[income_level]
-        # "bottom_50"
-        # "top_1"
         usa = shares_data.filter(pl.col('country') == 'usa').filter(pl.col('year') >= 1880)
-        dem = (
-            shares_data
-            .filter(pl.col('country').is_in([
-                'canada',
-                'germany',
-                'italy',
-                'japan',
-                'new_zealand',
-                'norway',
-                'uk',
-            ]))
-        )
-        auth = (
-            shares_data
-            .filter(pl.col('country').is_in(['russia', 'china']))
-        )
-        countries_dem = np.sort(dem.select('country').unique().to_numpy().flatten()).tolist()
-        countries_auth = np.sort(auth.select('country').unique().to_numpy().flatten()).tolist()
 
         fig = go.Figure(data=(
             [
@@ -1078,6 +1076,7 @@ def server(input, output, session):
         plot_period_shading(fig=fig)
         plot_economic_policy_shading(fig=fig)
 
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=usa[income_level])
         fig.update_layout(
             title=dict(
                 text=f"<b>{input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of'} Paycheck</b><br><sup>Based on {year_max} dollars</sup>",
@@ -1086,7 +1085,7 @@ def server(input, output, session):
             title_x=0.5,
             yaxis_title=axis_title_income + f"<br>{group_name}",
             yaxis=dict(
-                # range=[0, 3000000],
+                range=[yaxis_min, yaxis_max],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
                 fixedrange=config['fixedrange'],  # This prevents zooming
@@ -1339,6 +1338,7 @@ def server(input, output, session):
         plot_period_shading(fig=fig)
         plot_economic_policy_shading(fig=fig)
 
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=usa[income_level])
         fig.update_layout(
             title=dict(
                 text=f"<b>Do taxes on the Top 1% influence income?</b><br><sup>Based on {year_max} dollars</sup>",
@@ -1346,7 +1346,7 @@ def server(input, output, session):
             title_x=0.5,
             yaxis_title=axis_title_income + f"<br>{group_name}",
             yaxis=dict(
-                # range=[0, 3000000],
+                range=[yaxis_min, yaxis_max],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
                 fixedrange=config['fixedrange'],  # This prevents zooming
@@ -1433,6 +1433,7 @@ def server(input, output, session):
         plot_period_shading(fig=fig)
         plot_economic_policy_shading(fig=fig)
 
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=data['price_ratio'])
         fig.update_layout(
             title=dict(
                 text=f"<b>What is the price of a new Ford F-150 as a percent of {input.income_level() if input.income_level() != 'Gap' else 'the ' + input.income_level() + ' of'} income?</b><br><sup>Based on {year_max} dollars</sup>",
@@ -1440,7 +1441,7 @@ def server(input, output, session):
             title_x=0.5,
             yaxis_title="ratio of Ford F-150 price to " + f"<br>{group_name} income/yr average",
             yaxis=dict(
-                # range=[0, 3000000],
+                range=[yaxis_min, yaxis_max],
                 # tickprefix="$",
                 tickformat=',.0%',
                 fixedrange=config['fixedrange'],  # This prevents zooming
@@ -1470,6 +1471,7 @@ def server(input, output, session):
     @render_widget
     def plot_american_dream_kids():
 
+
         fig = go.Figure(
             data=[
                 go.Scatter(
@@ -1490,18 +1492,19 @@ def server(input, output, session):
         plot_period_shading(fig=fig)
         plot_economic_policy_shading(fig=fig)
 
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=american_dream_kids['probability'])
         fig.update_layout(
             title=dict(
-                text=f"<b>Earning More than Parents</b>",
+                text=f"<b>% Earning More than Parents</b>",
             ),
             title_x=0.5,
-            yaxis_title=f"probability<br><sup>that 30 year olds earn more than their parents at age 30</sup>",
+            yaxis_title=f"percent<br><sup>of 30 year olds earn more than their parents at age 30</sup>",
             xaxis_title=f"{sources['american_dream']}",
             xaxis=dict(
                 fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             yaxis=dict(
-                # range=[2000, 2026],
+                range=[yaxis_min, yaxis_max],
                 tickformat='.0%',
                 fixedrange=config['fixedrange'],  # This prevents zooming
             ),
