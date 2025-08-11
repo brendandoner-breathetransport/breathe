@@ -75,6 +75,7 @@ config = dict(
         ],
     }
 )
+
 #-----------------------------------------------------------------------------------------
 # Race Data
 #-----------------------------------------------------------------------------------------
@@ -114,6 +115,7 @@ healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcar
 # American Dream Data
 #-----------------------------------------------------------------------------------------
 american_dream_kids = read_data(folder='american_dream', file_name='american_dream_kids.csv')
+mobility_international = read_data(folder='american_dream', file_name='mobility_international.csv')
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
@@ -529,7 +531,7 @@ def plot_economic_policy_shading(fig):
         line_width=0,
         fillcolor='green',
         opacity=0.05,
-        annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Competition & Fairness<br>Friendly Policies</a></b>",
+        annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#policies'>Policies</a></b>",
         annotation_position='bottom right',
     )
     fig.add_vrect(
@@ -538,7 +540,8 @@ def plot_economic_policy_shading(fig):
         line_width=0,
         fillcolor='black',
         opacity=0.05,
-        annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Big Business & Exploitation<br>Friendly Policies</a></b>",
+        annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#policies'>Policies</a></b>",
+
         annotation_position='bottom right',
     )
 
@@ -753,7 +756,7 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_american_dream_kids")),
-                    # ui.card(output_widget("plot_black_upward_mobility")),
+                    ui.card(output_widget("plot_american_dream_mobility_international")),
                     col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
                 )
             ),
@@ -1533,6 +1536,73 @@ def server(input, output, session):
                 fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             showlegend=False,
+            template=get_color_template(input.dark_mode()),
+            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+        )
+
+        for trace in fig['data']:
+            if 'NONE' in trace['name']:
+                trace['showlegend'] = False
+
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
+        return fig
+
+    @output
+    @render_widget
+    def plot_american_dream_mobility_international():
+        col = 'growth_controlled'
+        data = (
+            mobility_international
+            .filter(pl.col(col).is_not_nan())
+        )
+        countries = np.sort(np.unique(data['country'].to_numpy().flatten()))
+        dark_mode = input.dark_mode()
+
+
+        fig = go.Figure(
+            data=(
+                [
+                    go.Scatter(
+                        name=f"{country}",
+                        mode='lines',
+                        x=data.filter(pl.col('country') == country)['year'],
+                        y=data.filter(pl.col('country') == country)[col],
+                        line=(
+                            dict(
+                                color=color_light_dark[dark_mode],
+                                width=3)
+                            if country.lower() == 'united states'
+                            else dict(
+                                color="rgba(0,0,0,0.2)",
+                                width=1,
+                            )
+                        ),
+                    ) for country in countries
+                ]
+            )
+        )
+
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
+
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=data[col])
+        fig.update_layout(
+            title=dict(
+                text=f"<b>International Comparison</b><br><sup>upward mobility with only the impact from inequality changes</sup>",
+            ),
+            title_x=0.5,
+            yaxis_title=f"percent<br><sup>of 30 year olds earn more than their parents at age 30</sup>",
+            xaxis_title=f"{sources['american_dream']}",
+            xaxis=dict(
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
+            yaxis=dict(
+                range=[yaxis_min, yaxis_max],
+                tickformat='.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
+            showlegend=True,
             template=get_color_template(input.dark_mode()),
             paper_bgcolor=get_background_color_plotly(input.dark_mode()),
         )
