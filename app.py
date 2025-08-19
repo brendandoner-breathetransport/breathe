@@ -73,7 +73,15 @@ config = dict(
             [0.15, '#CC0000'],    # 0.375 - Red
             [1.0, '#8B0000'],      # 0.60 - Dark red
         ],
-    }
+    },
+    countries=[
+        # 'Australia',
+        'Canada',
+        'Europe',
+        'Japan',
+        'United States',
+    ],
+
 )
 
 #-----------------------------------------------------------------------------------------
@@ -341,21 +349,21 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, da
     )
 
     countries = [
-        'costa rica',
-        # 'mexico',
-        'australia',
-        'france',
-        'switzerland',
+        "united states", "europe", "costa rica", "japan", "china",
+        # 'costa rica',
+        # # 'mexico',
+        # 'australia',
+        #
+        # 'europe',
+        #
         'canada',
-        'germany',
-        'italy',
-        'japan',
-        'new zealand',  # New Zealand
-        'norway',
-        'united kingdom',  # United Kingdom
-        # 'russia',  # Russian Federation
-        'china',
-        'united states',  # United States
+        #
+        # 'japan',
+        # 'new zealand',  # New Zealand
+        #
+        # # 'Russian Federation',  # Russian Federation
+        # 'china',
+        # 'united states',  # United States
     ]
 
     fig = go.Figure(
@@ -377,7 +385,7 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, da
                         y=last.filter(pl.col('country') == country)['value'],
                         text=f"<b>{country.title()}</b>" if country == 'united states' else f"{country.title()}",
                         textposition='middle right',
-                    ) for country in ["united states", "norway", "costa rica", "japan", "china"]
+                    ) for country in countries # ["united states", "europe", "costa rica", "japan", "china"]
                 ]
         )
     )
@@ -627,6 +635,11 @@ def plot_county_heatmap(
                           f'{title}: %{{z:.2f}}<br>' +
                           '<extra></extra>',
             text=data_filtered['county'] + ', ' + data_filtered['state'],
+            marker=dict(
+                line=dict(
+                    width=0  # Set to 0 to remove outlines completely
+                )
+            ),
             colorbar=dict(
                 # title=metric + ' % of cohort<br>',
                 title=None,
@@ -821,7 +834,7 @@ app_ui = ui.page_fillable(
         # --------------------------------------------------------------------------------------------------
         ui.nav_panel(
             "Justice",
-            ui.row(ui.h1(ui.span(HTML("How many Americans are behind bars?"), style="color:rgba(255,255,255,0.9)"))),
+            ui.row(ui.h1(ui.span(HTML("How many Americans are in jail?"), style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_white_jail")),
@@ -1567,6 +1580,7 @@ def server(input, output, session):
         data = (
             mobility_international
             .filter(pl.col(col).is_not_nan())
+            .filter(pl.col('country').is_in(config['countries']))
         )
         last = (
             data
@@ -1619,7 +1633,7 @@ def server(input, output, session):
                             y=last.filter(pl.col('country') == country)[col],
                             text=f"<b>{country.title()}</b>" if country == 'United States' else f"{country.title()}",
                             textposition='middle right',
-                        ) for country in ["United States", "Norway", "Sweden", "France", "Australia"]
+                        ) for country in  ["United States", "Europe",]
                     ]
             )
         )
@@ -1630,7 +1644,7 @@ def server(input, output, session):
         yaxis_min, yaxis_max = get_yaxis_range(y_data=data[col])
         fig.update_layout(
             title=dict(
-                text=f"<b>Upward Mobility</b><br><sup>Kids going better than parents</sup>",
+                text=f"<b>Upward Mobility</b><br><sup>Kids doing better than parents</sup>",
             ),
             title_x=0.5,
             yaxis_title=f"% of 30 year olds that earn more than parents",
@@ -1661,9 +1675,11 @@ def server(input, output, session):
     @render_widget
     def plot_american_dream_mobility_international():
         col = 'growth_controlled'
+
         data = (
             mobility_international
             .filter(pl.col(col).is_not_nan())
+            .filter(pl.col('country').is_in(config['countries']))
         )
         last = (
             data
@@ -1717,7 +1733,7 @@ def server(input, output, session):
                     y=last.filter(pl.col('country') == country)[col],
                     text=f"<b>{country.title()}</b>" if country == 'United States' else f"{country.title()}",
                     textposition='middle right',
-                ) for country in ["United States", "Norway", "Sweden", "France", "Australia"]
+                ) for country in config['countries'] # ["United States", "Norway", "Sweden", "France", "Australia"]
             ]
             )
         )
