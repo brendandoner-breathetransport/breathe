@@ -118,6 +118,8 @@ f150 = read_data(folder='economy', file_name="f150.csv")
 #-----------------------------------------------------------------------------------------
 healthcare_cost_per_capita = read_data(folder='healthcare', file_name='healthcare_cost_per_capita.csv')
 healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcare_life_expectancy.csv')
+healthcare_infant_mortality = read_data(folder='healthcare', file_name='healthcare_infant_mortality.csv')
+healthcare_suicide = read_data(folder='healthcare', file_name='healthcare_suicide_rates.csv')
 
 #-----------------------------------------------------------------------------------------
 # American Dream Data
@@ -333,7 +335,11 @@ def get_income_mean(group, data):
 
 
 def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, dark_mode):
-    last = (
+    data = (
+        data
+        .filter(pl.col('year')>=2000)
+    )
+    data_most_recent = (
         data
         .join(
             other=(
@@ -381,9 +387,9 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, da
                     go.Scatter(
                         name="NONE",
                         mode='text',
-                        x=last.filter(pl.col('country') == country)['year'],
-                        y=last.filter(pl.col('country') == country)['value'],
-                        text=f"<b>{country.title()}</b>" if country == 'united states' else f"{country.title()}",
+                        x=data_most_recent.filter(pl.col('country') == country)['year'],
+                        y=data_most_recent.filter(pl.col('country') == country)['value'],
+                        text=f"<b>{country.title()}</b>" if country == 'united states' else f"<br>{country.title()}" if country == 'canada' else f"{country.title()}",
                         textposition='middle right',
                     ) for country in countries # ["united states", "europe", "costa rica", "japan", "china"]
                 ]
@@ -820,12 +826,11 @@ app_ui = ui.page_fillable(
                     col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
                 )
             ),
-
-            # ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
-                    ui.card(ui.h3(ui.span("infant mortality rate vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
+                    ui.card(output_widget("plot_healthcare_infant_mortality")),
+                    ui.card(output_widget("plot_healthcare_suicide")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
                 )
             ),
         ),
@@ -1854,8 +1859,32 @@ def server(input, output, session):
             dark_mode=input.dark_mode(),
             xaxis_title=f"{sources['healthcare']}",
         )
-
         return fig
+
+    @output
+    @render_widget
+    def plot_healthcare_infant_mortality():
+        fig = plot_timeseries_multiple_countries(
+            data=healthcare_infant_mortality,
+            title="Infant Mortality",
+            yaxis_title="deaths per 1,000 babies",
+            dark_mode=input.dark_mode(),
+            xaxis_title=f"{sources['healthcare']}",
+        )
+        return fig
+
+    @output
+    @render_widget
+    def plot_healthcare_suicide():
+        fig = plot_timeseries_multiple_countries(
+            data=healthcare_suicide,
+            title="Suicide Rates",
+            yaxis_title="deaths per 100,000",
+            dark_mode=input.dark_mode(),
+            xaxis_title=f"{sources['healthcare']}",
+        )
+        return fig
+
 
 
     @render.image
