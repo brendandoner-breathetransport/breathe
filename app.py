@@ -1,24 +1,96 @@
-from shiny import App, reactive, ui, render
-from shinywidgets import output_widget, render_widget
-from shiny.ui import output_plot
 import numpy as np
 import pandas as pd
 import polars as pl
-import plotly.express as px
+import plotly
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import pickle
+import logging
+# Configure basic logging to display INFO messages and above
+logging.basicConfig(level=logging.INFO)
+# Get a logger instance for the current module
+logger = logging.getLogger(__name__)
+logger.info(f"plotly.__version__: {plotly.__version__}")
+logger.info(f"pl.__version__: {pl.__version__}")
+logger.info(f"pd.__version__: {pd.__version__}")
+
 from pathlib import Path
 from htmltools import HTML, div
-import pyarrow
-import matplotlib.pyplot as plt
+from shiny import App, reactive, ui, render
+from shinywidgets import output_widget, render_widget
 
 
-def read_data(folder, file_name):
-    data = pl.from_pandas(pd.read_csv(
-        str(Path(__file__).parent / f"data/{folder}/{file_name}"), delimiter=","
-    ))
+def get_path(folder, file_name):
+    path = str(Path(__file__).parent / f"data/{folder}/{file_name}")
+    return path
+
+def read_data(folder, file_name, dtype=None):
+    if dtype is None:
+        data = pl.from_pandas(
+            pd.read_csv(
+                get_path(folder=folder, file_name=file_name),
+                delimiter=",",
+            )
+        )
+    else:
+        data = pl.from_pandas(
+            pd.read_csv(
+                get_path(folder=folder, file_name=file_name),
+                delimiter=",",
+                dtype=dtype,
+            )
+        )
     return data
 
+config = dict(
+    fixedrange=True,
+    yaxis_range_pct=0.25,
+    plotly_mobile={
+        'staticPlot': False,
+        'responsive': True,
+        'displayModeBar': False,
+        'scrollZoom': False,
+        'doubleClick': False,
+    },
+    colorscale={
+        'upward_mobility':[
+            [0.0, '#8B0000'],      # 0.00 - Dark red
+            [0.40, '#CC0000'],    # 0.10 - Red
+            [0.45, '#FF8C00'],    # 0.25 - Orange
+            [0.5, '#FFD700'],      # 0.30 - Gold/Yellow
+            [0.583, '#FFFF00'],    # 0.35 - Bright yellow
+            [0.667, '#ADFF2F'],    # 0.40 - Yellow-green
+            [0.833, '#32CD32'],    # 0.50 - Lime green
+            [1.0, '#006400'],      # 0.60 - Dark green
+        ],
+        'jail':[
+            [0.0, '#006400'],      # 0.00 - Dark green
+            [0.02, '#228B22'],     # 0.03 - Forest green
+            [0.05, '#32CD32'],      # 0.06 - Lime green
+            [0.08, '#9ACD32'],     # 0.09 - Yellow-green
+            [0.10, '#ADFF2F'],      # 0.12 - Green-yellow
+            [0.12, '#FFD700'],     # 0.15 - Gold/Yellow
+            [0.15, '#CC0000'],    # 0.375 - Red
+            [1.0, '#8B0000'],      # 0.60 - Dark red
+        ],
+    }
+)
+
+#-----------------------------------------------------------------------------------------
+# Race Data
+#-----------------------------------------------------------------------------------------
+outcomes_upward_mobility_jail = read_data(
+    folder='race',
+    file_name='outcomes_upward_mobility_jail.csv',
+    dtype={
+        'fips_county': str,
+        'fips_state': str,
+        'value': float,
+        'state': str
+    },
+)
+with open(get_path(folder='race', file_name='counties_json.pickle'), 'rb') as f:
+    counties_json = pickle.load(f)
 #-----------------------------------------------------------------------------------------
 # Economy Data
 #-----------------------------------------------------------------------------------------
@@ -43,8 +115,7 @@ healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcar
 # American Dream Data
 #-----------------------------------------------------------------------------------------
 american_dream_kids = read_data(folder='american_dream', file_name='american_dream_kids.csv')
-child_income = read_data(folder='american_dream', file_name="mrc_table3.csv")
-income_demographics = read_data(folder="american_dream", file_name="parent_child_econ_outcomes_by_race.csv")
+mobility_international = read_data(folder='american_dream', file_name='mobility_international.csv')
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
@@ -52,16 +123,22 @@ axis_title_income = "<b>income</b>/yr average"
 axis_title_income_format = ',.2s'
 
 income_levels = {
-    "Main Street": "income_mean_bottom",
-    "Upper": "income_mean_upper",
+    "Bottom 50%": "income_mean_bottom",
+    "Upper 51-99%": "income_mean_upper",
     "Top 1%": "income_mean_top",
-    "Gap": 'income_mean_gap',
+    "Bottom 50% to Top 1% Gap": 'income_mean_gap',
 }
 group_names = {
-    "income_mean_bottom": "Main Street (bottom 50%)",
-    "income_mean_upper": "Upper (51-99%)",
+    "income_mean_bottom": "Bottom 50%",
+    "income_mean_upper": "Upper 51-99%",
     'income_mean_top': "Top 1%",
-    "income_mean_gap": "Gap (Top 1% - Main Street)",
+    "income_mean_gap": "Bottom 50% to Top 1% Gap",
+}
+
+layout_economy = {
+    'range':[1905, 2030],
+    'tickvals':[1902, 1945, 1969, 1980, 2023, 2032],
+    'ticktext':[1902, 1945, 1969, 1980, 2023, ''],
 }
 
 def get_source(name, link):
@@ -129,12 +206,6 @@ colors_tax_changes = {
     'down': 'rgba(230, 78, 67,    0.7)',
 }
 
-def read_data():
-    df = pd.read_csv(
-        Path(__file__).parent / "data/anonymized_cb_data.csv", delimiter=";"
-    )
-    df["cohort"] = df["cohort"].astype(str)
-    return df
 
 
 def get_color_template(mode):
@@ -150,29 +221,6 @@ def get_background_color_plotly(mode):
     else:
         return "rgb(29, 32, 33)"
 
-def get_period_shading(fig):
-
-    fig.add_vrect(
-        x0=1929,
-        x1=1939,
-        line_width=0,
-        fillcolor='black',
-        opacity=0.05,
-        annotation_text='<b>Great Depression</b>',
-        annotation_position='bottom left',
-    )
-
-# Helper functions (assumed available elsewhere in your app)
-def get_color_template(dark_mode):
-    return "plotly_dark" if dark_mode else "plotly_white"
-
-def get_background_color_plotly(dark_mode):
-    return "#111" if dark_mode else "#FFF"
-
-class input:
-    @staticmethod
-    def dark_mode():
-        return False  # Update this based on actual app input
 
 def plot_stick_figure(fig, x, y, add_hat=False):
     color_rect = "rgba(44, 76, 126, 0.3)" # rgba(44, 76, 126, 0.3) darkblue, rgba(150,55,55,0.5) red
@@ -337,10 +385,15 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, da
         title=dict(
             text=f"<b>{title}</b>",
         ),
+        title_x=0.5,
         yaxis_title=f"{yaxis_title}",
+        yaxis=dict(
+            fixedrange=config['fixedrange'],  # This prevents zooming
+        ),
         xaxis_title=xaxis_title,
         xaxis=dict(
             range=[2000, 2026],
+            fixedrange=config['fixedrange'],  # This prevents zooming
         ),
         showlegend=False,
         template=get_color_template(dark_mode),
@@ -351,6 +404,8 @@ def plot_timeseries_multiple_countries(data, title, yaxis_title, xaxis_title, da
         if 'NONE' in trace['name']:
             trace['showlegend'] = False
 
+    fig = go.FigureWidget(fig)
+    fig._config = fig._config | config['plotly_mobile']
     return fig
 
 def get_text(text, prefix, suffix, format, context):
@@ -381,7 +436,7 @@ def get_highlights(data, col_date, col_metric, number_type, ):
         'thousands': 1000,
         'percentage': 1,
     }[number_type]
-    
+
     data_latest = data.filter(pl.col(col_date) == data[col_date].max())
     data_min = data.filter(pl.col(col_metric) == data[col_metric].min())
     data_max = data.filter(pl.col(col_metric) == data[col_metric].max())
@@ -404,7 +459,7 @@ def get_highlights(data, col_date, col_metric, number_type, ):
             textposition='middle center',
         ),
     ]
-    
+
     highlight_min = [
         go.Scatter(
             # highlight the max of the metric
@@ -450,13 +505,179 @@ def get_highlights(data, col_date, col_metric, number_type, ):
 
     return highlights
 
+def plot_period_shading(fig):
+    # fig.add_vrect(
+    #     x0=1929,
+    #     x1=1939,
+    #     line_width=0,
+    #     fillcolor='darkblue',
+    #     opacity=0.05,
+    #     annotation_text='<b>Great Depression</b>',
+    #     annotation_position='top left',
+    # )
+    fig.add_vline(
+        x=1980,
+        line=dict(color='rgba(0,0,0,0.9)', width=2, dash='dash', ),
+        # secondary_y=True,
+        annotation_text="1980",
+        annotation_position="top right",
+        annotation_font_color="black",
+    )
+
+def plot_economic_policy_shading(fig):
+    fig.add_vrect(
+        x0=1938,
+        x1=1979,
+        line_width=0,
+        fillcolor='green',
+        opacity=0.05,
+        annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#policies'>Policies</a></b>",
+        annotation_position='bottom right',
+    )
+    fig.add_vrect(
+        x0=1980,
+        x1=2020,
+        line_width=0,
+        fillcolor='black',
+        opacity=0.05,
+        annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#policies'>Policies</a></b>",
+
+        annotation_position='bottom right',
+    )
+
+# config['plotly_mobile'] = {
+#     'responsive': True,
+#     'displayModeBar': True,
+#     'displaylogo': False,
+#     'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'select2d'],
+#     'toImageButtonOptions': {
+#         'format': 'png',
+#         'filename': 'custom_image',
+#         'height': 500,
+#         'width': 700,
+#         'scale': 1
+#     }
+# }
+
+config['plotly_mobile'] = {
+    # 'staticPlot': True,
+    'responsive': True,
+    'displayModeBar': False,
+    'displaylogo': False,
+    'scrollZoom': False,        # Disable scroll wheel zoom
+    'doubleClick': 'reset',     # Double click resets instead of zooms
+    'showTips': False,          # Hide zoom tips
+    'modeBarButtonsToRemove': [
+        'pan2d', 'lasso2d', 'select2d', 'autoScale2d',
+        'resetScale2d', 'hoverClosestCartesian', 'hoverCompareCartesian',
+        'zoom2d', 'zoomIn2d', 'zoomOut2d',  # Remove zoom buttons
+        'autoScale2d', 'resetScale2d'        # Remove scale buttons
+    ],
+    'toImageButtonOptions': {
+        'format': 'png',
+        'filename': 'income_timeseries',
+        'height': 400,
+        'width': 700,
+        'scale': 1
+    }
+}
+
+def plot_county_heatmap(
+        data: pl.DataFrame,
+        counties_json,
+        race: str,
+        metric: str,
+        title: str,
+        colorscale,
+        dark_mode,
+):
+    """
+    Create a county-level heatmap for the US
+    """
+    start = data.filter(pl.col('metric') == metric)['value'].min()
+    stop = data.filter(pl.col('metric') == metric)['value'].max()
+
+    data_filtered = (
+        data
+        .filter(pl.col('metric') == metric)
+        .filter(pl.col('race') == race)
+        # .filter(pl.col('state') == "CA")
+        .to_pandas()
+    )
+    # logger.info(
+    #     f"outcomes_upward_mobility_jail CA shape: {data_filtered.query("state=='CA'").dropna().shape}")
+    fig = go.Figure(
+        go.Choropleth(
+            locations=data_filtered['fips_county'],  # You'll need county FIPS codes
+            z=data_filtered['value'],
+            locationmode='geojson-id',
+            geojson=counties_json,
+            colorscale=colorscale,
+            zmin=start,
+            zmax=stop,
+            hovertemplate='<b>%{text}</b><br>' +
+                          f'{title}: %{{z:.2f}}<br>' +
+                          '<extra></extra>',
+            text=data_filtered['county'] + ', ' + data_filtered['state'],
+            colorbar=dict(
+                title=metric + ' % of cohort',
+                orientation="h",  # horizontal orientation
+                # x=0.0,  # center horizontally
+                # xanchor="center",
+                y=-0.1,  # position below the plot
+                yanchor="top",
+                thickness=10,  # adjust thickness as needed
+                len=0.80  # adjust length (0.8 = 80% of plot width)
+            ),
+        )
+    )
+
+    fig.update_layout(
+        title=dict(
+            text=f"<b>{title}</b>",
+        ),
+        title_x=0.5,
+        showlegend=False,
+        template=get_color_template(dark_mode),
+        paper_bgcolor=get_background_color_plotly(dark_mode),
+        geo=dict(
+            scope='usa',
+            projection=go.layout.geo.Projection(type='albers usa'),
+            showlakes=True,
+            lakecolor='rgb(255, 255, 255)'
+        ),
+    )
+
+    fig = go.FigureWidget(fig)
+    fig._config = fig._config | config['plotly_mobile']
+
+    return fig
+
+def get_yaxis_range(y_data):
+    if ~isinstance(y_data, np.ndarray):
+        try:
+            # polars
+            y_data = y_data.to_numpy()
+        except:
+            # pandas
+            y_data = y_data.values
+
+    min = np.min(y_data)
+    max = np.max(y_data)
+    range = max - min
+    yaxis_min = min - (range * config['yaxis_range_pct'])
+    yaxis_max = max + (range * config['yaxis_range_pct'])
+
+    return yaxis_min, yaxis_max
 
 app_ui = ui.page_fillable(
+    ui.tags.head(
+        ui.tags.meta(name="viewport", content="width=device-width, initial-scale=1.0"),
+    ),
     ui.page_navbar(
         ui.nav_panel(
             "Economy",
-            ui.row(ui.h1(ui.span(HTML("How healthy is the economy for Main Street Americans?"), style="color:rgba(255,255,255,0.9)"))),
-            ui.row(ui.h5(ui.span("Main Street Americans are defined as Americans in the bottom 50% of earnings for full-time employment.", style="color:rgba(200,200,200,0.9)"))),
+            ui.row(ui.h1(ui.span(HTML("How healthy is the economy for Americans?"), style="color:rgba(255,255,255,0.9)"))),
 
             # Income
             ui.row(
@@ -465,12 +686,12 @@ app_ui = ui.page_fillable(
                         id='income_level',
                         label=None,
                         choices={
-                            "Main Street": ui.span("Main Street", style=f"color:rgba(255,255,255,0.6)"),
-                            "Upper": ui.span("Upper", style=f"color:rgba(255,255,255,0.6)"),
+                            "Bottom 50%": ui.span("Bottom 50%", style=f"color:rgba(255,255,255,0.6)"),
+                            "Upper 51-99%": ui.span("Upper 51-99%", style=f"color:rgba(255,255,255,0.6)"),
                             "Top 1%": ui.span("Top 1%", style=f"color:rgba(255,255,255,0.6)"),
-                            "Gap": ui.span("Gap", style=f"color:rgba(255,255,255,0.6)"),
+                            # "Bottom 50% to Top 1% Gap": ui.span("Bottom 50% to Top 1% Gap", style=f"color:rgba(255,255,255,0.6)"),
                         },
-                        selected="Main Street",
+                        selected="Bottom 50%",
                         inline=True,
                     ),
                     col_widths=(12,),
@@ -480,36 +701,41 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_economy_timeseries_income")),
-                    ui.card(output_widget("plot_barchart_income_countries")),
-                    col_widths=(6, 6,),
+                    ui.card(output_widget("plot_economy_barchart_income_countries")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
                 )
             ),
 
             ui.row(
                 ui.layout_columns(
-                    ui.card(output_widget("plot_timeseries_income_policies")),
-                    ui.card(output_widget("plot_timeseries_income_taxes")),
-                    col_widths=(6, 6,),
+                    ui.card(output_widget("plot_economy_timeseries_income_taxes")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
                 )
             ),
-            ui.row(ui.h3(ui.span(HTML("Living"), style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(output_widget("plot_economy_f150")),
-                    # ui.card(output_widget("plot_timeseries_income_taxes")),
-                    col_widths=(6, 6,),
-                )
-            ),
+            # ui.row(ui.h3(ui.span(HTML("Living"), style="color:rgba(255,255,255,0.9)"))),
+            # ui.row(
+            #     ui.layout_columns(
+            #         ui.card(output_widget("plot_economy_f150")),
+            #         # ui.card(output_widget("plot_economy_timeseries_income_taxes")),
+            #         col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
+            #     )
+            # ),
 
             # Cost of Living
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
             ui.row(ui.h2(ui.span("Food & Shelter", style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
+                    ui.card(output_widget("plot_economy_f150")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
                     ui.card(ui.h3(ui.span("main_street_income_avg vs rent/mortgage, over time", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("main_street_income_avg vs energy bills (gas, mileage, utilities, i.e. ENERGY), over time",
                                           style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(6, 6),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
                 )
             ),
             ui.row(
@@ -517,7 +743,7 @@ app_ui = ui.page_fillable(
                     ui.card(ui.h3(ui.span("main_street_income_avg vs childcare, over time", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("main_street_income_avg vs cost of living, over time", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("main_street_income_avg vs college/trade school, over time", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
         ),
@@ -530,22 +756,16 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_american_dream_kids")),
-                    ui.card(output_widget("plot_child_upward_mobility_by_college_type")),
-                    col_widths=(6, 6,),
-                )
-            ), 
-            ui.row(
-                ui.layout_columns(
-                    ui.card(output_widget("plot_child_vs_parent_income", height="450px")),
-                    ui.card(output_widget("plot_rank_mobility", height="450px")),
-                    col_widths=(6, 6),
+                    ui.card(output_widget("plot_american_dream_mobility_international")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
                 )
             ),
             ui.row(
                 ui.layout_columns(
-                    ui.card(output_widget("plot_employment_rate", height="450px")),
-                    ui.card(output_widget("plot_upward_mobility", height="450px")),
-                    col_widths=(6, 6),
+                    ui.card(output_widget("plot_white_upward_mobility")),
+                    ui.card(output_widget("plot_black_upward_mobility")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                    # Stack on mobile, side-by-side on desktop
                 )
             ),
             ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
@@ -556,7 +776,7 @@ app_ui = ui.page_fillable(
                     ui.card(ui.h3(ui.span("likelihood rates for education levels (race, time) vs countries",
                                           style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("loan approval rates (race, time)", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
             ui.row(ui.h2(ui.span("Justice", style="color:rgba(255,255,255,0.9)"))),
@@ -565,7 +785,7 @@ app_ui = ui.page_fillable(
                     ui.card(ui.h3(ui.span("stop and frisk rates (by race, by state)", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("immigration (crime rate, race, time) vs benchmarks & countries", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("crime (by state, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
         ),
@@ -578,7 +798,7 @@ app_ui = ui.page_fillable(
                 ui.layout_columns(
                     ui.card(output_widget("plot_healthcare_cost_per_capita")),
                     ui.card(output_widget("plot_healthcare_life_expectancy")),
-                    col_widths=(6,6,),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
                 )
             ),
 
@@ -586,22 +806,30 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(ui.h3(ui.span("infant mortality rate vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
         ),
         ui.nav_panel(
-            "Energy",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+            "Justice",
             ui.row(
                 ui.layout_columns(
-                    ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("water (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("soil (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    ui.card(output_widget("plot_white_jail")),
+                    ui.card(output_widget("plot_black_jail")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                    # Stack on mobile, side-by-side on desktop
                 )
             ),
+            # Air & Water
+            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+            # ui.row(
+            #     ui.layout_columns(
+            #         ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+            #         ui.card(ui.h3(ui.span("water (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+            #         ui.card(ui.h3(ui.span("soil (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+            #         col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
+            #     )
+            # ),
         ),
         ui.nav_panel(
             "Environment",
@@ -612,143 +840,144 @@ app_ui = ui.page_fillable(
                     ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("water (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
                     ui.card(ui.h3(ui.span("soil (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
+                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
                 )
             ),
         ),
-        ui.nav_panel(
-            "Immigration",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-        ),
-        ui.nav_panel(
-            "Freedom",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(ui.h3(ui.span("story of the 100 years after civil war", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("incarceration rates", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("rape convictions based on race of victim", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(4, 4, 4),
-                )
-            ),
-        ),
-        ui.nav_panel(
-            "Corruption",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-        ),
-        ui.nav_panel(
-            "Efficiency",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-        ),
-        ui.nav_panel(
-            "MisInformation",
-            # Air & Water
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-        ),
-        ui.nav_panel(
-            "Spotlight",
-            # education, sick care, justice, laws/rules,
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(ui.h6(ui.span("Replace below with data driven plots...", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.output_image("img_freedom_scale")
-            ),
-            ui.row(ui.h1(ui.span("Disruptions", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(ui.h3(ui.span("Climate Change", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("AI",
-                                          style="color:rgba(0,0,0,0.9)"))),
-                    # ui.card(ui.h3(ui.span("crime (by state, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(6, 6,),
-                )
-            ),
-            ui.row(ui.h1(ui.span("Wants", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(
-                        ui.h3(ui.span("regional cultures and government preferences", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(12,),
-                )
-            ),
-            ui.row(ui.h1(ui.span("Voter supression", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.card(
-                        ui.h3(ui.span("Voter turn out vs laws that restrict voting", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths=(12,),
-                )
-            ),
-        ),
-        ui.nav_panel(
-            "About Us",
-            ui.row(ui.span(
-                ui.markdown("""
-                    # Breathe
-                    We are a grassroots community group that has come together to support 
-                    each other, pool our<br>diverse backgrounds, and bring 
-                    truth, understanding, and togetherness<br>into today's conversations.
-                    
-                    &ndash; Founded February, 2025
-                    
-                    ### Purpose
-                    Improve the lives of Americans and make our democracy stronger.
-                    
-                    ##### How
-                    * **Dashboard**
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Simple and reproducible, bring together data and history.
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Diagnose problems, see the health of the country in the context of our past and the world.
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Understand causes.
-                    
-                    * **Community**
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ideas, collaborate, support, expand impact.
-                    
-                    * **Outreach**
-                    
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Expand impact, expand resources.
-    
-                    
-                    ### Values
-                    * **Balance** (public good vs individualism)
-                    * **Fairness** (equal opportunity, equal justice, fair markets, no exploitation)
-                    * **Diversity** (team strength and learning come from diverse ideas, backgrounds, races, gender, etc.)
-                    * **Evidence** (learn from history and data)
-
-                """),
-                style="color:rgba(255,255,255,0.9)")),
-            ui.row(ui.h1(ui.span("Books Recommendations", style="color:rgba(255,255,255,0.9)"))),
-            ui.row(
-                ui.layout_columns(
-                    ui.tags.a(
-                        ui.output_image("img_american_character"),
-                        href='https://colinwoodard.com/books/american-character/',
-                        target="_blank"
-                    ),
-                    col_widths=(12),
-                )
-            ),
-            ui.row(
-                ui.layout_columns(
-                    ui.tags.a(
-                        ui.output_image("img_1619"),
-                        href='https://www.nytimes.com/interactive/2019/08/14/magazine/1619-america-slavery.html',
-                        target="_blank"
-                    ),
-                    col_widths=(12,),
-                )
-            ),
-        ),
-        ui.nav_control(
-            ui.a("Support Us", href="https://gofund.me/d7238719")
-        ),
+        # ui.nav_panel(
+        #     "Immigration",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        # ),
+        # ui.nav_panel(
+        #     "Freedom",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.card(ui.h3(ui.span("story of the 100 years after civil war", style="color:rgba(0,0,0,0.9)"))),
+        #             ui.card(ui.h3(ui.span("incarceration rates", style="color:rgba(0,0,0,0.9)"))),
+        #             ui.card(ui.h3(ui.span("rape convictions based on race of victim", style="color:rgba(0,0,0,0.9)"))),
+        #             col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
+        #         )
+        #     ),
+        # ),
+        #
+        # ui.nav_panel(
+        #     "Efficiency",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        # ),
+        # ui.nav_panel(
+        #     "Money in Politics",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        # ),
+        # ui.nav_panel(
+        #     "MisInformation",
+        #     # Air & Water
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        # ),
+        # ui.nav_panel(
+        #     "Spotlight",
+        #     # education, sick care, justice, laws/rules,
+        #     ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(ui.h6(ui.span("Replace below with data driven plots...", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.output_image("img_freedom_scale")
+        #     ),
+        #     ui.row(ui.h1(ui.span("Disruptions", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.card(ui.h3(ui.span("Climate Change", style="color:rgba(0,0,0,0.9)"))),
+        #             ui.card(ui.h3(ui.span("AI",
+        #                                   style="color:rgba(0,0,0,0.9)"))),
+        #             # ui.card(ui.h3(ui.span("crime (by state, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
+        #             col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},  # Stack on mobile, side-by-side on desktop
+        #         )
+        #     ),
+        #     ui.row(ui.h1(ui.span("Wants", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.card(
+        #                 ui.h3(ui.span("regional cultures and government preferences", style="color:rgba(0,0,0,0.9)"))),
+        #             col_widths=(12,),
+        #         )
+        #     ),
+        #     ui.row(ui.h1(ui.span("Voter supression", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.card(
+        #                 ui.h3(ui.span("Voter turn out vs laws that restrict voting", style="color:rgba(0,0,0,0.9)"))),
+        #             col_widths=(12,),
+        #         )
+        #     ),
+        # ),
+        # ui.nav_panel(
+        #     "About Us",
+        #     ui.row(ui.span(
+        #         ui.markdown("""
+        #             # Breathe
+        #             We are a grassroots community group that has come together to support
+        #             each other, pool our<br>diverse backgrounds, and bring
+        #             truth, understanding, and togetherness<br>into today's conversations.
+        #
+        #             &ndash; Founded February, 2025
+        #
+        #             ### Purpose
+        #             Improve the lives of Americans and make our democracy stronger.
+        #
+        #             ##### How
+        #             * **Dashboard**
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Simple and reproducible, bring together data and history.
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Diagnose problems, see the health of the country in the context of our past and the world.
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Understand causes.
+        #
+        #             * **Community**
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ideas, collaborate, support, expand impact.
+        #
+        #             * **Outreach**
+        #
+        #             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Expand impact, expand resources.
+        #
+        #
+        #             ### Values
+        #             * **Balance** (public good vs individualism)
+        #             * **Fairness** (equal opportunity, equal justice, fair markets, no exploitation)
+        #             * **Diversity** (team strength and learning come from diverse ideas, backgrounds, races, gender, etc.)
+        #             * **Evidence** (learn from history and data)
+        #
+        #         """),
+        #         style="color:rgba(255,255,255,0.9)")),
+        #     ui.row(ui.h1(ui.span("Books Recommendations", style="color:rgba(255,255,255,0.9)"))),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.tags.a(
+        #                 ui.output_image("img_american_character"),
+        #                 href='https://colinwoodard.com/books/american-character/',
+        #                 target="_blank"
+        #             ),
+        #             col_widths=(12),
+        #         )
+        #     ),
+        #     ui.row(
+        #         ui.layout_columns(
+        #             ui.tags.a(
+        #                 ui.output_image("img_1619"),
+        #                 href='https://www.nytimes.com/interactive/2019/08/14/magazine/1619-america-slavery.html',
+        #                 target="_blank"
+        #             ),
+        #             col_widths=(12,),
+        #         )
+        #     ),
+        # ),
+        # ui.nav_control(
+        #     ui.a("Support Us", href="https://gofund.me/d7238719")
+        # ),
         title=ui.img(src="images/logo_street.png", style="max-width:100px;width:45%"),
         # title=ui.img(src="www/logo_street.png", style="max-width:100px;width:50%"),
         # title = ui.img(src=f"www/logo_street.png", style="max-width:100px;width:50%"),
@@ -770,6 +999,7 @@ app_ui = ui.page_fillable(
     ),
     ui.tags.style(
         """
+        /* Your existing styles */
         .leaflet-popup-content {
             width: 600px !important;
         }
@@ -781,20 +1011,55 @@ app_ui = ui.page_fillable(
             color: #FD9902 !important;
         }
         .main {
-            /* Background image */
             background-image: url("images/background_dark_full.jpg");
             height: 100%;
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
         }
-        div#map_full.html-fill-container {
-            height: -webkit-fill-available !important;
-            min-height: 850px !important;
-            max-height: 2000px !important;
+
+        /* NEW MOBILE-SPECIFIC STYLES */
+        @media (max-width: 768px) {
+            /* Make text larger and more readable on mobile */
+            h1 { font-size: 1.8rem !important; }
+            h2 { font-size: 1.5rem !important; }
+            h3 { font-size: 1.2rem !important; }
+
+            /* Stack radio buttons vertically on mobile */
+            .form-check-inline {
+                display: block !important;
+                margin-bottom: 0.5rem;
+            }
+
+            /* Make cards full width with proper spacing */
+            .card {
+                margin-bottom: 1rem;
+                width: 100% !important;
+            }
+
+            /* Adjust navbar for mobile */
+            .navbar-nav {
+                text-align: center;
+            }
+
+            /* Make plots responsive */
+            .js-plotly-plot {
+                width: 100% !important;
+            }
+
+            /* Reduce padding on mobile */
+            .container-fluid {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
         }
-        div#main_panel.html-fill-container {
-            height: -webkit-fill-available !important;
+
+        /* For very small screens */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem !important; }
+            .navbar-brand img {
+                max-width: 80px !important;
+            }
         }
         """
     ),
@@ -814,30 +1079,9 @@ def server(input, output, session):
         Pre-tax national income Top 1% share
         :return:
         """
-        # todo: add selector for country comparison and dem/auth means
         income_level = income_levels[input.income_level()]
         group_name = group_names[income_level]
-        # "bottom_50"
-        # "top_1"
         usa = shares_data.filter(pl.col('country') == 'usa').filter(pl.col('year') >= 1880)
-        dem = (
-            shares_data
-            .filter(pl.col('country').is_in([
-                'canada',
-                'germany',
-                'italy',
-                'japan',
-                'new_zealand',
-                'norway',
-                'uk',
-            ]))
-        )
-        auth = (
-            shares_data
-            .filter(pl.col('country').is_in(['russia', 'china']))
-        )
-        countries_dem = np.sort(dem.select('country').unique().to_numpy().flatten()).tolist()
-        countries_auth = np.sort(auth.select('country').unique().to_numpy().flatten()).tolist()
 
         fig = go.Figure(data=(
             [
@@ -856,41 +1100,47 @@ def server(input, output, session):
             )
         ))
 
-        get_period_shading(fig=fig)
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
 
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=usa[income_level])
         fig.update_layout(
             title=dict(
-                text=f"<b>Where has {input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of'} income been in the past?</b><br><sup>Based on {year_max} dollars</sup>",
+                text=f"<b>{input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of'} Paycheck</b><br><sup>Based on {year_max} dollars</sup>",
                 #
             ),
             title_x=0.5,
             yaxis_title=axis_title_income + f"<br>{group_name}",
             yaxis=dict(
-                # range=[0, 3000000],
+                range=[yaxis_min, yaxis_max],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
-                range=[1880, 2030],
+                range=layout_economy['range'],
                 tickmode='array',
-                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
-                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+                fixedrange=config['fixedrange'],  # This prevents zooming
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
             paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+            # dragmode=False,  # ← This disables drag interactions
         )
 
         for trace in fig['data']:
             if ('min' in trace['name']) | ('NONE' in trace['name']):
                 trace['showlegend'] = False
-
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
     @render_widget
-    def plot_barchart_income_countries():
+    def plot_economy_barchart_income_countries():
 
         income_level=income_levels[input.income_level()]
         group_name = group_names[income_level]
@@ -903,12 +1153,18 @@ def server(input, output, session):
         countries = income_latest.select('country').to_numpy().flatten()
         colors = [colors_by_country[country] for country in countries]
 
+        texttemplate = {
+            'income_mean_bottom': "<b>%{text:.2s}</b>",
+            'income_mean_upper': "<b>%{text:.3s}</b>",
+            'income_mean_top': "<b>%{text:.3s}</b>",
+        }
+
         fig = go.Figure(data=[
             go.Bar(
                 x=income_latest['country'],
                 y=income_latest[income_level],
                 text=income_latest[income_level],
-                texttemplate='<b>%{text:.3s}</b>',
+                texttemplate=texttemplate[income_level],
                 textfont=dict(
                     size=12,
                 ),
@@ -919,7 +1175,7 @@ def server(input, output, session):
 
         fig.update_layout(
             title=dict(
-                text=f"<b>How does {'U.S. ' + input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of U.S.'} income compare to other countries?</b><br><sup>Based on {year_max} U.S. total income and each country's income share for the selected group</sup>",
+                text=f"<b>{input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of U.S.'} Country Comparison</b><br><sup>Based on {year_max} U.S. total income and each country's income share for the selected group</sup>",
             ),
             title_x=0.5,
             yaxis_title=axis_title_income + f"<br>{group_name}",
@@ -927,19 +1183,25 @@ def server(input, output, session):
                 # range=[0, 3000000],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis_tickangle=-45,
+            xaxis=dict(
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
             showlegend=False,
             template=get_color_template(input.dark_mode()),
             paper_bgcolor=get_background_color_plotly(input.dark_mode()),
         )
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
     @render_widget
-    def plot_timeseries_income_policies():
+    def plot_economy_timeseries_income_policies():
         """
         Source: https://wid.world/country/usa/
         Share of total,
@@ -986,25 +1248,9 @@ def server(input, output, session):
             )
         ))
 
-        fig.add_vrect(
-            x0=1938,
-            x1=1979,
-            line_width=0,
-            fillcolor='green',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
+        plot_period_shading(fig)
+        plot_economic_policy_shading(fig=fig)
 
-        fig.add_vrect(
-            x0=1980,
-            x1=2020,
-            line_width=0,
-            fillcolor='black',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
 
         fig.update_layout(
             title=dict(
@@ -1017,13 +1263,15 @@ def server(input, output, session):
                 # range=[0, 3000000],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
-                range=[1880, 2030],
+                range=layout_economy['range'],
                 tickmode='array',
-                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
-                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+                fixedrange=config['fixedrange'],  # This prevents zooming
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
@@ -1034,11 +1282,13 @@ def server(input, output, session):
             if ('min' in trace['name']) | ('NONE' in trace['name']):
                 trace['showlegend'] = False
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
     @render_widget
-    def plot_timeseries_income_taxes():
+    def plot_economy_timeseries_income_taxes():
         """
         Source: https://wid.world/country/usa/
         Share of total,
@@ -1054,15 +1304,23 @@ def server(input, output, session):
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        fig.add_traces([
-            go.Scatter(
-                name='NONE',
-                x=usa['year'],
-                y=usa[income_level],
-                line=dict(color=color_light_dark[input.dark_mode()], width=3),
-                text="<b>U.S.</b>",
-            ),
-        ])
+        fig.add_traces(
+            [
+                go.Scatter(
+                    name='NONE',
+                    x=usa['year'],
+                    y=usa[income_level],
+                    line=dict(color=color_light_dark[input.dark_mode()], width=3),
+                    text="<b>U.S.</b>",
+                ),
+            ] + get_highlights(
+                data=usa,
+                col_date='year',
+                col_metric=income_level,
+                number_type='thousands',
+            )
+        )
+
         # ---------------------------------------------------
         # tax changes
         data = tax.filter(pl.col('change_top_bracket') != 0).sort(['year'])
@@ -1104,38 +1362,21 @@ def server(input, output, session):
             secondary_y=True,
         )
 
-        # get_period_shading(fig=fig)
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
 
-        fig.add_vrect(
-            x0=1938,
-            x1=1979,
-            line_width=0,
-            fillcolor='green',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
-
-        fig.add_vrect(
-            x0=1980,
-            x1=2020,
-            line_width=0,
-            fillcolor='black',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
-
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=usa[income_level])
         fig.update_layout(
             title=dict(
-                text=f"<b>Do taxes on the Top 1% influence the gap?</b><br><sup>Based on {year_max} dollars</sup>",
+                text=f"<b>Do taxes on the Top 1% influence income?</b><br><sup>Based on {year_max} dollars</sup>",
             ),
             title_x=0.5,
             yaxis_title=axis_title_income + f"<br>{group_name}",
             yaxis=dict(
-                # range=[0, 3000000],
+                range=[yaxis_min, yaxis_max],
                 tickprefix="$",
                 tickformat=axis_title_income_format,
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             yaxis2=dict(
                 title='top tax bracket changes',
@@ -1144,13 +1385,15 @@ def server(input, output, session):
                 overlaying='y',
                 side='right',
                 tickformat='+.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy']}",
             xaxis=dict(
-                range=[1880, 2030],
+                range=layout_economy['range'],
                 tickmode='array',
-                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
-                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+                fixedrange=config['fixedrange'],  # This prevents zooming
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
@@ -1167,6 +1410,8 @@ def server(input, output, session):
             if ('NONE' in trace['name']):
                 trace['showlegend'] = False
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
@@ -1212,28 +1457,10 @@ def server(input, output, session):
         )
         ))
 
-        # get_period_shading(fig=fig)
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
 
-        fig.add_vrect(
-            x0=1938,
-            x1=1979,
-            line_width=0,
-            fillcolor='green',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
-
-        fig.add_vrect(
-            x0=1980,
-            x1=2020,
-            line_width=0,
-            fillcolor='black',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
-
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=data['price_ratio'])
         fig.update_layout(
             title=dict(
                 text=f"<b>What is the price of a new Ford F-150 as a percent of {input.income_level() if input.income_level() != 'Gap' else 'the ' + input.income_level() + ' of'} income?</b><br><sup>Based on {year_max} dollars</sup>",
@@ -1241,16 +1468,18 @@ def server(input, output, session):
             title_x=0.5,
             yaxis_title="ratio of Ford F-150 price to " + f"<br>{group_name} income/yr average",
             yaxis=dict(
-                # range=[0, 3000000],
+                range=[yaxis_min, yaxis_max],
                 # tickprefix="$",
                 tickformat=',.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy_f150']}",
             xaxis=dict(
-                range=[1880, 2030],
+                range=layout_economy['range'],
                 tickmode='array',
-                tickvals=[1902, 1945, 1969, 1980, 2023, 2032],
-                ticktext=[1902, 1945, 1969, 1980, 2023, ''],
+                fixedrange=config['fixedrange'],  # This prevents zooming
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
             template=get_color_template(input.dark_mode()),
@@ -1261,11 +1490,14 @@ def server(input, output, session):
             if ('min' in trace['name']) | ('NONE' in trace['name']):
                 trace['showlegend'] = False
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
         return fig
 
     @output
     @render_widget
     def plot_american_dream_kids():
+
 
         fig = go.Figure(
             data=[
@@ -1284,35 +1516,24 @@ def server(input, output, session):
             )
         )
 
-        fig.add_vrect(
-            x0=1938,
-            x1=1979,
-            line_width=0,
-            fillcolor='green',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Demand-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
 
-        fig.add_vrect(
-            x0=1980,
-            x1=2020,
-            line_width=0,
-            fillcolor='black',
-            opacity=0.05,
-            annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#what-are-the-key-differences-between-demand-side-and-supply-side-economics'>Supply-Side Economics</a></b>",
-            annotation_position='bottom right',
-        )
-
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=american_dream_kids['probability'])
         fig.update_layout(
             title=dict(
-                text=f"<b>What is the probability Americans earn more than their parents?</b>",
+                text=f"<b>% Earning More than Parents</b>",
             ),
-            yaxis_title=f"probability<br><sup>that 30 year olds earn more than their parents at age 30</sup>",
+            title_x=0.5,
+            yaxis_title=f"percent<br><sup>of 30 year olds earn more than their parents at age 30</sup>",
             xaxis_title=f"{sources['american_dream']}",
+            xaxis=dict(
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
             yaxis=dict(
-                # range=[2000, 2026],
+                range=[yaxis_min, yaxis_max],
                 tickformat='.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             showlegend=False,
             template=get_color_template(input.dark_mode()),
@@ -1323,6 +1544,135 @@ def server(input, output, session):
             if 'NONE' in trace['name']:
                 trace['showlegend'] = False
 
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
+        return fig
+
+    @output
+    @render_widget
+    def plot_american_dream_mobility_international():
+        col = 'growth_controlled'
+        data = (
+            mobility_international
+            .filter(pl.col(col).is_not_nan())
+        )
+        countries = np.sort(np.unique(data['country'].to_numpy().flatten()))
+        dark_mode = input.dark_mode()
+
+
+        fig = go.Figure(
+            data=(
+                [
+                    go.Scatter(
+                        name=f"{country}",
+                        mode='lines',
+                        x=data.filter(pl.col('country') == country)['year'],
+                        y=data.filter(pl.col('country') == country)[col],
+                        line=(
+                            dict(
+                                color=color_light_dark[dark_mode],
+                                width=3)
+                            if country.lower() == 'united states'
+                            else dict(
+                                color="rgba(0,0,0,0.2)",
+                                width=1,
+                            )
+                        ),
+                    ) for country in countries
+                ]
+            )
+        )
+
+        plot_period_shading(fig=fig)
+        plot_economic_policy_shading(fig=fig)
+
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=data[col])
+        fig.update_layout(
+            title=dict(
+                text=f"<b>International Comparison</b><br><sup>upward mobility with only the impact from inequality changes</sup>",
+            ),
+            title_x=0.5,
+            yaxis_title=f"percent<br><sup>of 30 year olds earn more than their parents at age 30</sup>",
+            xaxis_title=f"{sources['american_dream']}",
+            xaxis=dict(
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
+            yaxis=dict(
+                range=[yaxis_min, yaxis_max],
+                tickformat='.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
+            showlegend=True,
+            template=get_color_template(input.dark_mode()),
+            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+        )
+
+        for trace in fig['data']:
+            if 'NONE' in trace['name']:
+                trace['showlegend'] = False
+
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
+        return fig
+
+    @output
+    @render_widget
+    def plot_black_upward_mobility():
+        metric = 'upward_mobility'
+        fig = plot_county_heatmap(
+            data=outcomes_upward_mobility_jail,
+            counties_json=counties_json,
+            race='black',
+            metric=metric,
+            title=f"Black Male Upward Mobility<br>(parents in 25th percentile of income)",
+            colorscale=config['colorscale'][metric],
+            dark_mode=input.dark_mode(),
+            )
+        return fig
+
+    @output
+    @render_widget
+    def plot_white_upward_mobility():
+        metric = 'upward_mobility'
+        fig = plot_county_heatmap(
+            data=outcomes_upward_mobility_jail,
+            counties_json=counties_json,
+            race='white',
+            metric=metric,
+            title=f"White Male Upward Mobility<br>(parents in 25th percentile of income)",
+            colorscale=config['colorscale'][metric],
+            dark_mode=input.dark_mode(),
+            )
+        return fig
+
+    @output
+    @render_widget
+    def plot_black_jail():
+        metric = 'jail'
+        fig = plot_county_heatmap(
+            data=outcomes_upward_mobility_jail,
+            counties_json=counties_json,
+            race='black',
+            metric=metric,
+            title=f"Black Male in Jail Rate<br>(parents in 25th percentile of income)",
+            colorscale=config['colorscale'][metric],
+            dark_mode=input.dark_mode(),
+        )
+        return fig
+
+    @output
+    @render_widget
+    def plot_white_jail():
+        metric = 'jail'
+        fig = plot_county_heatmap(
+            data=outcomes_upward_mobility_jail,
+            counties_json=counties_json,
+            race='white',
+            metric=metric,
+            title=f"White Male in Jail Rate<br>(parents in 25th percentile of income)",
+            colorscale=config['colorscale'][metric],
+            dark_mode=input.dark_mode(),
+        )
         return fig
 
     @output
@@ -1335,179 +1685,8 @@ def server(input, output, session):
             xaxis_title=f"{sources['healthcare']}",
             dark_mode=input.dark_mode(),
         )
-        return fig
-    @output
-    @render_widget
-    def plot_child_upward_mobility_by_college_type():
-        df = child_income.with_columns(
-        pl.when(pl.col("tier") == 1).then(pl.lit("Ivy Plus"))
-        .when(pl.col("tier").is_in([3, 5, 7])).then(pl.lit("Public"))
-        .when(pl.col("tier").is_in([4, 6, 8])).then(pl.lit("Private"))
-        .when(pl.col("tier").is_in([10, 11])).then(pl.lit("For-Profit"))
-        .when(pl.col("tier").is_in([13, 14])).then(pl.lit("No College"))
-        .otherwise(pl.lit(None))
-        .alias("college_type")
-        )
-
-        # Filter rows with assigned types
-        df_filtered = (
-            df
-            .group_by("name")
-            .agg(pl.mean("par_mean").alias("par_mean"), 
-                 pl.mean("mr_kq5_pq1").alias("mr_kq5_pq1"), 
-                 pl.first("college_type").alias("college_type"))
-            .filter(pl.col("college_type").is_not_null())
-        )
-
-        # Convert to pandas for plotting
-        df_pd = df_filtered.select(["par_mean", "mr_kq5_pq1", "college_type"]).to_pandas()
-
-        # Scatter plot by college type
-        fig = px.scatter(
-            df_pd,
-            x="par_mean",
-            y="mr_kq5_pq1",
-            color="college_type",
-            labels={
-                "par_mean": "Mean Parental Income ($)",
-                "mr_kq5_pq1": "Mobility Rate (Bottom 20% → Top 20%)",
-                "college_type": "College Type"
-            },
-            title="Mobility Rate vs Mean Parental Income by College Type",
-            opacity=0.7
-        )
-
-        fig.update_layout(template="plotly_white")
 
         return fig
-    
-    @output
-    @render_widget
-    def plot_child_vs_parent_income():
-        races = ["white", "black", "hisp", "asian", "aian"]
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
-        fig = go.Figure()
-
-        for i, race in enumerate(races):
-            fig.add_trace(go.Scatter(
-                x=income_demographics["cohort"],
-                y=income_demographics[f"kfi_{race}_pooled_p100"],
-                name=f"{race.capitalize()} - Child",
-                mode="lines",
-                line=dict(color=colors[i], width=3)
-            ))
-            fig.add_trace(go.Scatter(
-                x=income_demographics["cohort"],
-                y=income_demographics[f"kii_{race}_pooled_p100"],
-                name=f"{race.capitalize()} - Parent",
-                mode="lines",
-                line=dict(color=colors[i], width=3, dash="dash")
-            ))
-
-        fig.update_layout(
-            title="<b>Child vs Parent Income Over Time</b>",
-            xaxis_title="Cohort (Year of Birth)",
-            yaxis_title="Income ($)",
-            template="plotly_white",
-            font=dict(size=14),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.70, xanchor="center", x=0.5),
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
-        )
-        return fig
-
-
-    @output
-    @render_widget
-    def plot_rank_mobility():
-        races = ["white", "black", "hisp", "asian", "aian"]
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
-        fig = go.Figure()
-
-        for i, race in enumerate(races):
-            fig.add_trace(go.Scatter(
-                x=income_demographics["cohort"],
-                y=income_demographics[f"kir_{race}_pooled_p1"],
-                name=race.capitalize(),
-                mode="lines",
-                line=dict(color=colors[i], width=3)
-            ))
-
-        fig.update_layout(
-            title="<b>Income Rank Mobility (Bottom 20%)</b>",
-            xaxis_title="Cohort (Year of Birth)",
-            xaxis_title=f"{sources['american_dream']}",
-            yaxis_title="Child Income Rank (0–100)",
-            template="plotly_white",
-            font=dict(size=14),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
-        )
-        return fig
-
-
-
-    @output
-    @render_widget
-    def plot_employment_rate():
-        races = ["white", "black", "hisp", "asian", "aian"]
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
-        fig = go.Figure()
-
-        for i, race in enumerate(races):
-            fig.add_trace(go.Scatter(
-                x=income_demographics["cohort"],
-                y=income_demographics[f"emp_{race}_pooled_p1"],
-                name=race.capitalize(),
-                mode="lines",
-                line=dict(color=colors[i], width=3)
-            ))
-
-        fig.update_layout(
-            title="<b>Employment Rate (Bottom 20%)</b>",
-            xaxis_title="Cohort (Year of Birth)",
-            yaxis_title="Employment Rate",
-            template="plotly_white",
-            font=dict(size=14),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5),
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
-        )
-        return fig
-
-
-
-    @output
-    @render_widget
-    def plot_upward_mobility():
-        races = ["white", "black", "hisp", "asian", "aian"]
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
-        fig = go.Figure()
-
-        for i, race in enumerate(races):
-            fig.add_trace(go.Scatter(
-                x=income_demographics["cohort"],
-                y=income_demographics[f"kfr_{race}_pooled_p1"],
-                name=race.capitalize(),
-                mode="lines",
-                line=dict(color=colors[i], width=3)
-            ))
-
-        fig.update_layout(\
-            title="<b>Upward Mobility Rate (Bottom 20%)</b>",
-            xaxis_title="Cohort (Year of Birth)",
-            yaxis_title="Mobility Rate",
-            yaxis=dict(tickformat=".0%"),
-            template="plotly_white",
-            font=dict(size=14),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5),
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
-        )
-        return fig
-
-
 
     @output
     @render_widget
@@ -1519,6 +1698,7 @@ def server(input, output, session):
             dark_mode=input.dark_mode(),
             xaxis_title=f"{sources['healthcare']}",
         )
+
         return fig
 
 
