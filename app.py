@@ -116,6 +116,7 @@ healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcar
 #-----------------------------------------------------------------------------------------
 american_dream_kids = read_data(folder='american_dream', file_name='american_dream_kids.csv')
 mobility_international = read_data(folder='american_dream', file_name='mobility_international.csv')
+state_income_wb = read_data(folder='american_dream', file_name='state_income_wb.csv')
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
@@ -206,6 +207,16 @@ colors_tax_changes = {
     'down': 'rgba(230, 78, 67,    0.7)',
 }
 
+fig_wb_gap = px.choropleth(
+    state_income_wb,
+    locations="State Abbr",
+    locationmode="USA-states",
+    color="White - Black Gap",
+    scope="usa",
+    color_continuous_scale="Reds",
+    title="White vs Black Household Income Gap by State (Mainstreet)",
+    labels={"White - Black Gap": "Income Gap ($)"}
+)
 
 
 def get_color_template(mode):
@@ -768,15 +779,28 @@ app_ui = ui.page_fillable(
                     # Stack on mobile, side-by-side on desktop
                 )
             ),
-            ui.row(ui.h1(ui.span("Under construction...", style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
-                    ui.card(ui.h3(
-                        ui.span("incarceration rate (by race, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("likelihood rates for education levels (race, time) vs countries",
-                                          style="color:rgba(0,0,0,0.9)"))),
-                    ui.card(ui.h3(ui.span("loan approval rates (race, time)", style="color:rgba(0,0,0,0.9)"))),
-                    col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
+                    ui.input_select(
+                        id="map_choice",
+                        label="Select View",
+                        choices=[
+                            ("Education Spending", "edu"),
+                            ("Prison Spending", "prison"),
+                            ("Education % of Total", "edu_share"),
+                            ("Mobility Rank", "mobility"),
+                            ("White-Black Income Gap", "wb_gap")
+                        ]
+                    ),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (12, 12)}
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(
+                        output_widget("map_display")
+                    ),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (12, 12)}
                 )
             ),
             ui.row(ui.h2(ui.span("Justice", style="color:rgba(255,255,255,0.9)"))),
@@ -1687,6 +1711,20 @@ def server(input, output, session):
         )
 
         return fig
+    
+    @app.render_widget
+    def map_display():
+        choice = input.map_choice()
+        if choice == "edu":
+            return plot_edu
+        elif choice == "prison":
+            return plot_prison
+        elif choice == "edu_share":
+            return plot_edu_share
+        elif choice == "mobility":
+            return plot_mobility
+        elif choice == "wb_gap":
+            return fig_wb_gap
 
     @output
     @render_widget
