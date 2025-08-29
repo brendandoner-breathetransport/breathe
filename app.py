@@ -119,6 +119,7 @@ f150 = read_data(folder='economy', file_name="f150.csv")
 healthcare_cost_per_capita = read_data(folder='healthcare', file_name='healthcare_cost_per_capita.csv')
 healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcare_life_expectancy.csv')
 healthcare_infant_mortality = read_data(folder='healthcare', file_name='healthcare_infant_mortality.csv')
+healthcare_maternal_mortality = read_data(folder='healthcare', file_name='healthcare_maternal_mortality.csv')
 healthcare_suicide = read_data(folder='healthcare', file_name='healthcare_suicide_rates.csv')
 
 #-----------------------------------------------------------------------------------------
@@ -129,6 +130,16 @@ mobility_international = read_data(folder='american_dream', file_name='mobility_
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+# Environment
+#-----------------------------------------------------------------------------------------
+electricity_cost = (
+    read_data(folder='environment', file_name='levelized_cost_of_energy_comparison_lazard.csv')
+    .sort(['LCOE_Low_USD_MWh'], descending=True)
+)
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+
 axis_title_income = "<b>income/yr average</b>"
 axis_title_income_format = ',.2s'
 
@@ -829,10 +840,18 @@ app_ui = ui.page_fillable(
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_healthcare_infant_mortality")),
-                    ui.card(output_widget("plot_healthcare_suicide")),
+                    ui.card(output_widget("plot_healthcare_maternal_mortality")),
                     col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
                 )
             ),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(output_widget("plot_healthcare_suicide")),
+                    # ui.card(output_widget("plot_healthcare_suicide")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                )
+            ),
+
         ),
         # --------------------------------------------------------------------------------------------------
         # Justice
@@ -857,8 +876,21 @@ app_ui = ui.page_fillable(
         ui.nav_panel(
             "Environment",
             # Air & Water
-            ui.row(ui.h1(ui.span(HTML("How much are we polluting?"),
-                                 style="color:rgba(255,255,255,0.9)"))),
+            ui.row(
+                ui.h1(
+                    ui.span(HTML("Fossil fuels are not the cheapest sources for energy."),
+                                 style="color:rgba(255,255,255,0.9)")
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(output_widget("plot_electricity_cost")),
+                    # ui.card(output_widget("plot_black_jail")),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                    # Stack on mobile, side-by-side on desktop
+                )
+            ),
+
             # ui.row(
             #     ui.layout_columns(
             #         ui.card(ui.h3(ui.span("air (standards, time) vs countries", style="color:rgba(0,0,0,0.9)"))),
@@ -1875,6 +1907,20 @@ def server(input, output, session):
 
     @output
     @render_widget
+    def plot_healthcare_maternal_mortality():
+        fig = plot_timeseries_multiple_countries(
+            data=healthcare_maternal_mortality,
+            title="Mother Mortality",
+            yaxis_title="deaths per 100,000 births",
+            dark_mode=input.dark_mode(),
+            xaxis_title=f"{sources['healthcare']}",
+        )
+        return fig
+
+
+
+    @output
+    @render_widget
     def plot_healthcare_suicide():
         fig = plot_timeseries_multiple_countries(
             data=healthcare_suicide,
@@ -1883,6 +1929,115 @@ def server(input, output, session):
             dark_mode=input.dark_mode(),
             xaxis_title=f"{sources['healthcare']}",
         )
+        return fig
+
+    @output
+    @render_widget
+    def plot_electricity_cost():
+        colors = {
+            "Renewable Energy": "rgb(60, 179, 113, 0.9)",
+            "Conventional Energy": "rgb(139, 129, 130, 0.9)",
+        }
+        counts = {
+            "Renewable Energy": 0,
+            "Conventional Energy": 0,
+        }
+
+        # Create the figure
+        fig = go.Figure()
+
+        # Add renewable energy technologies
+        for technology in electricity_cost.select(["Technology"]).to_numpy().flatten():
+            row = (
+                electricity_cost
+                .filter(pl.col('Technology') == technology)
+            )
+            category = row['Category'].to_numpy()[0]
+            counts[category] += 1
+            fig.add_trace(go.Scatter(
+                x=[row['LCOE_Low_USD_MWh'].to_numpy().flatten()[0], row['LCOE_High_USD_MWh'].to_numpy().flatten()[0]],
+                y=[row['Technology'].to_numpy().flatten()[0], row['Technology'].to_numpy().flatten()[0]],
+                mode='lines+markers',
+                line=dict(color=colors[category], width=6),
+                marker=dict(size=8, color=colors[category]),
+                name=category if counts[category] <= 1 else '',
+                showlegend=True if counts[category] <= 1 else False,
+                hovertemplate=f"<b>{row['Technology']}</b><br>" +
+                              f"LCOE Range: ${row['LCOE_Low_USD_MWh']}-${row['LCOE_High_USD_MWh']}/MWh<br>" +
+                              f"<extra></extra>"
+            ))
+
+        # Update layout
+        fig.update_layout(
+            title={
+                'text': "Cost of Electricity<br><sub>Ranges by Source</sub>",
+                'x': 0.5,
+                'xanchor': 'center',
+                'font': {'size': 16}
+            },
+            xaxis=dict(
+                title='$ / megawatt hour',
+                showgrid=True,
+                gridcolor='lightgray',
+                range=[0, 300]
+            ),
+            yaxis=dict(
+                title='Technology',
+                showgrid=True,
+                gridcolor='lightgray',
+                categoryorder='array',
+                categoryarray=list(electricity_cost['Technology'].to_numpy().flatten()),
+            ),
+            # width=1000,
+            # height=800,
+            plot_bgcolor='white',
+            legend=dict(
+                x=0.7,
+                y=0.98,
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='gray',
+                borderwidth=1
+            ),
+            # annotations=[
+            #     dict(
+            #         text="Source: Lazard and Roland Berger estimates and publicly available information",
+            #         xref="paper", yref="paper",
+            #         x=0.5, y=-0.12,
+            #         showarrow=False,
+            #         font=dict(size=10, color="gray"),
+            #         xanchor="center"
+            #     )
+            # ],
+            template=get_color_template(input.dark_mode()),
+            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+        )
+
+        # fig.update_layout(
+        #     title=dict(
+        #         text=f"<b>Upward Mobility Breakdown</b><br><sup>Fixed income growth, impact of Top 1% taking more</sup>",
+        #     ),
+        #     title_x=0.5,
+        #     yaxis_title=f"% of 30 year olds that earn more than parents",
+        #     xaxis_title=f"{sources['american_dream']}",
+        #     xaxis=dict(
+        #         fixedrange=config['fixedrange'],  # This prevents zooming
+        #         range=[data['year'].min()-4, data['year'].max()+15],
+        #     ),
+        #     yaxis=dict(
+        #         range=[yaxis_min, yaxis_max],
+        #         tickformat='.0%',
+        #         fixedrange=config['fixedrange'],  # This prevents zooming
+        #     ),
+            # showlegend=False,
+        # )
+        #
+        # for trace in fig['data']:
+        #     if 'NONE' in trace['name']:
+        #         trace['showlegend'] = False
+
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
+
         return fig
 
 
