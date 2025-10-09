@@ -4,8 +4,14 @@ import polars as pl
 import plotly
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.express as px
 import pickle
-import logging
+import logging 
+import us
+import matplotlib.pyplot as plt
+import plotly.express as px
+import us
+
 # Configure basic logging to display INFO messages and above
 logging.basicConfig(level=logging.INFO)
 # Get a logger instance for the current module
@@ -117,6 +123,287 @@ healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcar
 american_dream_kids = read_data(folder='american_dream', file_name='american_dream_kids.csv')
 mobility_international = read_data(folder='american_dream', file_name='mobility_international.csv')
 state_income_wb = read_data(folder='american_dream', file_name='state_income_wb.csv')
+df_spending = pd.read_csv(str(Path(__file__).parent / "data/american_dream/per_capita_spending_by_state.csv"))
+df_mobility = pd.read_csv(str(Path(__file__).parent / "data/american_dream/tract_outcomes_state.csv"))
+
+
+# --- Plot Definitions (global scope) ---
+# --- plot_mobility_rank (Plotly version) ---
+
+def create_plot_mobility_entitlement(df_mobility, population):
+    # Load the Excel file
+    excel_path = "/american_dream/22slsstab1.xlsx"  # Located in data_raw/
+    directory_raw = str(Path(__file__).parent / 'data/')
+    xls = pd.ExcelFile(directory_raw + excel_path)
+
+    # Step 1: Load state names from header row
+    header_df = pd.read_excel(xls, sheet_name=xls.sheet_names[0], nrows=9)
+    state_row = header_df.iloc[7]
+    state_names = [s for s in state_row[2:].values[::5] if isinstance(s, str)]
+    state_names
+
+    # Step 2: Load actual data starting from row 10
+    raw_df = pd.read_excel(xls, sheet_name=xls.sheet_names[0], skiprows=10)
+    raw_df
+    # Helper to extract every 5th column for each state
+    def extract_row_values(df, row_index, start_col=2, step=5, state_count=None):
+        row = df.iloc[row_index]
+        values = row[start_col::step].astype(float).values
+        return values[:state_count] if state_count else values
+
+    # Row indexes for spending categories
+    ROW_TOTAL = 71     # "Total Direct General Expenditure"
+    ROW_ENTITLEMENT = 96  # "Public Welfare" (Entitlement spending)
+    ROW_POP = 20        # Population
+
+    # Extract and normalize
+    state_count = len(state_names)
+    total_spending = extract_row_values(raw_df, ROW_TOTAL, state_count=state_count)
+    entitlement_spending = extract_row_values(raw_df, ROW_ENTITLEMENT, state_count=state_count)
+    latest_year = population['year'].max()
+    # Fix: Use Polars .filter() instead of boolean mask
+    pop_latest = population.filter(pl.col('year') == latest_year)
+    # If you need pandas, add .to_pandas()
+
+    # Prepare state names for merge (assume state_names from previous cells)
+    # If state_names is not available, you may need to reload or extract it again
+    state_names = [s for s in state_row[2:].values[::5] if isinstance(s, str)]
+
+    # Create DataFrame for state spending (from previous extraction)
+    spending_df = pd.DataFrame({
+        'State': state_names,
+        'Total Spend ($1000s)': total_spending,
+        'Entitlement Spend ($1000s)': entitlement_spending
+    })
+
+    # Merge with population data (assume US states only, not DC/territories)
+    # You may need a mapping from state name to population if population.csv is national only
+    # For demonstration, use national population for all states (adjust if you have state-level population)
+    spending_df['Population'] = int(pop_latest['population'].values[0])
+
+    # Calculate per capita spending
+    spending_df['Total Spend Per Capita ($)'] = (spending_df['Total Spend ($1000s)'] * 1000) / spending_df['Population']
+    spending_df['Entitlement Spend Per Capita ($)'] = (spending_df['Entitlement Spend ($1000s)'] * 1000) / spending_df['Population']
+    spending_df_clean = spending_df[spending_df['State'] != 'United States Total'].copy()
+    spending_df_clean['State Abbr'] = spending_df_clean['State'].map(lambda name: us.states.lookup(name).abbr if us.states.lookup(name) else None)
+
+    # Assume df_mobility is already loaded and contains 'State' and 'Upward Mobility (P25 Income Rank)' columns
+    # Merge with entitlement fraction data
+    mobility_map_df = spending_df_clean.merge(df_mobility[['State', 'Upward Mobility (P25 Income Rank)']], on='State', how='left')
+
+    # Add state abbreviations for mapping
+    mobility_map_df['State Abbr'] = mobility_map_df['State'].map(lambda name: us.states.lookup(name).abbr if us.states.lookup(name) else None)
+
+    # Use merged DataFrame from previous cell
+    mobility_map_df['State Abbr'] = mobility_map_df['State'].map(lambda name: us.states.lookup(name).abbr if us.states.lookup(name) else None)
+
+    fig = px.choropleth(
+        mobility_map_df,
+        locations='State Abbr',
+        locationmode='USA-states',
+        color='Upward Mobility (P25 Income Rank)',
+        scope='usa',
+        color_continuous_scale='OrRd',
+        hover_data={'Entitlement Fraction': True},
+        labels={'Upward Mobility (P25 Income Rank)': 'Mobility'},
+        title='Upward Mobility Entitlement Efficiency Spend by State'
+    )
+
+def create_plot_mobility_rank(df_mobility, df_spending):
+    fips_to_state = {
+        1: "Alabama", 2: "Alaska", 4: "Arizona", 5: "Arkansas", 6: "California",
+        8: "Colorado", 9: "Connecticut", 10: "Delaware", 11: "District of Columbia",
+        12: "Florida", 13: "Georgia", 15: "Hawaii", 16: "Idaho", 17: "Illinois",
+        18: "Indiana", 19: "Iowa", 20: "Kansas", 21: "Kentucky", 22: "Louisiana",
+        23: "Maine", 24: "Maryland", 25: "Massachusetts", 26: "Michigan", 27: "Minnesota",
+        28: "Mississippi", 29: "Missouri", 30: "Montana", 31: "Nebraska", 32: "Nevada",
+        33: "New Hampshire", 34: "New Jersey", 35: "New Mexico", 36: "New York",
+        37: "North Carolina", 38: "North Dakota", 39: "Ohio", 40: "Oklahoma", 41: "Oregon",
+        42: "Pennsylvania", 44: "Rhode Island", 45: "South Carolina", 46: "South Dakota",
+        47: "Tennessee", 48: "Texas", 49: "Utah", 50: "Vermont", 51: "Virginia",
+        53: "Washington", 54: "West Virginia", 55: "Wisconsin", 56: "Wyoming"
+    }
+    df_mobility["State"] = df_mobility["state"].map(fips_to_state)
+    df_mobility = df_mobility.rename(columns={"kfr_pooled_pooled_p25": "Upward Mobility (P25 Income Rank)"})
+    df_merged = df_spending.merge(df_mobility, on="State", how="inner")
+    df_merged["State Abbr"] = df_merged["State"].map(lambda x: us.states.lookup(x).abbr if us.states.lookup(x) else None)
+    fig = px.choropleth(
+        df_merged,
+        locations="State Abbr",
+        locationmode="USA-states",
+        color="Upward Mobility (P25 Income Rank)",
+        scope="usa",
+        color_continuous_scale="Purples",
+        title="Upward Mobility of Children from Low-Income Families by State"
+    )
+    fig.update_layout(
+        dragmode=False,
+        geo=dict(
+            projection_scale=.96,  # Make map larger
+            center=dict(lat=37.0902, lon=-95.7129),
+            showcountries=True,
+            showland=True,
+            showlakes=True,
+            showrivers=True,
+            showcoastlines=True,
+            domain={'x': [0, 0.95], 'y': [0, 1]}  # Use more horizontal space for map
+        ),
+        coloraxis_colorbar=dict(
+            x=1.01,
+            thickness=12,  # Make guide thinner
+            tickfont=dict(size=10),  # Smaller font for guide
+            title="Mobility Score"
+        ),
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
+        margin=dict(r=5)
+    )
+    fig.update_layout(
+        modebar_remove=["zoom", "pan", "select", "lasso2d", "zoomIn", "zoomOut", "autoScale", "resetScale"]
+    )
+    return fig
+# --- Functions to create plots ---
+def create_plot_mobility(df_mobility, df_spending):
+    fips_to_state = {
+        1: "Alabama", 2: "Alaska", 4: "Arizona", 5: "Arkansas", 6: "California",
+        8: "Colorado", 9: "Connecticut", 10: "Delaware", 11: "District of Columbia",
+        12: "Florida", 13: "Georgia", 15: "Hawaii", 16: "Idaho", 17: "Illinois",
+        18: "Indiana", 19: "Iowa", 20: "Kansas", 21: "Kentucky", 22: "Louisiana",
+        23: "Maine", 24: "Maryland", 25: "Massachusetts", 26: "Michigan", 27: "Minnesota",
+        28: "Mississippi", 29: "Missouri", 30: "Montana", 31: "Nebraska", 32: "Nevada",
+        33: "New Hampshire", 34: "New Jersey", 35: "New Mexico", 36: "New York",
+        37: "North Carolina", 38: "North Dakota", 39: "Ohio", 40: "Oklahoma", 41: "Oregon",
+        42: "Pennsylvania", 44: "Rhode Island", 45: "South Carolina", 46: "South Dakota",
+        47: "Tennessee", 48: "Texas", 49: "Utah", 50: "Vermont", 51: "Virginia",
+        53: "Washington", 54: "West Virginia", 55: "Wisconsin", 56: "Wyoming"
+    }
+    df_mobility["State"] = df_mobility["state"].map(fips_to_state)
+    df_mobility = df_mobility.rename(columns={"kfr_pooled_pooled_p25": "Upward Mobility (P25 Income Rank)"})
+    df_merged = df_spending.merge(df_mobility, on="State", how="inner")
+    df_merged["Mobility Efficiency Score"] = (df_merged["Upward Mobility (P25 Income Rank)"] / df_merged["Education Per Capita ($)"] ) * 10000
+    df_merged["State Abbr"] = df_merged["State"].apply(lambda x: us.states.lookup(x).abbr if us.states.lookup(x) else None)
+    fig = px.choropleth(
+        df_merged,
+        locations="State Abbr",
+        locationmode="USA-states",
+        color="Mobility Efficiency Score",
+        color_continuous_scale="YlGnBu",
+        scope="usa",
+        title="Mobility Efficiency Score by State",
+        labels={"Mobility Efficiency Score": "Mobility /$s Invested"}
+    )
+    fig.update_layout(
+        dragmode=False,
+        geo=dict(
+            projection_scale=1.0,
+            center=dict(lat=37.0902, lon=-95.7129),
+            showcountries=True,
+            showland=True,
+            showlakes=True,
+            showrivers=True,
+            showcoastlines=True,
+            domain={'x': [0, 0.92], 'y': [0, 1]}
+        ),
+        coloraxis_colorbar=dict(
+            x=1.01,
+            thickness=18,
+            tickfont=dict(size=12),
+            title="Mobility Efficiency Score"  # Shorter guide name
+        ),
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
+        margin=dict(r=10)
+    )
+    fig.update_layout(
+        modebar_remove=["zoom", "pan", "select", "lasso2d", "zoomIn", "zoomOut", "autoScale", "resetScale"]
+    )
+    return fig
+
+def create_plot_prison(df_states):
+    # Add State Abbr column for choropleth
+    df_states["State Abbr"] = df_states["State"].apply(lambda x: us.states.lookup(x).abbr if us.states.lookup(x) else None)
+    # Calculate Education % of Total
+    df_states["Education % of Total"] = df_states["Education Per Capita ($)"] / (df_states["Education Per Capita ($)"] + df_states["Prison Per Capita ($)"]) * 100
+    fig = px.choropleth(
+        df_states,
+        locations="State Abbr",
+        locationmode="USA-states",
+        color="Education % of Total",
+        scope="usa",
+        color_continuous_scale="Viridis",
+        labels={"Education % of Total": "% to Education"},
+        title="Percentage of Per Capita Spending Allocated to Education by State"
+    )
+    fig.update_layout(
+        dragmode=False,
+        geo=dict(
+            projection_scale=0.96,
+            center=dict(lat=37.0902, lon=-95.7129),
+            showcountries=True,
+            showland=True,
+            showlakes=True,
+            showrivers=True,
+            showcoastlines=True,
+            domain={'x': [0, 0.92], 'y': [0, 1]}
+        ),
+        coloraxis_colorbar=dict(
+            x=1.01,
+            thickness=18,
+            tickfont=dict(size=12)
+        ),
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
+        margin=dict(r=10)
+    )
+    fig.update_layout(
+        modebar_remove=["zoom", "pan", "select", "lasso2d", "zoomIn", "zoomOut", "autoScale", "resetScale"]
+    )
+    return fig
+
+# --- Create global plot variables ---
+plot_mobility_rank = create_plot_mobility_rank(df_mobility=df_mobility, df_spending=df_spending)
+plot_mobility = create_plot_mobility(df_mobility=df_mobility, df_spending=df_spending)
+plot_prison = create_plot_prison(df_states=df_spending)
+plot_mobility_entitlement = create_plot_mobility_entitlement(df_mobility=df_mobility, population=population)
+
+state_income_wb = state_income_wb.with_columns([
+    (pl.col("kfr_white_pooled_p50") - pl.col("kfr_black_pooled_p50")).alias("White - Black Gap")
+])
+fig_wb_gap = px.choropleth(
+    state_income_wb,
+    locations="State Abbr",
+    locationmode="USA-states",
+    color="White - Black Gap",
+    scope="usa",
+    color_continuous_scale="Reds",
+    title="White vs Black Household Income Gap by State (Mainstreet)",
+    labels={"White - Black Gap": "Income Gap ($)"}
+)
+fig_wb_gap.update_layout(
+    dragmode=False,
+    geo=dict(
+        projection_scale=.96,  # Make map larger
+        center=dict(lat=37.0902, lon=-95.7129),
+        showcountries=True,
+        showland=True,
+        showlakes=True,
+        showrivers=True,
+        showcoastlines=True,
+        domain={'x': [0, 0.95], 'y': [0, 1]}  # Use more horizontal space for map
+    ),
+    coloraxis_colorbar=dict(
+        x=1.01,
+        thickness=12,  # Make guide thinner
+        tickfont=dict(size=10),  # Smaller font for guide
+        title="Income Gap ($)"
+    ),
+    xaxis_fixedrange=True,
+    yaxis_fixedrange=True,
+    margin=dict(r=5)
+)
+fig_wb_gap.update_layout(
+    modebar_remove=["zoom", "pan", "select", "lasso2d", "zoomIn", "zoomOut", "autoScale", "resetScale"]
+)
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
@@ -207,16 +494,7 @@ colors_tax_changes = {
     'down': 'rgba(230, 78, 67,    0.7)',
 }
 
-fig_wb_gap = px.choropleth(
-    state_income_wb,
-    locations="State Abbr",
-    locationmode="USA-states",
-    color="White - Black Gap",
-    scope="usa",
-    color_continuous_scale="Reds",
-    title="White vs Black Household Income Gap by State (Mainstreet)",
-    labels={"White - Black Gap": "Income Gap ($)"}
-)
+
 
 
 def get_color_template(mode):
@@ -784,13 +1062,13 @@ app_ui = ui.page_fillable(
                     ui.input_select(
                         id="map_choice",
                         label="Select View",
-                        choices=[
-                            ("Education Spending", "edu"),
-                            ("Prison Spending", "prison"),
-                            ("Education % of Total", "edu_share"),
-                            ("Mobility Rank", "mobility"),
-                            ("White-Black Income Gap", "wb_gap")
-                        ]
+                            choices=[
+                                "education_vs_prison_investment",
+                                "mobility_efficiency",
+                                "mobility_rank",
+                                "race_income_gap",
+                                "mobility_entitlement"
+                            ]
                     ),
                     col_widths={"xs": (12, 12), "sm": (12, 12), "md": (12, 12)}
                 )
@@ -1461,7 +1739,7 @@ def server(input, output, session):
             )
             .with_columns(
                 price_ratio = pl.col('price')/pl.col(income_level)
-            )
+                       )
         )
 
         fig = go.Figure(data=(
@@ -1493,7 +1771,7 @@ def server(input, output, session):
             yaxis_title="ratio of Ford F-150 price to " + f"<br>{group_name} income/yr average",
             yaxis=dict(
                 range=[yaxis_min, yaxis_max],
-                # tickprefix="$",
+                               # tickprefix="$",
                 tickformat=',.0%',
                 fixedrange=config['fixedrange'],  # This prevents zooming
             ),
@@ -1712,19 +1990,46 @@ def server(input, output, session):
 
         return fig
     
-    @app.render_widget
+    @output
+    @render_widget
     def map_display():
         choice = input.map_choice()
-        if choice == "edu":
-            return plot_edu
-        elif choice == "prison":
-            return plot_prison
-        elif choice == "edu_share":
-            return plot_edu_share
-        elif choice == "mobility":
-            return plot_mobility
-        elif choice == "wb_gap":
-            return fig_wb_gap
+        import plotly.graph_objects as go
+        try:
+            result = None
+            if choice == "education_vs_prison_investment":
+                logger.info(f"Returning plot_prison for map_display, type: {type(plot_prison)}")
+                logger.info(f"plot_prison summary: {plot_prison.to_json()[:200]}")
+                assert plot_prison is not None, "plot_prison is None"
+                result = plot_prison
+            elif choice == "mobility_efficiency":
+                logger.info(f"Returning plot_mobility for map_display, type: {type(plot_mobility)}")
+                logger.info(f"plot_mobility summary: {plot_mobility.to_json()[:200]}")
+                assert plot_mobility is not None, "plot_mobility is None"
+                result = plot_mobility
+            elif choice == "mobility_rank":
+                logger.info(f"Returning plot_mobility_rank for map_display, type: {type(plot_mobility_rank)}")
+                logger.info(f"plot_mobility_rank summary: {plot_mobility_rank.to_json()[:200]}")
+                assert plot_mobility_rank is not None, "plot_mobility_rank is None"
+                result = plot_mobility_rank
+            elif choice == "race_income_gap":
+                logger.info(f"Returning fig_wb_gap for map_display, type: {type(fig_wb_gap)}")
+                logger.info(f"fig_wb_gap summary: {fig_wb_gap.to_json()[:200]}")
+                assert fig_wb_gap is not None, "fig_wb_gap is None"
+                result = fig_wb_gap
+            elif choice == "mobility_entitlement":
+                logger.info(f"Returning plot_mobility_entitlement for map_display, type: {type(plot_mobility_entitlement)}")
+                logger.info(f"plot_mobility_entitlement summary: {plot_mobility_entitlement.to_json()[:200]}")
+                assert plot_mobility_entitlement is not None, "plot_mobility_entitlement is None"
+                result = plot_mobility_entitlement
+            else:
+                logger.warning(f"Unknown map_display choice: {choice}")
+                result = "No map selected or unknown option."
+            logger.info(f"map_display returning: type={type(result)}, value={result}")
+            return result
+        except Exception as e:
+            logger.error(f"Error in map_display for choice {choice}: {e}")
+            return None
 
     @output
     @render_widget

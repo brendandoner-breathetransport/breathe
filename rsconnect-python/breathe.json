@@ -3,9 +3,9 @@
         "server_url": "https://api.shinyapps.io",
         "filename": "/Users/brentondickerson/git/breathe",
         "app_url": "https://breathe-brenton-dickerson.shinyapps.io/test1/",
-        "app_id": 15201565,
+        "app_id": 15405873,
         "app_guid": null,
-        "title": "US Social Metrics",
+        "title": "test",
         "app_mode": "python-shiny",
         "app_store_version": 1
     }

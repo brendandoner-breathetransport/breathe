@@ -9,3 +9,4 @@ shinylive
 shinywidgets
 pyarrow
 matplotlib
+us
