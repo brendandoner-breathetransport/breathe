@@ -105,8 +105,8 @@ with open(get_path(folder='race', file_name='counties_json.pickle'), 'rb') as f:
 n_workers_full_time = read_data(folder='economy', file_name='n_workers_full_time.csv')
 shares_wid = read_data(folder='economy', file_name="shares_wid.csv")
 shares_wid_full_distribution = read_data(folder='economy', file_name="shares_wid_full_distribution.csv")
-shares_data = shares_wid
-year_max = shares_data.select(pl.max('year')).to_numpy().flatten()[0]
+
+year_max = shares_wid.select(pl.max('year')).to_numpy().flatten()[0]
 tax = read_data(folder='economy', file_name="tax.csv")
 income_total = read_data(folder='economy', file_name="income_total.csv")
 population = read_data(folder='economy', file_name="population.csv")
@@ -445,7 +445,7 @@ def get_text(text, prefix, suffix, format, context):
     """
     return f"<span style='color:rgb(0, 0, 0)'><b>{prefix}{text:{format}}{suffix}</b><br>{context}</span>"
 
-def get_highlights(data, col_date, col_metric, number_type, max_or_min):
+def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_min):
     format = {
         'thousands': ".0f",
         'percentage': ".0%",
@@ -539,26 +539,24 @@ def get_highlights(data, col_date, col_metric, number_type, max_or_min):
 
     return highlights
 
-def plot_period_shading(fig):
-    # fig.add_vrect(
-    #     x0=1929,
-    #     x1=1939,
-    #     line_width=0,
-    #     fillcolor='darkblue',
-    #     opacity=0.05,
-    #     annotation_text='<b>Great Depression</b>',
-    #     annotation_position='top left',
-    # )
+def plot_period_dashed_line(fig, year=None, text=None):
     fig.add_vline(
         x=1980,
         line=dict(color='rgba(0,0,0,0.9)', width=2, dash='dash', ),
-        # secondary_y=True,
         annotation_text="1980",
         annotation_position="top right",
         annotation_font_color="black",
     )
+    if year is not None:
+        fig.add_vline(
+            x=year,
+            line=dict(color='rgba(0,0,0,0.9)', width=2, dash='dash', ),
+            annotation_text=text,
+            annotation_position="top right",
+            annotation_font_color="black",
+        )
 
-def plot_economic_policy_shading(fig):
+def plot_period_shading(fig):
     fig.add_vrect(
         x0=1938,
         x1=1979,
@@ -734,6 +732,22 @@ app_ui = ui.page_fillable(
                             # "Bottom 50% to Top 1% Gap": ui.span("Bottom 50% to Top 1% Gap", style=f"color:rgba(255,255,255,0.6)"),
                         },
                         selected="Bottom 50%",
+                        inline=True,
+                    ),
+                    col_widths=(12,),
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
+                    ui.input_radio_buttons(
+                        id='country',
+                        label=None,
+                        choices={
+                            country: ui.span(country, style=f"color:rgba(255,255,255,0.6)")
+                            for country in
+                            shares_wid.select(['country']).unique().sort(['country']).to_numpy().flatten().tolist()
+                        },
+                        selected="usa",
                         inline=True,
                     ),
                     col_widths=(12,),
@@ -1135,35 +1149,71 @@ def server(input, output, session):
         Pre-tax national income Top 1% share
         :return:
         """
+        country = input.country()
         income_level = income_levels[input.income_level()]
-        group_name = group_names[income_level]
-        usa = shares_data.filter(pl.col('country') == 'usa').filter(pl.col('year') >= 1880)
+        data = shares_wid.filter(pl.col('country') == country).filter(pl.col('year') >= 1880)
+        usa = shares_wid.filter(pl.col('country') == 'usa').filter(pl.col('year') >= 1880)
+        dark_mode=input.dark_mode()
 
         fig = go.Figure(data=(
-            [
-                go.Scatter(
-                    name='NONE',
-                    x=usa['year'],
-                    y=usa[income_level],
-                    line=dict(color=color_light_dark[input.dark_mode()], width=3),
-                    text=f"<b>U.S.</b>",
-                ),
-            ] + get_highlights(
-                data=usa,
-                col_date='year',
-                col_metric=income_level,
-                number_type='thousands',
-                max_or_min='max',
-            )
+                [
+                    go.Scatter(
+                        name=country,
+                        x=data['year'],
+                        y=data[income_level],
+                        line=dict(color=color_light_dark[dark_mode], width=3),
+                        text=f"<b>{country}</b>",
+                    ),
+                ]
+                +
+                get_highlights_line_min_max(
+                    data=data,
+                    col_date='year',
+                    col_metric=income_level,
+                    number_type='thousands',
+                    max_or_min='max',
+                )
+                +
+                [
+                    go.Scatter(
+                        name='usa',
+                        x=usa['year'],
+                        y=usa[income_level],
+                        line=dict(color='rgba(0,0,0,0.2)', width=3),
+                        text=f"<b>usa</b>",
+                    ),
+                ]
+                +
+                get_highlights_line_min_max(
+                    data=usa,
+                    col_date='year',
+                    col_metric=income_level,
+                    number_type='thousands',
+                    max_or_min='max',
+                )
         ))
 
-        plot_period_shading(fig=fig)
-        plot_economic_policy_shading(fig=fig)
+        if country in ['canada', 'france']:
+            year = {
+                'canada':2004,
+                'france':1995,
+            }[country]
+            text = {
+                'canada': '2004<br>canadian<br>corporate<br>money<br>ban',
+                'france': '1995<br>french<br>corporate<br>money<br>ban',
+            }[country]
 
-        yaxis_min, yaxis_max = get_yaxis_range(y_data=usa[income_level])
+        else:
+            year=None
+            text=None
+
+        plot_period_dashed_line(fig=fig, year=year, text=text)
+        plot_period_shading(fig=fig)
+
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=data[income_level])
         fig.update_layout(
             title=dict(
-                text=f"<b>{input.income_level() if input.income_level()!='Gap' else 'the ' + input.income_level() + ' of'} Paycheck</b><br><sup>{year_max} dollars</sup>",
+                text=f"<b>{income_level if income_level != 'Gap' else 'the ' + income_level + ' of'} Paycheck</b><br><sup>{year_max} dollars</sup>",
                 #
             ),
             title_x=0.5,
@@ -1179,12 +1229,10 @@ def server(input, output, session):
                 range=layout_economy['range'],
                 tickmode='array',
                 fixedrange=config['fixedrange'],  # This prevents zooming
-                # tickvals=layout_economy['tickvals'],
-                # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+            template=get_color_template(dark_mode),
+            paper_bgcolor=get_background_color_plotly(dark_mode),
             # dragmode=False,  # ← This disables drag interactions
         )
 
@@ -1201,10 +1249,11 @@ def server(input, output, session):
 
         income_level=income_levels[input.income_level()]
         group_name = group_names[income_level]
+        dark_mode=input.dark_mode()
 
         income_latest = (
-            shares_data
-            .filter(pl.col('year') == shares_data['year'].max())
+            shares_wid
+            .filter(pl.col('year') == shares_wid['year'].max())
             .sort([income_level,], descending=[False,])
         )
         countries = income_latest.select('country').to_numpy().flatten()
@@ -1248,8 +1297,8 @@ def server(input, output, session):
                 fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             showlegend=False,
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+            template=get_color_template(dark_mode),
+            paper_bgcolor=get_background_color_plotly(dark_mode),
         )
 
         fig = go.FigureWidget(fig)
@@ -1268,11 +1317,12 @@ def server(input, output, session):
         """
         income_level = income_levels[input.income_level()]
         group_name = group_names[income_level]
+        dark_mode=input.dark_mode()
         # "bottom_50"
         # "top_1"
-        usa = shares_data.filter(pl.col('country') == 'usa').filter(pl.col('year') >= 1880)
+        usa = shares_wid.filter(pl.col('country') == 'usa').filter(pl.col('year') >= 1880)
         dem = (
-            shares_data
+            shares_wid
             .filter(pl.col('country').is_in([
                 'canada',
                 'germany',
@@ -1284,7 +1334,7 @@ def server(input, output, session):
             ]))
         )
         auth = (
-            shares_data
+            shares_wid
             .filter(pl.col('country').is_in(['russia', 'china']))
         )
 
@@ -1294,10 +1344,10 @@ def server(input, output, session):
                     name='NONE',
                     x=usa['year'],
                     y=usa[income_level],
-                    line=dict(color=color_light_dark[input.dark_mode()], width=3),
+                    line=dict(color=color_light_dark[dark_mode], width=3),
                     text=f"<b>U.S.</b>",
                 ),
-            ] + get_highlights(
+            ] + get_highlights_line_min_max(
                 data=usa,
                 col_date='year',
                 col_metric=income_level,
@@ -1306,8 +1356,8 @@ def server(input, output, session):
             )
         ))
 
-        plot_period_shading(fig)
-        plot_economic_policy_shading(fig=fig)
+        plot_period_dashed_line(fig)
+        plot_period_shading(fig=fig)
 
 
         fig.update_layout(
@@ -1332,8 +1382,8 @@ def server(input, output, session):
                 # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+            template=get_color_template(dark_mode),
+            paper_bgcolor=get_background_color_plotly(dark_mode),
         )
 
         for trace in fig['data']:
@@ -1358,7 +1408,8 @@ def server(input, output, session):
         # "top_1"
         income_level = income_levels[input.income_level()]
         group_name = group_names[income_level]
-        usa = shares_data.filter(pl.col('country') == 'usa').filter(pl.col('year') > 1880)
+        usa = shares_wid.filter(pl.col('country') == 'usa').filter(pl.col('year') > 1880)
+        dark_mode=input.dark_mode()
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -1368,10 +1419,10 @@ def server(input, output, session):
                     name='NONE',
                     x=usa['year'],
                     y=usa[income_level],
-                    line=dict(color=color_light_dark[input.dark_mode()], width=3),
+                    line=dict(color=color_light_dark[dark_mode], width=3),
                     text="<b>U.S.</b>",
                 ),
-            ] + get_highlights(
+            ] + get_highlights_line_min_max(
                 data=usa,
                 col_date='year',
                 col_metric=income_level,
@@ -1421,8 +1472,8 @@ def server(input, output, session):
             secondary_y=True,
         )
 
+        plot_period_dashed_line(fig=fig)
         plot_period_shading(fig=fig)
-        plot_economic_policy_shading(fig=fig)
 
         yaxis_min, yaxis_max = get_yaxis_range(y_data=usa[income_level])
         fig.update_layout(
@@ -1455,8 +1506,8 @@ def server(input, output, session):
                 # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+            template=get_color_template(dark_mode),
+            paper_bgcolor=get_background_color_plotly(dark_mode),
             legend=dict(
                 x=0.01,  # x position (0 = left, 1 = right)
                 y=0.99,  # y position (0 = bottom, 1 = top)
@@ -1482,11 +1533,11 @@ def server(input, output, session):
         :return:
         """
         income_level = income_levels[input.income_level()]
-        group_name = group_names[income_level]
         usa = (
-            shares_data.filter(pl.col('country') == 'usa')
+            shares_wid.filter(pl.col('country') == 'usa')
             .filter(pl.col('year') >= 1880)
         )
+        dark_mode=input.dark_mode()
         data = (
             f150
             .join(
@@ -1505,10 +1556,10 @@ def server(input, output, session):
                     name='NONE',
                     x=data['year'],
                     y=data['price_ratio'],
-                    line=dict(color=color_light_dark[input.dark_mode()], width=3),
+                    line=dict(color=color_light_dark[dark_mode], width=3),
                     text=f"<b>U.S.</b>",
                 ),
-            ] + get_highlights(
+            ] + get_highlights_line_min_max(
             data=data,
             col_date='year',
             col_metric='price_ratio',
@@ -1517,8 +1568,8 @@ def server(input, output, session):
         )
         ))
 
+        plot_period_dashed_line(fig=fig)
         plot_period_shading(fig=fig)
-        plot_economic_policy_shading(fig=fig)
 
         yaxis_min, yaxis_max = get_yaxis_range(y_data=data['price_ratio'])
         fig.update_layout(
@@ -1543,8 +1594,8 @@ def server(input, output, session):
                 # ticktext=layout_economy['ticktext'],
             ),
             showlegend=True,
-            template=get_color_template(input.dark_mode()),
-            paper_bgcolor=get_background_color_plotly(input.dark_mode()),
+            template=get_color_template(dark_mode),
+            paper_bgcolor=get_background_color_plotly(dark_mode),
         )
 
         for trace in fig['data']:
@@ -1568,7 +1619,7 @@ def server(input, output, session):
     #                 y=american_dream_kids['probability'],
     #                 line=dict(color=color_light_dark[input.dark_mode()], width=3),
     #             )
-    #         ] + get_highlights(
+    #         ] + get_highlights_line_min_max(
     #             data=american_dream_kids,
     #             col_date='cohort_work_year',
     #             col_metric='probability',
@@ -1577,8 +1628,8 @@ def server(input, output, session):
     #         )
     #     )
     #
+    #     plot_period_dashed_line(fig=fig)
     #     plot_period_shading(fig=fig)
-    #     plot_economic_policy_shading(fig=fig)
     #
     #     yaxis_min, yaxis_max = get_yaxis_range(y_data=american_dream_kids['probability'])
     #     fig.update_layout(
@@ -1655,7 +1706,7 @@ def server(input, output, session):
                                 )
                             ),
                         ) for country in countries
-                    ] + get_highlights(
+                    ] + get_highlights_line_min_max(
                 data=data.filter(pl.col('country') == 'United States'),
                 col_date='year',
                 col_metric=col,
@@ -1675,8 +1726,8 @@ def server(input, output, session):
             )
         )
 
+        plot_period_dashed_line(fig=fig)
         plot_period_shading(fig=fig)
-        plot_economic_policy_shading(fig=fig)
 
         yaxis_min, yaxis_max = get_yaxis_range(y_data=data[col])
         fig.update_layout(
@@ -1755,7 +1806,7 @@ def server(input, output, session):
                             )
                         ),
                     ) for country in countries
-                ] + get_highlights(
+                ] + get_highlights_line_min_max(
                 data=data.filter(pl.col('country')=='United States'),
                 col_date='year',
                 col_metric=col,
@@ -1775,8 +1826,8 @@ def server(input, output, session):
             )
         )
 
+        plot_period_dashed_line(fig=fig)
         plot_period_shading(fig=fig)
-        plot_economic_policy_shading(fig=fig)
 
         yaxis_min, yaxis_max = get_yaxis_range(y_data=data[col])
         fig.update_layout(
