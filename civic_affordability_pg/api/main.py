@@ -26,6 +26,23 @@ class AskRequest(BaseModel):
     state_abbrev: str = Field(default="CO", min_length=2, max_length=2)
 
 
+SUPPORTED_QUESTION_GUIDE = {
+    "supported_categories": [
+        "trend summary",
+        "before/after year comparison",
+        "largest affordability gap year",
+        "component comparison",
+        "policy year impact",
+    ],
+    "example_prompts": [
+        "What was the largest affordability gap year?",
+        "Compare before and after 2010 and 2023.",
+        "Compare before and after 2010 and 2023 in inflation adjusted terms.",
+        "How did policy impact in 2020?",
+    ],
+}
+
+
 def _format_float(value: Any) -> str:
     try:
         return f"{float(value):.1f}"
@@ -41,6 +58,48 @@ def _json_safe(value: Any) -> Any:
 
 def _normalize_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [{k: _json_safe(v) for k, v in row.items()} for row in rows]
+
+
+def _validate_question_text(question: str) -> None:
+    q = (question or "").strip().lower()
+    if not q:
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+
+    blocked_patterns = [
+        "drop ",
+        "delete ",
+        "truncate ",
+        "alter ",
+        "insert ",
+        "update ",
+        "select * from",
+        "information_schema",
+        "pg_catalog",
+    ]
+    if any(pattern in q for pattern in blocked_patterns):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This assistant only supports predefined affordability question templates. "
+                "Please ask a trend, comparison, largest-gap, component, or policy-impact question."
+            ),
+        )
+
+
+def _build_grounding(rows: list[dict[str, Any]], state: str) -> dict[str, Any]:
+    years = [
+        int(row["year"])
+        for row in rows
+        if "year" in row and str(row["year"]).isdigit()
+    ]
+    year_min = min(years) if years else None
+    year_max = max(years) if years else None
+    return {
+        "state": state,
+        "rows_used": len(rows),
+        "year_min": year_min,
+        "year_max": year_max,
+    }
 
 
 def _compose_answer(plan_category: str, rows: list[dict[str, Any]], state: str) -> str:
@@ -190,10 +249,17 @@ def get_policy(state_abbrev: str = "CO") -> dict[str, Any]:
 @app.post("/api/ask")
 def ask_data(payload: AskRequest) -> dict[str, Any]:
     state = payload.state_abbrev.upper()
+    _validate_question_text(payload.question)
     try:
         plan = build_query_plan(payload.question, state=state)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"{exc} Supported asks: "
+                + ", ".join(SUPPORTED_QUESTION_GUIDE["supported_categories"])
+            ),
+        ) from exc
 
     # Guardrail: only analytics mart access and read-only SQL templates.
     normalized_sql = " ".join(plan.sql.lower().split())
@@ -221,7 +287,13 @@ def ask_data(payload: AskRequest) -> dict[str, Any]:
 
     normalized_rows = _normalize_rows(rows)
     confidence = _confidence_for_result(plan.category, len(normalized_rows), warnings)
+    grounding = _build_grounding(normalized_rows, state)
     answer_text = _compose_answer(plan.category, normalized_rows, state)
+    if grounding["year_min"] is not None:
+        answer_text += (
+            f" Based on {grounding['rows_used']} row(s) from {grounding['state']} "
+            f"covering {grounding['year_min']} to {grounding['year_max']}."
+        )
 
     return {
         "status": "ok",
@@ -240,6 +312,8 @@ def ask_data(payload: AskRequest) -> dict[str, Any]:
         "table_rows": normalized_rows[:MAX_ROWS],
         "table_columns": list(normalized_rows[0].keys()) if normalized_rows else [],
         "follow_up_suggestions": _follow_up_suggestions(plan.category),
+        "grounding": grounding,
+        "question_guide": SUPPORTED_QUESTION_GUIDE,
         "approved_marts": sorted(ALLOWED_TABLES),
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     }

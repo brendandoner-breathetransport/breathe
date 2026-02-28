@@ -31,7 +31,18 @@ type AskPayload = {
   warnings: string[];
   row_count: number;
   table_rows: Array<Record<string, unknown>>;
+  table_columns: string[];
   approved_marts: string[];
+  grounding: {
+    state: string;
+    rows_used: number;
+    year_min: number | null;
+    year_max: number | null;
+  };
+  question_guide: {
+    supported_categories: string[];
+    example_prompts: string[];
+  };
 };
 
 type ChatMessage = {
@@ -200,7 +211,8 @@ export default function AffordabilityDashboard() {
       });
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json?.detail || "Ask API request failed");
+        const detail = json?.detail || "Ask API request failed";
+        throw new Error(`${detail}`);
       }
       const payload = json as AskPayload;
       const assistantMessage: ChatMessage = {
@@ -333,6 +345,12 @@ export default function AffordabilityDashboard() {
                     {message.payload.category} · confidence {message.payload.confidence}
                   </div>
                 )}
+                {message.payload?.grounding && message.payload.grounding.year_min != null ? (
+                  <div className="small" style={{ marginTop: "0.2rem", opacity: 0.85 }}>
+                    Grounding: {message.payload.grounding.state}, {message.payload.grounding.rows_used} row(s),{" "}
+                    {message.payload.grounding.year_min}-{message.payload.grounding.year_max}
+                  </div>
+                ) : null}
               </div>
             ))}
             {loadingAsk && (
@@ -360,6 +378,12 @@ export default function AffordabilityDashboard() {
               <p><strong>{selectedResult.summary}</strong> <span className="badge">{selectedResult.category}</span></p>
               <p className="small muted">Rows: {selectedResult.row_count} · Template: {selectedResult.query_template}</p>
               <p className="small muted">Allowed marts: {selectedResult.approved_marts?.join(", ")}</p>
+              {selectedResult.grounding?.year_min != null ? (
+                <p className="small muted">
+                  Grounded on {selectedResult.grounding.rows_used} row(s) in {selectedResult.grounding.state} for years{" "}
+                  {selectedResult.grounding.year_min}-{selectedResult.grounding.year_max}.
+                </p>
+              ) : null}
               {selectedResult.warnings?.length ? (
                 <p className="small" style={{ color: "#9a3412" }}>{selectedResult.warnings.join(" ")}</p>
               ) : null}
