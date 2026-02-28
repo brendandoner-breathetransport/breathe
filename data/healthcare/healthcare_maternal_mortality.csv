@@ -1,0 +1,586 @@
+country,year,value
+australia,1985,21.43
+australia,1986,20.7
+australia,1987,21.26
+australia,1988,21.62
+australia,1989,22.57
+australia,1990,23.05
+australia,1991,23.16
+australia,1992,23.5
+australia,1993,22.76
+australia,1994,22.83
+australia,1995,21.82
+australia,1996,20.42
+australia,1997,20.03
+australia,1998,18.54
+australia,1999,17.68
+australia,2000,16.51
+australia,2001,14.29
+australia,2002,13.81
+australia,2003,13.65
+australia,2004,13.07
+australia,2005,12.79
+australia,2006,13.34
+australia,2007,14.67
+australia,2008,14.87
+australia,2009,16.0
+australia,2010,16.27
+australia,2011,17.56
+australia,2012,17.91
+australia,2013,18.1
+australia,2014,17.95
+australia,2015,18.03
+australia,2016,18.36
+australia,2017,17.34
+australia,2018,16.81
+australia,2019,16.16
+australia,2020,15.17
+australia,2021,13.16
+australia,2022,10.91
+australia,2023,7.1
+canada,1985,26.99
+canada,1986,26.64
+canada,1987,25.87
+canada,1988,26.82
+canada,1989,29.52
+canada,1990,30.08
+canada,1991,31.34
+canada,1992,31.21
+canada,1993,31.54
+canada,1994,31.07
+canada,1995,31.45
+canada,1996,31.47
+canada,1997,29.49
+canada,1998,29.41
+canada,1999,29.84
+canada,2000,29.63
+canada,2001,31.83
+canada,2002,32.86
+canada,2003,34.37
+canada,2004,34.87
+canada,2005,38.3
+canada,2006,39.75
+canada,2007,41.86
+canada,2008,44.89
+canada,2009,45.84
+canada,2010,43.01
+canada,2011,42.94
+canada,2012,43.92
+canada,2013,42.64
+canada,2014,44.45
+canada,2015,43.5
+canada,2016,46.04
+canada,2017,46.35
+canada,2018,47.08
+canada,2019,45.67
+canada,2020,60.32
+canada,2021,50.22
+canada,2022,51.91
+canada,2023,42.04
+china,1985,30261.0
+china,1986,31174.0
+china,1987,31485.0
+china,1988,28456.0
+china,1989,28201.0
+china,1990,28532.0
+china,1991,20863.0
+china,1992,18147.0
+china,1993,16205.0
+china,1994,14895.0
+china,1995,13501.0
+china,1996,12218.0
+china,1997,11149.0
+china,1998,10336.0
+china,1999,9712.0
+china,2000,9771.0
+china,2001,8689.0
+china,2002,8153.0
+china,2003,7633.0
+china,2004,7350.0
+china,2005,6968.0
+china,2006,6682.0
+china,2007,6465.0
+china,2008,6726.0
+china,2009,6251.0
+china,2010,6029.0
+china,2011,5794.0
+china,2012,6102.0
+china,2013,5450.0
+china,2014,5277.0
+china,2015,4581.0
+china,2016,4542.0
+china,2017,4325.0
+china,2018,3372.0
+china,2019,3081.0
+china,2020,2348.0
+china,2021,2190.0
+china,2022,1730.0
+china,2023,1446.0
+costa rica,1985,35.49
+costa rica,1986,35.68
+costa rica,1987,34.6
+costa rica,1988,33.96
+costa rica,1989,33.63
+costa rica,1990,33.32
+costa rica,1991,32.42
+costa rica,1992,31.66
+costa rica,1993,31.71
+costa rica,1994,31.52
+costa rica,1995,31.38
+costa rica,1996,31.22
+costa rica,1997,30.05
+costa rica,1998,29.59
+costa rica,1999,28.73
+costa rica,2000,28.31
+costa rica,2001,27.48
+costa rica,2002,25.19
+costa rica,2003,24.16
+costa rica,2004,23.65
+costa rica,2005,22.94
+costa rica,2006,21.37
+costa rica,2007,22.05
+costa rica,2008,22.35
+costa rica,2009,21.55
+costa rica,2010,20.24
+costa rica,2011,20.66
+costa rica,2012,19.8
+costa rica,2013,18.52
+costa rica,2014,18.81
+costa rica,2015,18.1
+costa rica,2016,18.66
+costa rica,2017,18.32
+costa rica,2018,19.16
+costa rica,2019,16.29
+costa rica,2020,19.5
+costa rica,2021,23.45
+costa rica,2022,14.38
+costa rica,2023,12.53
+denmark,1985,6.51
+denmark,1986,6.68
+denmark,1987,6.64
+denmark,1988,7.41
+denmark,1989,7.84
+denmark,1990,7.7
+denmark,1991,7.68
+denmark,1992,8.09
+denmark,1993,7.96
+denmark,1994,8.23
+denmark,1995,8.27
+denmark,1996,7.36
+denmark,1997,7.06
+denmark,1998,6.14
+denmark,1999,6.25
+denmark,2000,5.88
+denmark,2001,5.72
+denmark,2002,5.56
+denmark,2003,5.35
+denmark,2004,5.2
+denmark,2005,4.81
+denmark,2006,4.66
+denmark,2007,4.77
+denmark,2008,4.72
+denmark,2009,4.39
+denmark,2010,4.18
+denmark,2011,3.68
+denmark,2012,3.33
+denmark,2013,2.98
+denmark,2014,3.06
+denmark,2015,2.89
+denmark,2016,3.15
+denmark,2017,2.84
+denmark,2018,2.86
+denmark,2019,2.59
+denmark,2020,2.49
+denmark,2021,4.86
+denmark,2022,3.23
+denmark,2023,2.12
+europe,1985,13.12
+europe,1986,16.43
+europe,1987,22.64
+europe,1988,31.33
+europe,1989,40.06
+europe,1990,48.26
+europe,1991,53.04
+europe,1992,56.11
+europe,1993,60.18
+europe,1994,64.08
+europe,1995,63.35
+europe,1996,61.07
+europe,1997,62.56
+europe,1998,69.15
+europe,1999,77.09
+europe,2000,82.41
+europe,2001,84.63
+europe,2002,89.35
+europe,2003,95.12
+europe,2004,94.49
+europe,2005,89.67
+europe,2006,88.62
+europe,2007,86.7
+europe,2008,88.69
+europe,2009,84.28
+europe,2010,82.95
+europe,2011,78.82
+europe,2012,72.96
+europe,2013,68.39
+europe,2014,70.02
+europe,2015,71.31
+europe,2016,73.06
+europe,2017,69.25
+europe,2018,68.62
+europe,2019,64.9
+europe,2020,93.05
+europe,2021,89.53
+europe,2022,104.5
+europe,2023,57.18
+finland,1985,4.14
+finland,1986,4.57
+finland,1987,4.4
+finland,1988,4.81
+finland,1989,4.96
+finland,1990,5.25
+finland,1991,4.98
+finland,1992,5.25
+finland,1993,4.76
+finland,1994,4.57
+finland,1995,4.39
+finland,1996,4.15
+finland,1997,4.22
+finland,1998,3.82
+finland,1999,3.86
+finland,2000,4.07
+finland,2001,3.89
+finland,2002,3.91
+finland,2003,3.84
+finland,2004,4.23
+finland,2005,4.48
+finland,2006,4.09
+finland,2007,4.29
+finland,2008,4.32
+finland,2009,4.71
+finland,2010,4.63
+finland,2011,4.31
+finland,2012,4.57
+finland,2013,4.49
+finland,2014,3.92
+finland,2015,3.95
+finland,2016,3.91
+finland,2017,3.93
+finland,2018,3.76
+finland,2019,3.83
+finland,2020,3.97
+finland,2021,4.19
+finland,2022,3.73
+finland,2023,3.43
+france,1985,156.1
+france,1986,154.8
+france,1987,146.6
+france,1988,146.6
+france,1989,144.0
+france,1990,136.8
+france,1991,135.7
+france,1992,129.1
+france,1993,118.7
+france,1994,110.1
+france,1995,108.8
+france,1996,98.04
+france,1997,84.17
+france,1998,78.4
+france,1999,74.6
+france,2000,73.64
+france,2001,72.32
+france,2002,71.24
+france,2003,70.83
+france,2004,70.17
+france,2005,71.32
+france,2006,74.41
+france,2007,73.31
+france,2008,76.74
+france,2009,77.58
+france,2010,75.92
+france,2011,73.58
+france,2012,71.71
+france,2013,69.38
+france,2014,68.8
+france,2015,66.72
+france,2016,65.22
+france,2017,61.26
+france,2018,61.6
+france,2019,59.51
+france,2020,61.87
+france,2021,61.72
+france,2022,59.85
+france,2023,46.67
+japan,1985,259.4
+japan,1986,237.9
+japan,1987,215.1
+japan,1988,201.7
+japan,1989,179.6
+japan,1990,165.7
+japan,1991,155.8
+japan,1992,147.6
+japan,1993,136.7
+japan,1994,134.0
+japan,1995,133.8
+japan,1996,126.4
+japan,1997,120.2
+japan,1998,118.1
+japan,1999,110.6
+japan,2000,105.5
+japan,2001,97.51
+japan,2002,90.77
+japan,2003,86.16
+japan,2004,82.63
+japan,2005,77.27
+japan,2006,74.66
+japan,2007,70.88
+japan,2008,69.89
+japan,2009,66.35
+japan,2010,63.67
+japan,2011,60.01
+japan,2012,57.11
+japan,2013,54.93
+japan,2014,52.4
+japan,2015,50.09
+japan,2016,47.65
+japan,2017,44.63
+japan,2018,43.13
+japan,2019,40.08
+japan,2020,36.03
+japan,2021,33.3
+japan,2022,41.98
+japan,2023,23.08
+mexico,1985,2629.0
+mexico,1986,2463.0
+mexico,1987,2272.0
+mexico,1988,2137.0
+mexico,1989,2060.0
+mexico,1990,1965.0
+mexico,1991,1883.0
+mexico,1992,1806.0
+mexico,1993,1753.0
+mexico,1994,1705.0
+mexico,1995,1630.0
+mexico,1996,1568.0
+mexico,1997,1509.0
+mexico,1998,1450.0
+mexico,1999,1392.0
+mexico,2000,1346.0
+mexico,2001,1318.0
+mexico,2002,1305.0
+mexico,2003,1271.0
+mexico,2004,1239.0
+mexico,2005,1197.0
+mexico,2006,1166.0
+mexico,2007,1139.0
+mexico,2008,1164.0
+mexico,2009,1166.0
+mexico,2010,1149.0
+mexico,2011,1095.0
+mexico,2012,1062.0
+mexico,2013,1041.0
+mexico,2014,992.5
+mexico,2015,952.3
+mexico,2016,933.3
+mexico,2017,933.4
+mexico,2018,933.9
+mexico,2019,919.9
+mexico,2020,1291.0
+mexico,2021,2168.0
+mexico,2022,937.6
+mexico,2023,858.0
+new zealand,1985,10.07
+new zealand,1986,9.4
+new zealand,1987,10.48
+new zealand,1988,10.68
+new zealand,1989,10.33
+new zealand,1990,10.48
+new zealand,1991,9.72
+new zealand,1992,8.69
+new zealand,1993,8.22
+new zealand,1994,7.42
+new zealand,1995,8.03
+new zealand,1996,7.74
+new zealand,1997,7.28
+new zealand,1998,6.55
+new zealand,1999,6.7
+new zealand,2000,6.04
+new zealand,2001,5.76
+new zealand,2002,5.68
+new zealand,2003,6.01
+new zealand,2004,6.11
+new zealand,2005,6.06
+new zealand,2006,5.98
+new zealand,2007,6.61
+new zealand,2008,6.29
+new zealand,2009,6.27
+new zealand,2010,6.29
+new zealand,2011,6.17
+new zealand,2012,5.64
+new zealand,2013,4.85
+new zealand,2014,4.23
+new zealand,2015,4.82
+new zealand,2016,4.49
+new zealand,2017,4.42
+new zealand,2018,4.29
+new zealand,2019,4.43
+new zealand,2020,4.36
+new zealand,2021,4.46
+new zealand,2022,13.33
+new zealand,2023,4.16
+norway,1985,4.64
+norway,1986,4.62
+norway,1987,4.72
+norway,1988,5.37
+norway,1989,5.25
+norway,1990,5.44
+norway,1991,5.04
+norway,1992,4.55
+norway,1993,4.16
+norway,1994,3.97
+norway,1995,3.73
+norway,1996,3.55
+norway,1997,3.26
+norway,1998,3.15
+norway,1999,3.2
+norway,2000,3.21
+norway,2001,3.08
+norway,2002,2.82
+norway,2003,3.05
+norway,2004,3.22
+norway,2005,3.18
+norway,2006,3.09
+norway,2007,2.91
+norway,2008,2.82
+norway,2009,2.74
+norway,2010,2.51
+norway,2011,2.24
+norway,2012,1.83
+norway,2013,1.68
+norway,2014,1.41
+norway,2015,1.31
+norway,2016,1.2
+norway,2017,1.04
+norway,2018,0.92
+norway,2019,0.86
+norway,2020,1.15
+norway,2021,0.93
+norway,2022,1.39
+norway,2023,0.67
+sweden,1985,7.98
+sweden,1986,8.42
+sweden,1987,8.65
+sweden,1988,10.16
+sweden,1989,9.82
+sweden,1990,10.35
+sweden,1991,10.16
+sweden,1992,9.53
+sweden,1993,8.98
+sweden,1994,8.25
+sweden,1995,6.95
+sweden,1996,5.94
+sweden,1997,5.28
+sweden,1998,5.12
+sweden,1999,5.11
+sweden,2000,4.92
+sweden,2001,4.78
+sweden,2002,5.15
+sweden,2003,5.42
+sweden,2004,5.29
+sweden,2005,5.13
+sweden,2006,5.56
+sweden,2007,5.54
+sweden,2008,5.59
+sweden,2009,5.66
+sweden,2010,5.44
+sweden,2011,5.46
+sweden,2012,5.6
+sweden,2013,5.61
+sweden,2014,5.58
+sweden,2015,5.16
+sweden,2016,5.27
+sweden,2017,5.19
+sweden,2018,5.17
+sweden,2019,5.06
+sweden,2020,5.86
+sweden,2021,5.81
+sweden,2022,5.32
+sweden,2023,3.94
+united kingdom of great britain and northern ireland,1985,13.12
+united kingdom of great britain and northern ireland,1986,16.43
+united kingdom of great britain and northern ireland,1987,22.64
+united kingdom of great britain and northern ireland,1988,31.33
+united kingdom of great britain and northern ireland,1989,40.06
+united kingdom of great britain and northern ireland,1990,48.26
+united kingdom of great britain and northern ireland,1991,53.04
+united kingdom of great britain and northern ireland,1992,56.11
+united kingdom of great britain and northern ireland,1993,60.18
+united kingdom of great britain and northern ireland,1994,64.08
+united kingdom of great britain and northern ireland,1995,63.35
+united kingdom of great britain and northern ireland,1996,61.07
+united kingdom of great britain and northern ireland,1997,62.56
+united kingdom of great britain and northern ireland,1998,69.15
+united kingdom of great britain and northern ireland,1999,77.09
+united kingdom of great britain and northern ireland,2000,82.41
+united kingdom of great britain and northern ireland,2001,84.63
+united kingdom of great britain and northern ireland,2002,89.35
+united kingdom of great britain and northern ireland,2003,95.12
+united kingdom of great britain and northern ireland,2004,94.49
+united kingdom of great britain and northern ireland,2005,89.67
+united kingdom of great britain and northern ireland,2006,88.62
+united kingdom of great britain and northern ireland,2007,86.7
+united kingdom of great britain and northern ireland,2008,88.69
+united kingdom of great britain and northern ireland,2009,84.28
+united kingdom of great britain and northern ireland,2010,82.95
+united kingdom of great britain and northern ireland,2011,78.82
+united kingdom of great britain and northern ireland,2012,72.96
+united kingdom of great britain and northern ireland,2013,68.39
+united kingdom of great britain and northern ireland,2014,70.02
+united kingdom of great britain and northern ireland,2015,71.31
+united kingdom of great britain and northern ireland,2016,73.06
+united kingdom of great britain and northern ireland,2017,69.25
+united kingdom of great britain and northern ireland,2018,68.62
+united kingdom of great britain and northern ireland,2019,64.9
+united kingdom of great britain and northern ireland,2020,93.05
+united kingdom of great britain and northern ireland,2021,89.53
+united kingdom of great britain and northern ireland,2022,104.5
+united kingdom of great britain and northern ireland,2023,57.18
+united states,1985,423.4
+united states,1986,430.7
+united states,1987,444.5
+united states,1988,464.6
+united states,1989,482.0
+united states,1990,490.3
+united states,1991,484.2
+united states,1992,462.4
+united states,1993,458.7
+united states,1994,448.4
+united states,1995,444.1
+united states,1996,433.2
+united states,1997,422.2
+united states,1998,428.9
+united states,1999,452.0
+united states,2000,478.3
+united states,2001,497.6
+united states,2002,509.4
+united states,2003,530.7
+united states,2004,530.8
+united states,2005,541.7
+united states,2006,563.5
+united states,2007,571.1
+united states,2008,579.3
+united states,2009,596.9
+united states,2010,580.3
+united states,2011,604.9
+united states,2012,618.3
+united states,2013,631.4
+united states,2014,658.8
+united states,2015,677.8
+united states,2016,703.2
+united states,2017,691.5
+united states,2018,669.7
+united states,2019,660.9
+united states,2020,817.9
+united states,2021,1149.0
+united states,2022,751.5
+united states,2023,608.3

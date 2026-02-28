@@ -1,0 +1,15 @@
+﻿Technology,Category,LCOE_Low_USD_MWh,LCOE_High_USD_MWh,Marginal_Cost_USD_MWh,Notes
+Wind (Land),Renewable Energy,27,73,,
+Solar by Utilities,Renewable Energy,29,92,,
+Natural Gas,Conventional Energy,45,108,71,Marginal cost of existing fully depreciated facilities
+Wind & Batteries (Land),Renewable Energy,45,133,,
+Solar by Community,Renewable Energy,54,191,,
+Solar & Batteries by Utilities,Renewable Energy,60,210,,
+Geothermal,Renewable Energy,64,106,,
+Coal,Conventional Energy,69,168,85,Marginal cost of existing fully depreciated facilities
+Wind (Ocean),Renewable Energy,74,139,,
+Natural Gas (for peak demand),Conventional Energy,110,228,30,Marginal cost of existing fully depreciated facilities
+Solar on Homes,Renewable Energy,122,284,,
+Nuclear (new plants),Conventional Energy,142,222,32,Marginal cost of existing fully depreciated facilities
+Natural Gas + 20% Green Hydrogen,Conventional Energy,150,150,,20% blend of green hydrogen by volume
+Nuclear (just built),Conventional Energy,190,190,,Illustrative midpoint LCOE for Vogtle units 3&4
