@@ -23,9 +23,23 @@ type PolicyRow = {
 type AskPayload = {
   category: string;
   summary: string;
+  answer_text: string;
+  query_template: string;
+  query_sql: string;
+  query_params: Record<string, unknown>;
+  confidence: "low" | "medium" | "high";
+  warnings: string[];
   row_count: number;
-  rows: Array<Record<string, unknown>>;
+  table_rows: Array<Record<string, unknown>>;
   approved_marts: string[];
+};
+
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  payload?: AskPayload;
+  createdAt: string;
 };
 
 const seriesMeta = [
@@ -41,9 +55,25 @@ export default function AffordabilityDashboard() {
   const [indexMode, setIndexMode] = useState<"nominal" | "inflation_adjusted">("nominal");
   const [affordability, setAffordability] = useState<AffordabilityRow[]>([]);
   const [policy, setPolicy] = useState<PolicyRow[]>([]);
-  const [question, setQuestion] = useState("What was the largest affordability gap year?");
-  const [askResult, setAskResult] = useState<AskPayload | null>(null);
+  const [question, setQuestion] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      id: "welcome",
+      role: "assistant",
+      text: "Ask about affordability trends, year comparisons, component differences, or policy impact.",
+      createdAt: new Date().toISOString()
+    }
+  ]);
+  const [selectedResult, setSelectedResult] = useState<AskPayload | null>(null);
   const [loadingAsk, setLoadingAsk] = useState(false);
+  const [showQueryDetails, setShowQueryDetails] = useState(false);
+
+  const suggestionPrompts = [
+    "What was the largest affordability gap year?",
+    "Compare before and after 2010 and 2023.",
+    "How did policy impact in 2020?",
+    "Give me a trend summary."
+  ];
 
   useEffect(() => {
     const run = async () => {
@@ -150,15 +180,47 @@ export default function AffordabilityDashboard() {
   }, [affordability, policy, showPolicyMarkers, metricKeys]);
 
   const onAsk = async () => {
+    if (!question.trim()) {
+      return;
+    }
+
+    const userMessage: ChatMessage = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      text: question.trim(),
+      createdAt: new Date().toISOString()
+    };
+    setChatMessages((prev) => [...prev, userMessage]);
     setLoadingAsk(true);
     try {
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, state_abbrev: stateAbbrev })
+        body: JSON.stringify({ question: question.trim(), state_abbrev: stateAbbrev })
       });
       const json = await res.json();
-      setAskResult(json);
+      if (!res.ok) {
+        throw new Error(json?.detail || "Ask API request failed");
+      }
+      const payload = json as AskPayload;
+      const assistantMessage: ChatMessage = {
+        id: `a-${Date.now()}`,
+        role: "assistant",
+        text: payload.answer_text,
+        payload,
+        createdAt: new Date().toISOString()
+      };
+      setChatMessages((prev) => [...prev, assistantMessage]);
+      setSelectedResult(payload);
+      setQuestion("");
+    } catch (error) {
+      const assistantMessage: ChatMessage = {
+        id: `e-${Date.now()}`,
+        role: "assistant",
+        text: `I hit an error: ${error instanceof Error ? error.message : "unknown error"}`,
+        createdAt: new Date().toISOString()
+      };
+      setChatMessages((prev) => [...prev, assistantMessage]);
     } finally {
       setLoadingAsk(false);
     }
@@ -227,38 +289,133 @@ export default function AffordabilityDashboard() {
       <div className="grid two-col">
         <div className="card">
           <h2 style={{ marginBottom: "0.75rem" }}>Ask the Data</h2>
-          <p className="muted small">Template-based SQL only. Approved marts only. 50 rows max.</p>
+          <p className="muted small">Template-routed queries only. Approved marts only. 50 rows max.</p>
+          <div className="controls" style={{ marginBottom: "0.75rem" }}>
+            {suggestionPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                className="btn"
+                style={{ background: "#2f3a46", fontSize: "0.8rem", padding: "0.4rem 0.55rem" }}
+                onClick={() => setQuestion(prompt)}
+                type="button"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+          <div
+            style={{
+              border: "1px solid #d9e0d8",
+              borderRadius: "10px",
+              padding: "0.65rem",
+              maxHeight: "300px",
+              overflowY: "auto",
+              display: "grid",
+              gap: "0.55rem",
+              marginBottom: "0.7rem"
+            }}
+          >
+            {chatMessages.map((message) => (
+              <div
+                key={message.id}
+                style={{
+                  justifySelf: message.role === "user" ? "end" : "start",
+                  background: message.role === "user" ? "#111827" : "#f6f7f9",
+                  color: message.role === "user" ? "#ffffff" : "#1f2937",
+                  borderRadius: "12px",
+                  padding: "0.55rem 0.7rem",
+                  maxWidth: "90%"
+                }}
+              >
+                <div style={{ fontSize: "0.9rem" }}>{message.text}</div>
+                {message.payload && (
+                  <div className="small" style={{ marginTop: "0.35rem", opacity: 0.85 }}>
+                    {message.payload.category} · confidence {message.payload.confidence}
+                  </div>
+                )}
+              </div>
+            ))}
+            {loadingAsk && (
+              <div style={{ justifySelf: "start", background: "#f6f7f9", borderRadius: "12px", padding: "0.55rem 0.7rem" }}>
+                Thinking...
+              </div>
+            )}
+          </div>
           <div className="controls">
-            <input value={question} onChange={(e) => setQuestion(e.target.value)} type="text" />
+            <input
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !loadingAsk) {
+                  onAsk();
+                }
+              }}
+              type="text"
+              placeholder="Ask about trends, comparisons, or policy impact..."
+            />
             <button onClick={onAsk} disabled={loadingAsk}>{loadingAsk ? "Running..." : "Ask"}</button>
           </div>
-          {askResult && (
+          {selectedResult && (
             <div style={{ marginTop: "0.8rem" }}>
-              <p><strong>{askResult.summary}</strong> <span className="badge">{askResult.category}</span></p>
-              <p className="small muted">Rows: {askResult.row_count}</p>
-              <p className="small muted">Allowed marts: {askResult.approved_marts?.join(", ")}</p>
+              <p><strong>{selectedResult.summary}</strong> <span className="badge">{selectedResult.category}</span></p>
+              <p className="small muted">Rows: {selectedResult.row_count} · Template: {selectedResult.query_template}</p>
+              <p className="small muted">Allowed marts: {selectedResult.approved_marts?.join(", ")}</p>
+              {selectedResult.warnings?.length ? (
+                <p className="small" style={{ color: "#9a3412" }}>{selectedResult.warnings.join(" ")}</p>
+              ) : null}
+              <button
+                type="button"
+                className="btn"
+                style={{ marginTop: "0.4rem", background: "#374151" }}
+                onClick={() => setShowQueryDetails((v) => !v)}
+              >
+                {showQueryDetails ? "Hide query details" : "Show query details"}
+              </button>
+              {showQueryDetails ? (
+                <pre className="small" style={{ marginTop: "0.55rem", whiteSpace: "pre-wrap" }}>
+                  SQL: {selectedResult.query_sql}
+                  {"\n"}
+                  Params: {JSON.stringify(selectedResult.query_params)}
+                </pre>
+              ) : null}
             </div>
           )}
         </div>
 
         <div className="card table-wrap">
-          <h3 style={{ marginBottom: "0.5rem" }}>Policy Events</h3>
+          <h3 style={{ marginBottom: "0.5rem" }}>{selectedResult ? "Latest Ask Table" : "Policy Events"}</h3>
           <table>
             <thead>
-              <tr>
-                <th>Year</th>
-                <th>Label</th>
-                <th>Category</th>
-              </tr>
+              {selectedResult?.table_rows?.length ? (
+                <tr>
+                  {Object.keys(selectedResult.table_rows[0]).map((key) => (
+                    <th key={key}>{key}</th>
+                  ))}
+                </tr>
+              ) : (
+                <tr>
+                  <th>Year</th>
+                  <th>Label</th>
+                  <th>Category</th>
+                </tr>
+              )}
             </thead>
             <tbody>
-              {policy.map((p) => (
-                <tr key={`${p.year}-${p.short_label}`}>
-                  <td>{p.year}</td>
-                  <td>{p.short_label}</td>
-                  <td>{p.category}</td>
-                </tr>
-              ))}
+              {selectedResult?.table_rows?.length
+                ? selectedResult.table_rows.slice(0, 20).map((row, idx) => (
+                    <tr key={`ask-row-${idx}`}>
+                      {Object.keys(selectedResult.table_rows[0]).map((key) => (
+                        <td key={`${idx}-${key}`}>{String(row[key] ?? "")}</td>
+                      ))}
+                    </tr>
+                  ))
+                : policy.map((p) => (
+                    <tr key={`${p.year}-${p.short_label}`}>
+                      <td>{p.year}</td>
+                      <td>{p.short_label}</td>
+                      <td>{p.category}</td>
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </div>

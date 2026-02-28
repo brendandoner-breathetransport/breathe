@@ -9,6 +9,7 @@ MAX_ROWS = 50
 @dataclass
 class QueryPlan:
     category: str
+    template_id: str
     sql: str
     params: dict[str, Any]
     summary: str
@@ -28,6 +29,7 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
     if ("largest" in q or "biggest" in q or "max" in q) and "gap" in q:
         return QueryPlan(
             category="largest_affordability_gap_year",
+            template_id="largest_affordability_gap_year_v1",
             sql=(
                 "SELECT geo_id, state_abbrev, year, cost_pressure_index, income_index, affordability_gap_index "
                 "FROM analytics.mart_cost_pressure_annual "
@@ -43,6 +45,7 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
         y1, y2 = years[0], years[1]
         return QueryPlan(
             category="before_after_comparison",
+            template_id="before_after_comparison_v1",
             sql=(
                 "SELECT year, income_index, housing_index, healthcare_index, childcare_index "
                 "FROM analytics.mart_affordability_index_annual "
@@ -57,6 +60,7 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
     if "compare" in q and any(c in q for c in ["income", "housing", "healthcare", "childcare", "component"]):
         return QueryPlan(
             category="component_comparison",
+            template_id="component_comparison_latest_v1",
             sql=(
                 "SELECT year, income_index, housing_index, healthcare_index, childcare_index "
                 "FROM analytics.mart_affordability_index_annual "
@@ -72,6 +76,7 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
         if years:
             return QueryPlan(
                 category="policy_year_impact",
+                template_id="policy_year_impact_v1",
                 sql=(
                     "SELECT p.year, p.short_label, p.category, c.cost_pressure_index, c.affordability_gap_index "
                     "FROM analytics.mart_policy_events_direct p "
@@ -86,6 +91,7 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
             )
         return QueryPlan(
             category="policy_events",
+            template_id="policy_events_recent_v1",
             sql=(
                 "SELECT year, short_label, summary, category "
                 "FROM analytics.mart_policy_events_direct "
@@ -99,6 +105,7 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
 
     return QueryPlan(
         category="trend_summary",
+        template_id="trend_summary_v1",
         sql=(
             "SELECT year, income_index, housing_index, healthcare_index, childcare_index "
             "FROM analytics.mart_affordability_index_annual "
