@@ -49,7 +49,15 @@ export default function AffordabilityDashboard() {
       ]);
       const affJson = await affRes.json();
       const polJson = await polRes.json();
-      setAffordability(affJson.rows ?? []);
+      setAffordability(
+        (affJson.rows ?? []).map((row: Record<string, unknown>) => ({
+          year: Number(row.year),
+          income_index: Number(row.income_index),
+          housing_index: Number(row.housing_index),
+          healthcare_index: Number(row.healthcare_index),
+          childcare_index: Number(row.childcare_index)
+        }))
+      );
       setPolicy(polJson.rows ?? []);
     };
     run();
