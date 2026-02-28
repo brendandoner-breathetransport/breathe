@@ -1,6 +1,7 @@
 ipyleaflet
 numpy
 pandas
+pyarrow
 pathlib
 plotly
 polars

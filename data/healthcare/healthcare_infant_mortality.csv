@@ -1,0 +1,1099 @@
+country,year,value
+australia,1949,25.32
+australia,1950,24.95
+australia,1951,24.55
+australia,1952,24.09
+australia,1953,23.57
+australia,1954,23.03
+australia,1955,22.51
+australia,1956,22.03
+australia,1957,21.6
+australia,1958,21.17
+australia,1959,20.77
+australia,1960,20.37
+australia,1961,19.96
+australia,1962,19.54
+australia,1963,19.14
+australia,1964,18.8
+australia,1965,18.53
+australia,1966,18.36
+australia,1967,18.26
+australia,1968,18.2
+australia,1969,18.11
+australia,1970,17.87
+australia,1971,17.47
+australia,1972,16.9
+australia,1973,16.17
+australia,1974,15.32
+australia,1975,14.41
+australia,1976,13.49
+australia,1977,12.65
+australia,1978,11.92
+australia,1979,11.3
+australia,1980,10.8
+australia,1981,10.4
+australia,1982,10.08
+australia,1983,9.82
+australia,1984,9.58
+australia,1985,9.34
+australia,1986,9.06
+australia,1987,8.75
+australia,1988,8.4
+australia,1989,8.0
+australia,1990,7.57
+australia,1991,7.12
+australia,1992,6.7
+australia,1993,6.32
+australia,1994,6.0
+australia,1995,5.75
+australia,1996,5.56
+australia,1997,5.41
+australia,1998,5.3
+australia,1999,5.2
+australia,2000,5.1
+australia,2001,5.02
+australia,2002,4.95
+australia,2003,4.9
+australia,2004,4.84
+australia,2005,4.76
+australia,2006,4.65
+australia,2007,4.52
+australia,2008,4.36
+australia,2009,4.19
+australia,2010,4.0
+australia,2011,3.81
+australia,2012,3.63
+australia,2013,3.48
+australia,2014,3.36
+australia,2015,3.28
+australia,2016,3.24
+australia,2017,3.22
+australia,2018,3.22
+australia,2019,3.22
+australia,2020,3.21
+australia,2021,3.2
+australia,2022,3.17
+australia,2023,3.14
+canada,1949,43.24
+canada,1950,41.09
+canada,1951,39.06
+canada,1952,37.16
+canada,1953,35.44
+canada,1954,33.95
+canada,1955,32.65
+canada,1956,31.52
+canada,1957,30.52
+canada,1958,29.59
+canada,1959,28.69
+canada,1960,27.82
+canada,1961,26.93
+canada,1962,26.01
+canada,1963,25.05
+canada,1964,24.07
+canada,1965,23.09
+canada,1966,22.13
+canada,1967,21.2
+canada,1968,20.3
+canada,1969,19.42
+canada,1970,18.53
+canada,1971,17.64
+canada,1972,16.74
+canada,1973,15.86
+canada,1974,14.99
+canada,1975,14.13
+canada,1976,13.3
+canada,1977,12.5
+canada,1978,11.73
+canada,1979,11.0
+canada,1980,10.33
+canada,1981,9.72
+canada,1982,9.18
+canada,1983,8.72
+canada,1984,8.33
+canada,1985,8.01
+canada,1986,7.74
+canada,1987,7.49
+canada,1988,7.27
+canada,1989,7.04
+canada,1990,6.8
+canada,1991,6.58
+canada,1992,6.36
+canada,1993,6.15
+canada,1994,5.96
+canada,1995,5.78
+canada,1996,5.62
+canada,1997,5.48
+canada,1998,5.38
+canada,1999,5.31
+canada,2000,5.27
+canada,2001,5.26
+canada,2002,5.27
+canada,2003,5.27
+canada,2004,5.26
+canada,2005,5.24
+canada,2006,5.2
+canada,2007,5.15
+canada,2008,5.09
+canada,2009,5.03
+canada,2010,4.97
+canada,2011,4.91
+canada,2012,4.84
+canada,2013,4.78
+canada,2014,4.72
+canada,2015,4.66
+canada,2016,4.61
+canada,2017,4.56
+canada,2018,4.53
+canada,2019,4.5
+canada,2020,4.47
+canada,2021,4.46
+canada,2022,4.45
+canada,2023,4.43
+china,1969,88.53
+china,1970,84.31
+china,1971,80.34
+china,1972,76.45
+china,1973,72.54
+china,1974,68.61
+china,1975,64.71
+china,1976,60.91
+china,1977,57.31
+china,1978,54.03
+china,1979,51.2
+china,1980,48.79
+china,1981,46.81
+china,1982,45.28
+china,1983,44.14
+china,1984,43.42
+china,1985,43.05
+china,1986,42.98
+china,1987,43.09
+china,1988,43.27
+china,1989,43.35
+china,1990,43.26
+china,1991,42.95
+china,1992,42.27
+china,1993,41.27
+china,1994,40.08
+china,1995,38.67
+china,1996,37.17
+china,1997,35.56
+china,1998,33.83
+china,1999,31.95
+china,2000,29.96
+china,2001,27.83
+china,2002,25.65
+china,2003,23.45
+china,2004,21.34
+china,2005,19.4
+china,2006,17.66
+china,2007,16.11
+china,2008,14.75
+china,2009,13.55
+china,2010,12.46
+china,2011,11.45
+china,2012,10.54
+china,2013,9.68
+china,2014,8.9
+china,2015,8.2
+china,2016,7.55
+china,2017,6.97
+china,2018,6.44
+china,2019,5.97
+china,2020,5.54
+china,2021,5.14
+china,2022,4.78
+china,2023,4.45
+costa rica,1949,91.53
+costa rica,1950,91.36
+costa rica,1951,91.16
+costa rica,1952,90.82
+costa rica,1953,90.13
+costa rica,1954,89.03
+costa rica,1955,87.26
+costa rica,1956,84.63
+costa rica,1957,81.21
+costa rica,1958,77.42
+costa rica,1959,73.79
+costa rica,1960,70.89
+costa rica,1961,69.33
+costa rica,1962,69.14
+costa rica,1963,69.48
+costa rica,1964,69.43
+costa rica,1965,68.79
+costa rica,1966,67.57
+costa rica,1967,65.9
+costa rica,1968,63.99
+costa rica,1969,61.98
+costa rica,1970,59.58
+costa rica,1971,56.36
+costa rica,1972,52.21
+costa rica,1973,47.44
+costa rica,1974,42.39
+costa rica,1975,37.34
+costa rica,1976,32.5
+costa rica,1977,28.13
+costa rica,1978,24.61
+costa rica,1979,22.1
+costa rica,1980,20.47
+costa rica,1981,19.58
+costa rica,1982,19.25
+costa rica,1983,19.15
+costa rica,1984,19.0
+costa rica,1985,18.63
+costa rica,1986,17.97
+costa rica,1987,17.04
+costa rica,1988,16.03
+costa rica,1989,15.14
+costa rica,1990,14.41
+costa rica,1991,13.83
+costa rica,1992,13.39
+costa rica,1993,13.08
+costa rica,1994,12.86
+costa rica,1995,12.71
+costa rica,1996,12.55
+costa rica,1997,12.35
+costa rica,1998,12.07
+costa rica,1999,11.67
+costa rica,2000,11.22
+costa rica,2001,10.79
+costa rica,2002,10.42
+costa rica,2003,10.12
+costa rica,2004,9.9
+costa rica,2005,9.75
+costa rica,2006,9.63
+costa rica,2007,9.53
+costa rica,2008,9.41
+costa rica,2009,9.25
+costa rica,2010,9.04
+costa rica,2011,8.79
+costa rica,2012,8.5
+costa rica,2013,8.22
+costa rica,2014,7.98
+costa rica,2015,7.8
+costa rica,2016,7.7
+costa rica,2017,7.69
+costa rica,2018,7.78
+costa rica,2019,7.94
+costa rica,2020,8.18
+costa rica,2021,8.49
+costa rica,2022,8.85
+costa rica,2023,9.18
+denmark,1950,29.2
+denmark,1951,28.61
+denmark,1952,27.91
+denmark,1953,27.07
+denmark,1954,26.09
+denmark,1955,25.05
+denmark,1956,24.03
+denmark,1957,23.14
+denmark,1958,22.39
+denmark,1959,21.82
+denmark,1960,21.35
+denmark,1961,20.86
+denmark,1962,20.27
+denmark,1963,19.57
+denmark,1964,18.76
+denmark,1965,17.88
+denmark,1966,16.97
+denmark,1967,16.08
+denmark,1968,15.27
+denmark,1969,14.58
+denmark,1970,13.93
+denmark,1971,13.21
+denmark,1972,12.41
+denmark,1973,11.6
+denmark,1974,10.86
+denmark,1975,10.21
+denmark,1976,9.65
+denmark,1977,9.17
+denmark,1978,8.78
+denmark,1979,8.46
+denmark,1980,8.2
+denmark,1981,8.02
+denmark,1982,7.9
+denmark,1983,7.85
+denmark,1984,7.87
+denmark,1985,7.93
+denmark,1986,7.97
+denmark,1987,7.97
+denmark,1988,7.87
+denmark,1989,7.65
+denmark,1990,7.32
+denmark,1991,6.91
+denmark,1992,6.47
+denmark,1993,6.04
+denmark,1994,5.68
+denmark,1995,5.39
+denmark,1996,5.16
+denmark,1997,4.98
+denmark,1998,4.85
+denmark,1999,4.75
+denmark,2000,4.67
+denmark,2001,4.59
+denmark,2002,4.48
+denmark,2003,4.36
+denmark,2004,4.21
+denmark,2005,4.06
+denmark,2006,3.91
+denmark,2007,3.77
+denmark,2008,3.66
+denmark,2009,3.57
+denmark,2010,3.51
+denmark,2011,3.49
+denmark,2012,3.49
+denmark,2013,3.51
+denmark,2014,3.52
+denmark,2015,3.52
+denmark,2016,3.49
+denmark,2017,3.45
+denmark,2018,3.38
+denmark,2019,3.31
+denmark,2020,3.23
+denmark,2021,3.16
+denmark,2022,3.09
+denmark,2023,3.02
+europe,1949,32.79
+europe,1950,31.46
+europe,1951,30.17
+europe,1952,28.89
+europe,1953,27.66
+europe,1954,26.52
+europe,1955,25.54
+europe,1956,24.74
+europe,1957,24.11
+europe,1958,23.64
+europe,1959,23.27
+europe,1960,22.92
+europe,1961,22.55
+europe,1962,22.09
+europe,1963,21.51
+europe,1964,20.85
+europe,1965,20.2
+europe,1966,19.63
+europe,1967,19.15
+europe,1968,18.77
+europe,1969,18.44
+europe,1970,18.11
+europe,1971,17.71
+europe,1972,17.23
+europe,1973,16.68
+europe,1974,16.06
+europe,1975,15.42
+europe,1976,14.76
+europe,1977,14.09
+europe,1978,13.42
+europe,1979,12.74
+europe,1980,12.07
+europe,1981,11.41
+europe,1982,10.82
+europe,1983,10.34
+europe,1984,9.95
+europe,1985,9.65
+europe,1986,9.4
+europe,1987,9.12
+europe,1988,8.77
+europe,1989,8.35
+europe,1990,7.86
+europe,1991,7.35
+europe,1992,6.89
+europe,1993,6.53
+europe,1994,6.26
+europe,1995,6.06
+europe,1996,5.92
+europe,1997,5.82
+europe,1998,5.72
+europe,1999,5.63
+europe,2000,5.54
+europe,2001,5.46
+europe,2002,5.38
+europe,2003,5.31
+europe,2004,5.23
+europe,2005,5.14
+europe,2006,5.04
+europe,2007,4.91
+europe,2008,4.77
+europe,2009,4.61
+europe,2010,4.44
+europe,2011,4.27
+europe,2012,4.13
+europe,2013,4.01
+europe,2014,3.93
+europe,2015,3.87
+europe,2016,3.84
+europe,2017,3.83
+europe,2018,3.83
+europe,2019,3.84
+europe,2020,3.87
+europe,2021,3.91
+europe,2022,3.95
+europe,2023,3.95
+finland,1949,38.7
+finland,1950,36.78
+finland,1951,34.98
+finland,1952,33.31
+finland,1953,31.78
+finland,1954,30.38
+finland,1955,29.02
+finland,1956,27.68
+finland,1957,26.27
+finland,1958,24.79
+finland,1959,23.32
+finland,1960,21.93
+finland,1961,20.65
+finland,1962,19.48
+finland,1963,18.43
+finland,1964,17.46
+finland,1965,16.58
+finland,1966,15.79
+finland,1967,15.08
+finland,1968,14.44
+finland,1969,13.85
+finland,1970,13.25
+finland,1971,12.64
+finland,1972,12.03
+finland,1973,11.41
+finland,1974,10.78
+finland,1975,10.12
+finland,1976,9.44
+finland,1977,8.78
+finland,1978,8.17
+finland,1979,7.63
+finland,1980,7.17
+finland,1981,6.8
+finland,1982,6.52
+finland,1983,6.32
+finland,1984,6.18
+finland,1985,6.1
+finland,1986,6.03
+finland,1987,5.97
+finland,1988,5.89
+finland,1989,5.77
+finland,1990,5.58
+finland,1991,5.34
+finland,1992,5.06
+finland,1993,4.78
+finland,1994,4.51
+finland,1995,4.27
+finland,1996,4.07
+finland,1997,3.9
+finland,1998,3.75
+finland,1999,3.62
+finland,2000,3.51
+finland,2001,3.41
+finland,2002,3.32
+finland,2003,3.24
+finland,2004,3.15
+finland,2005,3.05
+finland,2006,2.93
+finland,2007,2.81
+finland,2008,2.68
+finland,2009,2.56
+finland,2010,2.44
+finland,2011,2.32
+finland,2012,2.22
+finland,2013,2.13
+finland,2014,2.05
+finland,2015,1.99
+finland,2016,1.94
+finland,2017,1.91
+finland,2018,1.88
+finland,2019,1.86
+finland,2020,1.85
+finland,2021,1.84
+finland,2022,1.83
+finland,2023,1.82
+france,1949,51.41
+france,1950,47.93
+france,1951,44.67
+france,1952,41.59
+france,1953,38.67
+france,1954,35.96
+france,1955,33.44
+france,1956,31.11
+france,1957,28.94
+france,1958,26.95
+france,1959,25.18
+france,1960,23.7
+france,1961,22.44
+france,1962,21.33
+france,1963,20.33
+france,1964,19.42
+france,1965,18.58
+france,1966,17.82
+france,1967,17.13
+france,1968,16.47
+france,1969,15.79
+france,1970,15.06
+france,1971,14.34
+france,1972,13.68
+france,1973,13.14
+france,1974,12.68
+france,1975,12.25
+france,1976,11.84
+france,1977,11.41
+france,1978,10.96
+france,1979,10.51
+france,1980,10.12
+france,1981,9.77
+france,1982,9.43
+france,1983,9.1
+france,1984,8.8
+france,1985,8.54
+france,1986,8.31
+france,1987,8.12
+france,1988,7.93
+france,1989,7.72
+france,1990,7.45
+france,1991,7.1
+france,1992,6.68
+france,1993,6.2
+france,1994,5.72
+france,1995,5.29
+france,1996,4.92
+france,1997,4.64
+france,1998,4.42
+france,1999,4.25
+france,2000,4.08
+france,2001,3.92
+france,2002,3.76
+france,2003,3.6
+france,2004,3.46
+france,2005,3.35
+france,2006,3.28
+france,2007,3.22
+france,2008,3.18
+france,2009,3.15
+france,2010,3.11
+france,2011,3.09
+france,2012,3.08
+france,2013,3.1
+france,2014,3.14
+france,2015,3.19
+france,2016,3.24
+france,2017,3.28
+france,2018,3.3
+france,2019,3.31
+france,2020,3.33
+france,2021,3.35
+france,2022,3.38
+france,2023,3.41
+japan,1949,62.36
+japan,1950,57.86
+japan,1951,53.7
+japan,1952,49.94
+japan,1953,46.63
+japan,1954,43.78
+japan,1955,41.35
+japan,1956,39.2
+japan,1957,37.14
+japan,1958,35.01
+japan,1959,32.77
+japan,1960,30.37
+japan,1961,27.89
+japan,1962,25.43
+japan,1963,23.08
+japan,1964,20.95
+japan,1965,19.12
+japan,1966,17.56
+japan,1967,16.25
+japan,1968,15.15
+japan,1969,14.21
+japan,1970,13.38
+japan,1971,12.62
+japan,1972,11.92
+japan,1973,11.26
+japan,1974,10.62
+japan,1975,10.0
+japan,1976,9.4
+japan,1977,8.84
+japan,1978,8.32
+japan,1979,7.83
+japan,1980,7.38
+japan,1981,6.95
+japan,1982,6.55
+japan,1983,6.16
+japan,1984,5.81
+japan,1985,5.49
+japan,1986,5.22
+japan,1987,4.99
+japan,1988,4.81
+japan,1989,4.68
+japan,1990,4.58
+japan,1991,4.51
+japan,1992,4.44
+japan,1993,4.36
+japan,1994,4.25
+japan,1995,4.12
+japan,1996,3.96
+japan,1997,3.78
+japan,1998,3.61
+japan,1999,3.44
+japan,2000,3.28
+japan,2001,3.14
+japan,2002,3.02
+japan,2003,2.91
+japan,2004,2.83
+japan,2005,2.74
+japan,2006,2.66
+japan,2007,2.59
+japan,2008,2.52
+japan,2009,2.45
+japan,2010,2.38
+japan,2011,2.33
+japan,2012,2.23
+japan,2013,2.16
+japan,2014,2.08
+japan,2015,2.01
+japan,2016,1.96
+japan,2017,1.91
+japan,2018,1.86
+japan,2019,1.82
+japan,2020,1.79
+japan,2021,1.77
+japan,2022,1.77
+japan,2023,1.77
+mexico,1953,131.2
+mexico,1954,127.1
+mexico,1955,122.9
+mexico,1956,119.0
+mexico,1957,115.3
+mexico,1958,111.7
+mexico,1959,108.4
+mexico,1960,105.3
+mexico,1961,102.4
+mexico,1962,99.68
+mexico,1963,97.11
+mexico,1964,94.75
+mexico,1965,92.44
+mexico,1966,90.19
+mexico,1967,88.06
+mexico,1968,85.85
+mexico,1969,83.62
+mexico,1970,81.36
+mexico,1971,79.06
+mexico,1972,76.8
+mexico,1973,74.51
+mexico,1974,72.23
+mexico,1975,69.95
+mexico,1976,67.67
+mexico,1977,65.33
+mexico,1978,62.97
+mexico,1979,60.57
+mexico,1980,58.17
+mexico,1981,55.83
+mexico,1982,53.5
+mexico,1983,51.26
+mexico,1984,49.15
+mexico,1985,47.11
+mexico,1986,45.14
+mexico,1987,43.24
+mexico,1988,41.39
+mexico,1989,39.59
+mexico,1990,37.82
+mexico,1991,36.13
+mexico,1992,34.49
+mexico,1993,32.92
+mexico,1994,31.43
+mexico,1995,30.0
+mexico,1996,28.63
+mexico,1997,27.32
+mexico,1998,26.06
+mexico,1999,24.86
+mexico,2000,23.74
+mexico,2001,22.69
+mexico,2002,21.71
+mexico,2003,20.81
+mexico,2004,19.99
+mexico,2005,19.23
+mexico,2006,18.54
+mexico,2007,17.92
+mexico,2008,17.33
+mexico,2009,16.77
+mexico,2010,16.25
+mexico,2011,15.74
+mexico,2012,15.25
+mexico,2013,14.78
+mexico,2014,14.32
+mexico,2015,13.88
+mexico,2016,13.45
+mexico,2017,13.04
+mexico,2018,12.63
+mexico,2019,12.22
+mexico,2020,11.84
+mexico,2021,11.48
+mexico,2022,11.1
+mexico,2023,10.76
+new zealand,1949,28.96
+new zealand,1950,28.38
+new zealand,1951,27.79
+new zealand,1952,27.16
+new zealand,1953,26.48
+new zealand,1954,25.82
+new zealand,1955,25.23
+new zealand,1956,24.73
+new zealand,1957,24.27
+new zealand,1958,23.79
+new zealand,1959,23.24
+new zealand,1960,22.56
+new zealand,1961,21.76
+new zealand,1962,20.92
+new zealand,1963,20.11
+new zealand,1964,19.39
+new zealand,1965,18.8
+new zealand,1966,18.33
+new zealand,1967,17.94
+new zealand,1968,17.6
+new zealand,1969,17.27
+new zealand,1970,16.93
+new zealand,1971,16.57
+new zealand,1972,16.2
+new zealand,1973,15.81
+new zealand,1974,15.4
+new zealand,1975,14.97
+new zealand,1976,14.5
+new zealand,1977,14.03
+new zealand,1978,13.58
+new zealand,1979,13.17
+new zealand,1980,12.8
+new zealand,1981,12.47
+new zealand,1982,12.17
+new zealand,1983,11.89
+new zealand,1984,11.61
+new zealand,1985,11.3
+new zealand,1986,10.97
+new zealand,1987,10.58
+new zealand,1988,10.13
+new zealand,1989,9.64
+new zealand,1990,9.14
+new zealand,1991,8.65
+new zealand,1992,8.2
+new zealand,1993,7.8
+new zealand,1994,7.45
+new zealand,1995,7.14
+new zealand,1996,6.87
+new zealand,1997,6.62
+new zealand,1998,6.41
+new zealand,1999,6.21
+new zealand,2000,6.05
+new zealand,2001,5.9
+new zealand,2002,5.77
+new zealand,2003,5.65
+new zealand,2004,5.55
+new zealand,2005,5.46
+new zealand,2006,5.39
+new zealand,2007,5.33
+new zealand,2008,5.28
+new zealand,2009,5.23
+new zealand,2010,5.17
+new zealand,2011,5.09
+new zealand,2012,5.0
+new zealand,2013,4.91
+new zealand,2014,4.8
+new zealand,2015,4.7
+new zealand,2016,4.59
+new zealand,2017,4.49
+new zealand,2018,4.4
+new zealand,2019,4.32
+new zealand,2020,4.24
+new zealand,2021,4.16
+new zealand,2022,4.07
+new zealand,2023,3.98
+norway,1950,26.85
+norway,1951,25.25
+norway,1952,23.83
+norway,1953,22.65
+norway,1954,21.72
+norway,1955,21.07
+norway,1956,20.56
+norway,1957,20.07
+norway,1958,19.52
+norway,1959,18.96
+norway,1960,18.44
+norway,1961,17.97
+norway,1962,17.52
+norway,1963,17.08
+norway,1964,16.59
+norway,1965,16.01
+norway,1966,15.36
+norway,1967,14.74
+norway,1968,14.17
+norway,1969,13.64
+norway,1970,13.11
+norway,1971,12.58
+norway,1972,12.06
+norway,1973,11.52
+norway,1974,10.98
+norway,1975,10.41
+norway,1976,9.84
+norway,1977,9.29
+norway,1978,8.8
+norway,1979,8.4
+norway,1980,8.13
+norway,1981,8.0
+norway,1982,7.99
+norway,1983,8.06
+norway,1984,8.17
+norway,1985,8.27
+norway,1986,8.29
+norway,1987,8.19
+norway,1988,7.94
+norway,1989,7.54
+norway,1990,7.02
+norway,1991,6.43
+norway,1992,5.86
+norway,1993,5.35
+norway,1994,4.94
+norway,1995,4.62
+norway,1996,4.4
+norway,1997,4.24
+norway,1998,4.13
+norway,1999,4.03
+norway,2000,3.93
+norway,2001,3.82
+norway,2002,3.69
+norway,2003,3.56
+norway,2004,3.42
+norway,2005,3.29
+norway,2006,3.16
+norway,2007,3.04
+norway,2008,2.91
+norway,2009,2.78
+norway,2010,2.66
+norway,2011,2.55
+norway,2012,2.45
+norway,2013,2.36
+norway,2014,2.28
+norway,2015,2.21
+norway,2016,2.14
+norway,2017,2.07
+norway,2018,2.01
+norway,2019,1.97
+norway,2020,1.94
+norway,2021,1.93
+norway,2022,1.93
+norway,2023,1.93
+sweden,1950,22.05
+sweden,1951,20.92
+sweden,1952,19.91
+sweden,1953,19.04
+sweden,1954,18.34
+sweden,1955,17.81
+sweden,1956,17.41
+sweden,1957,17.1
+sweden,1958,16.81
+sweden,1959,16.56
+sweden,1960,16.3
+sweden,1961,16.0
+sweden,1962,15.58
+sweden,1963,15.02
+sweden,1964,14.38
+sweden,1965,13.73
+sweden,1966,13.12
+sweden,1967,12.59
+sweden,1968,12.15
+sweden,1969,11.74
+sweden,1970,11.34
+sweden,1971,10.89
+sweden,1972,10.39
+sweden,1973,9.84
+sweden,1974,9.28
+sweden,1975,8.78
+sweden,1976,8.34
+sweden,1977,7.96
+sweden,1978,7.66
+sweden,1979,7.4
+sweden,1980,7.16
+sweden,1981,6.94
+sweden,1982,6.77
+sweden,1983,6.63
+sweden,1984,6.52
+sweden,1985,6.43
+sweden,1986,6.35
+sweden,1987,6.27
+sweden,1988,6.19
+sweden,1989,6.06
+sweden,1990,5.85
+sweden,1991,5.56
+sweden,1992,5.18
+sweden,1993,4.76
+sweden,1994,4.37
+sweden,1995,4.04
+sweden,1996,3.79
+sweden,1997,3.62
+sweden,1998,3.5
+sweden,1999,3.44
+sweden,2000,3.39
+sweden,2001,3.34
+sweden,2002,3.28
+sweden,2003,3.19
+sweden,2004,3.08
+sweden,2005,2.95
+sweden,2006,2.83
+sweden,2007,2.72
+sweden,2008,2.63
+sweden,2009,2.56
+sweden,2010,2.5
+sweden,2011,2.46
+sweden,2012,2.43
+sweden,2013,2.4
+sweden,2014,2.37
+sweden,2015,2.34
+sweden,2016,2.3
+sweden,2017,2.25
+sweden,2018,2.2
+sweden,2019,2.16
+sweden,2020,2.11
+sweden,2021,2.07
+sweden,2022,2.04
+sweden,2023,2.02
+united kingdom of great britain and northern ireland,1949,32.79
+united kingdom of great britain and northern ireland,1950,31.46
+united kingdom of great britain and northern ireland,1951,30.17
+united kingdom of great britain and northern ireland,1952,28.89
+united kingdom of great britain and northern ireland,1953,27.66
+united kingdom of great britain and northern ireland,1954,26.52
+united kingdom of great britain and northern ireland,1955,25.54
+united kingdom of great britain and northern ireland,1956,24.74
+united kingdom of great britain and northern ireland,1957,24.11
+united kingdom of great britain and northern ireland,1958,23.64
+united kingdom of great britain and northern ireland,1959,23.27
+united kingdom of great britain and northern ireland,1960,22.92
+united kingdom of great britain and northern ireland,1961,22.55
+united kingdom of great britain and northern ireland,1962,22.09
+united kingdom of great britain and northern ireland,1963,21.51
+united kingdom of great britain and northern ireland,1964,20.85
+united kingdom of great britain and northern ireland,1965,20.2
+united kingdom of great britain and northern ireland,1966,19.63
+united kingdom of great britain and northern ireland,1967,19.15
+united kingdom of great britain and northern ireland,1968,18.77
+united kingdom of great britain and northern ireland,1969,18.44
+united kingdom of great britain and northern ireland,1970,18.11
+united kingdom of great britain and northern ireland,1971,17.71
+united kingdom of great britain and northern ireland,1972,17.23
+united kingdom of great britain and northern ireland,1973,16.68
+united kingdom of great britain and northern ireland,1974,16.06
+united kingdom of great britain and northern ireland,1975,15.42
+united kingdom of great britain and northern ireland,1976,14.76
+united kingdom of great britain and northern ireland,1977,14.09
+united kingdom of great britain and northern ireland,1978,13.42
+united kingdom of great britain and northern ireland,1979,12.74
+united kingdom of great britain and northern ireland,1980,12.07
+united kingdom of great britain and northern ireland,1981,11.41
+united kingdom of great britain and northern ireland,1982,10.82
+united kingdom of great britain and northern ireland,1983,10.34
+united kingdom of great britain and northern ireland,1984,9.95
+united kingdom of great britain and northern ireland,1985,9.65
+united kingdom of great britain and northern ireland,1986,9.4
+united kingdom of great britain and northern ireland,1987,9.12
+united kingdom of great britain and northern ireland,1988,8.77
+united kingdom of great britain and northern ireland,1989,8.35
+united kingdom of great britain and northern ireland,1990,7.86
+united kingdom of great britain and northern ireland,1991,7.35
+united kingdom of great britain and northern ireland,1992,6.89
+united kingdom of great britain and northern ireland,1993,6.53
+united kingdom of great britain and northern ireland,1994,6.26
+united kingdom of great britain and northern ireland,1995,6.06
+united kingdom of great britain and northern ireland,1996,5.92
+united kingdom of great britain and northern ireland,1997,5.82
+united kingdom of great britain and northern ireland,1998,5.72
+united kingdom of great britain and northern ireland,1999,5.63
+united kingdom of great britain and northern ireland,2000,5.54
+united kingdom of great britain and northern ireland,2001,5.46
+united kingdom of great britain and northern ireland,2002,5.38
+united kingdom of great britain and northern ireland,2003,5.31
+united kingdom of great britain and northern ireland,2004,5.23
+united kingdom of great britain and northern ireland,2005,5.14
+united kingdom of great britain and northern ireland,2006,5.04
+united kingdom of great britain and northern ireland,2007,4.91
+united kingdom of great britain and northern ireland,2008,4.77
+united kingdom of great britain and northern ireland,2009,4.61
+united kingdom of great britain and northern ireland,2010,4.44
+united kingdom of great britain and northern ireland,2011,4.27
+united kingdom of great britain and northern ireland,2012,4.13
+united kingdom of great britain and northern ireland,2013,4.01
+united kingdom of great britain and northern ireland,2014,3.93
+united kingdom of great britain and northern ireland,2015,3.87
+united kingdom of great britain and northern ireland,2016,3.84
+united kingdom of great britain and northern ireland,2017,3.83
+united kingdom of great britain and northern ireland,2018,3.83
+united kingdom of great britain and northern ireland,2019,3.84
+united kingdom of great britain and northern ireland,2020,3.87
+united kingdom of great britain and northern ireland,2021,3.91
+united kingdom of great britain and northern ireland,2022,3.95
+united kingdom of great britain and northern ireland,2023,3.95
+united states,1949,33.24
+united states,1950,32.36
+united states,1951,31.5
+united states,1952,30.65
+united states,1953,29.85
+united states,1954,29.11
+united states,1955,28.44
+united states,1956,27.86
+united states,1957,27.35
+united states,1958,26.87
+united states,1959,26.42
+united states,1960,25.95
+united states,1961,25.46
+united states,1962,24.96
+united states,1963,24.45
+united states,1964,23.92
+united states,1965,23.35
+united states,1966,22.75
+united states,1967,22.1
+united states,1968,21.41
+united states,1969,20.69
+united states,1970,19.92
+united states,1971,19.14
+united states,1972,18.34
+united states,1973,17.53
+united states,1974,16.73
+united states,1975,15.94
+united states,1976,15.17
+united states,1977,14.45
+united states,1978,13.77
+united states,1979,13.15
+united states,1980,12.58
+united states,1981,12.06
+united states,1982,11.61
+united states,1983,11.22
+united states,1984,10.89
+united states,1985,10.61
+united states,1986,10.36
+united states,1987,10.13
+united states,1988,9.9
+united states,1989,9.65
+united states,1990,9.37
+united states,1991,9.07
+united states,1992,8.77
+united states,1993,8.46
+united states,1994,8.17
+united states,1995,7.91
+united states,1996,7.69
+united states,1997,7.5
+united states,1998,7.35
+united states,1999,7.22
+united states,2000,7.12
+united states,2001,7.03
+united states,2002,6.96
+united states,2003,6.9
+united states,2004,6.83
+united states,2005,6.76
+united states,2006,6.68
+united states,2007,6.59
+united states,2008,6.47
+united states,2009,6.35
+united states,2010,6.23
+united states,2011,6.11
+united states,2012,6.01
+united states,2013,5.92
+united states,2014,5.83
+united states,2015,5.76
+united states,2016,5.69
+united states,2017,5.62
+united states,2018,5.57
+united states,2019,5.52
+united states,2020,5.5
+united states,2021,5.49
+united states,2022,5.49
+united states,2023,5.49
