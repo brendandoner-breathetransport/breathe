@@ -1,5 +1,7 @@
 import os
 from typing import Any
+from datetime import datetime, timezone
+from decimal import Decimal
 
 import psycopg
 from fastapi import FastAPI, HTTPException
@@ -29,6 +31,16 @@ def _format_float(value: Any) -> str:
         return f"{float(value):.1f}"
     except Exception:
         return str(value)
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
+
+
+def _normalize_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{k: _json_safe(v) for k, v in row.items()} for row in rows]
 
 
 def _compose_answer(plan_category: str, rows: list[dict[str, Any]], state: str) -> str:
@@ -86,6 +98,48 @@ def _compose_answer(plan_category: str, rows: list[dict[str, Any]], state: str) 
     return "I found matching data and returned the result rows."
 
 
+def _confidence_for_result(category: str, row_count: int, warnings: list[str]) -> str:
+    if row_count == 0:
+        return "low"
+    if warnings:
+        return "medium"
+    if category in {"largest_affordability_gap_year", "component_comparison"} and row_count >= 1:
+        return "high"
+    if category in {"trend_summary", "before_after_comparison"} and row_count >= 2:
+        return "high"
+    return "medium"
+
+
+def _follow_up_suggestions(category: str) -> list[str]:
+    options = {
+        "largest_affordability_gap_year": [
+            "Compare the gap in that year versus 2010.",
+            "What policy events happened around that year?",
+        ],
+        "before_after_comparison": [
+            "Compare another year pair before and after a policy year.",
+            "Show component comparison for the latest year.",
+        ],
+        "component_comparison": [
+            "Show trend summary across all years.",
+            "What was the largest affordability gap year?",
+        ],
+        "policy_year_impact": [
+            "Compare affordability before and after that policy year.",
+            "List all recent direct policy events.",
+        ],
+        "policy_events": [
+            "Show policy impact for a specific year.",
+            "Which year had the largest affordability gap?",
+        ],
+        "trend_summary": [
+            "Compare before and after two specific years.",
+            "Which year had the largest affordability gap?",
+        ],
+    }
+    return options.get(category, ["Show trend summary.", "Compare before and after two years."])
+
+
 def _run_query(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
@@ -136,7 +190,10 @@ def get_policy(state_abbrev: str = "CO") -> dict[str, Any]:
 @app.post("/api/ask")
 def ask_data(payload: AskRequest) -> dict[str, Any]:
     state = payload.state_abbrev.upper()
-    plan = build_query_plan(payload.question, state=state)
+    try:
+        plan = build_query_plan(payload.question, state=state)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # Guardrail: only analytics mart access and read-only SQL templates.
     normalized_sql = " ".join(plan.sql.lower().split())
@@ -153,24 +210,36 @@ def ask_data(payload: AskRequest) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Query execution failed: {exc}") from exc
 
     warnings: list[str] = []
-    confidence = "high"
+    if not plan.extracted_years and plan.category == "before_after_comparison":
+        warnings.append("No valid comparison years detected.")
     if len(rows) == 0:
-        confidence = "low"
         warnings.append("No rows matched this question. Try adding a specific year or metric.")
-    elif len(rows) < 2 and plan.category in {"before_after_comparison", "trend_summary"}:
-        confidence = "medium"
+    elif len(rows) < 2 and plan.category in {"before_after_comparison", "trend_summary", "policy_year_impact"}:
         warnings.append("Limited result rows reduced comparison confidence.")
+    if plan.is_inflation_adjusted:
+        warnings.append("Inflation-adjusted mode inferred from your question keywords.")
+
+    normalized_rows = _normalize_rows(rows)
+    confidence = _confidence_for_result(plan.category, len(normalized_rows), warnings)
+    answer_text = _compose_answer(plan.category, normalized_rows, state)
 
     return {
+        "status": "ok",
         "category": plan.category,
+        "intent": plan.intent,
         "summary": plan.summary,
-        "answer_text": _compose_answer(plan.category, rows, state),
+        "answer_text": answer_text,
         "query_template": plan.template_id,
         "query_sql": plan.sql,
         "query_params": plan.params,
+        "is_inflation_adjusted": plan.is_inflation_adjusted,
+        "extracted_years": plan.extracted_years,
         "confidence": confidence,
         "warnings": warnings,
-        "row_count": len(rows),
-        "table_rows": rows[:MAX_ROWS],
+        "row_count": len(normalized_rows),
+        "table_rows": normalized_rows[:MAX_ROWS],
+        "table_columns": list(normalized_rows[0].keys()) if normalized_rows else [],
+        "follow_up_suggestions": _follow_up_suggestions(plan.category),
         "approved_marts": sorted(ALLOWED_TABLES),
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     }
