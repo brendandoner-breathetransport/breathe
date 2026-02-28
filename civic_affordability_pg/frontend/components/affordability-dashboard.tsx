@@ -8,6 +8,9 @@ type AffordabilityRow = {
   housing_index: number;
   healthcare_index: number;
   childcare_index: number;
+  income_cpi_2023_index: number;
+  healthcare_cpi_2023_index: number;
+  childcare_cpi_2023_index: number;
 };
 
 type PolicyRow = {
@@ -35,6 +38,7 @@ const seriesMeta = [
 export default function AffordabilityDashboard() {
   const [stateAbbrev, setStateAbbrev] = useState("CO");
   const [showPolicyMarkers, setShowPolicyMarkers] = useState(true);
+  const [indexMode, setIndexMode] = useState<"nominal" | "inflation_adjusted">("nominal");
   const [affordability, setAffordability] = useState<AffordabilityRow[]>([]);
   const [policy, setPolicy] = useState<PolicyRow[]>([]);
   const [question, setQuestion] = useState("What was the largest affordability gap year?");
@@ -55,7 +59,10 @@ export default function AffordabilityDashboard() {
           income_index: Number(row.income_index),
           housing_index: Number(row.housing_index),
           healthcare_index: Number(row.healthcare_index),
-          childcare_index: Number(row.childcare_index)
+          childcare_index: Number(row.childcare_index),
+          income_cpi_2023_index: Number(row.income_cpi_2023_index),
+          healthcare_cpi_2023_index: Number(row.healthcare_cpi_2023_index),
+          childcare_cpi_2023_index: Number(row.childcare_cpi_2023_index)
         }))
       );
       setPolicy(polJson.rows ?? []);
@@ -64,6 +71,28 @@ export default function AffordabilityDashboard() {
   }, [stateAbbrev]);
 
   const latest = affordability[affordability.length - 1];
+  const metricKeys =
+    indexMode === "inflation_adjusted"
+      ? {
+          income: "income_cpi_2023_index",
+          healthcare: "healthcare_cpi_2023_index",
+          childcare: "childcare_cpi_2023_index"
+        }
+      : {
+          income: "income_index",
+          healthcare: "healthcare_index",
+          childcare: "childcare_index"
+        };
+  const incomeVal = latest ? Number(latest[metricKeys.income as keyof AffordabilityRow]) : null;
+  const housingVal = latest ? Number(latest.housing_index) : null;
+  const healthcareVal = latest ? Number(latest[metricKeys.healthcare as keyof AffordabilityRow]) : null;
+  const childcareVal = latest ? Number(latest[metricKeys.childcare as keyof AffordabilityRow]) : null;
+  const costPressureVal =
+    incomeVal != null && housingVal != null && healthcareVal != null && childcareVal != null
+      ? (housingVal + healthcareVal + childcareVal) / 3
+      : null;
+  const affordabilityGapVal =
+    costPressureVal != null && incomeVal != null ? costPressureVal - incomeVal : null;
 
   const chartLines = useMemo(() => {
     if (!affordability.length) return "";
@@ -74,7 +103,15 @@ export default function AffordabilityDashboard() {
     const padT = 20;
     const padB = 36;
     const minY = 90;
-    const maxY = Math.max(...affordability.flatMap((r) => [r.income_index, r.housing_index, r.healthcare_index, r.childcare_index])) + 15;
+    const maxY =
+      Math.max(
+        ...affordability.flatMap((r) => [
+          Number(r[metricKeys.income as keyof AffordabilityRow]),
+          r.housing_index,
+          Number(r[metricKeys.healthcare as keyof AffordabilityRow]),
+          Number(r[metricKeys.childcare as keyof AffordabilityRow])
+        ])
+      ) + 15;
     const years = affordability.map((r) => r.year);
     const minX = Math.min(...years);
     const maxX = Math.max(...years);
@@ -84,7 +121,17 @@ export default function AffordabilityDashboard() {
 
     const paths = seriesMeta.map((s) => {
       const d = affordability
-        .map((r, i) => `${i === 0 ? "M" : "L"} ${x(r.year).toFixed(1)} ${y(Number(r[s.key])).toFixed(1)}`)
+        .map((r, i) => {
+          const value =
+            s.key === "income_index"
+              ? Number(r[metricKeys.income as keyof AffordabilityRow])
+              : s.key === "healthcare_index"
+              ? Number(r[metricKeys.healthcare as keyof AffordabilityRow])
+              : s.key === "childcare_index"
+              ? Number(r[metricKeys.childcare as keyof AffordabilityRow])
+              : Number(r[s.key]);
+          return `${i === 0 ? "M" : "L"} ${x(r.year).toFixed(1)} ${y(value).toFixed(1)}`;
+        })
         .join(" ");
       return `<path d=\"${d}\" fill=\"none\" stroke=\"${s.color}\" stroke-width=\"3\" />`;
     });
@@ -100,7 +147,7 @@ export default function AffordabilityDashboard() {
       : "";
 
     return `<svg class=\"chart\" viewBox=\"0 0 ${width} ${height}\" preserveAspectRatio=\"none\">\n<line x1=\"${padL}\" y1=\"${height - padB}\" x2=\"${width - padR}\" y2=\"${height - padB}\" stroke=\"#c9d2ca\"/>\n<line x1=\"${padL}\" y1=\"${padT}\" x2=\"${padL}\" y2=\"${height - padB}\" stroke=\"#c9d2ca\"/>\n${markerLines}\n${paths.join("\n")}\n</svg>`;
-  }, [affordability, policy, showPolicyMarkers]);
+  }, [affordability, policy, showPolicyMarkers, metricKeys]);
 
   const onAsk = async () => {
     setLoadingAsk(true);
@@ -130,6 +177,13 @@ export default function AffordabilityDashboard() {
           </select>
         </label>
         <label>
+          Index Mode:&nbsp;
+          <select value={indexMode} onChange={(e) => setIndexMode(e.target.value as "nominal" | "inflation_adjusted")}>
+            <option value="nominal">Nominal</option>
+            <option value="inflation_adjusted">Inflation-adjusted (CPI 2023)</option>
+          </select>
+        </label>
+        <label>
           <input
             type="checkbox"
             checked={showPolicyMarkers}
@@ -142,16 +196,19 @@ export default function AffordabilityDashboard() {
       </div>
 
       <div className="grid summary-grid">
-        <div className="card"><div className="small muted">Income Index</div><h3>{latest?.income_index?.toFixed?.(1) ?? "-"}</h3></div>
+        <div className="card"><div className="small muted">Income Index</div><h3>{incomeVal?.toFixed?.(1) ?? "-"}</h3></div>
         <div className="card"><div className="small muted">Housing Index</div><h3>{latest?.housing_index?.toFixed?.(1) ?? "-"}</h3></div>
-        <div className="card"><div className="small muted">Healthcare Index</div><h3>{latest?.healthcare_index?.toFixed?.(1) ?? "-"}</h3></div>
-        <div className="card"><div className="small muted">Childcare Index</div><h3>{latest?.childcare_index?.toFixed?.(1) ?? "-"}</h3></div>
-        <div className="card"><div className="small muted">Cost Pressure</div><h3>{latest ? (((latest.housing_index + latest.healthcare_index + latest.childcare_index) / 3).toFixed(1)) : "-"}</h3></div>
-        <div className="card"><div className="small muted">Affordability Gap</div><h3>{latest ? ((((latest.housing_index + latest.healthcare_index + latest.childcare_index) / 3) - latest.income_index).toFixed(1)) : "-"}</h3></div>
+        <div className="card"><div className="small muted">Healthcare Index</div><h3>{healthcareVal?.toFixed?.(1) ?? "-"}</h3></div>
+        <div className="card"><div className="small muted">Childcare Index</div><h3>{childcareVal?.toFixed?.(1) ?? "-"}</h3></div>
+        <div className="card"><div className="small muted">Cost Pressure</div><h3>{costPressureVal?.toFixed?.(1) ?? "-"}</h3></div>
+        <div className="card"><div className="small muted">Affordability Gap</div><h3>{affordabilityGapVal?.toFixed?.(1) ?? "-"}</h3></div>
       </div>
 
       <div className="card">
         <h2 style={{ marginBottom: "0.5rem" }}>Indexed Trend Chart</h2>
+        <p className="small muted" style={{ marginTop: 0 }}>
+          {indexMode === "inflation_adjusted" ? "Using inflation-adjusted income/healthcare/childcare indexes (CPI 2023)." : "Using nominal indexes."}
+        </p>
         <div className="series">
           {seriesMeta.map((s) => (
             <span key={s.key} className="legend-item"><span className="dot" style={{ background: s.color }} />{s.label}</span>

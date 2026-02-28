@@ -43,7 +43,9 @@ def get_affordability(state_abbrev: str = "CO") -> dict[str, Any]:
     rows = _run_query(
         (
             "SELECT geo_id, state_abbrev, year, income_real, housing_hpi, healthcare_pc, childcare_annual, "
-            "income_index, housing_index, healthcare_index, childcare_index "
+            "income_real_cpi_2023, healthcare_pc_cpi_2023, childcare_annual_cpi_2023, "
+            "income_index, housing_index, healthcare_index, childcare_index, "
+            "income_cpi_2023_index, healthcare_cpi_2023_index, childcare_cpi_2023_index "
             "FROM analytics.mart_affordability_index_annual "
             "WHERE state_abbrev = %(state)s "
             "ORDER BY year "
