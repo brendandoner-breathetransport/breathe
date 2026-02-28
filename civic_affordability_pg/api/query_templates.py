@@ -31,7 +31,7 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
             category="largest_affordability_gap_year",
             template_id="largest_affordability_gap_year_v1",
             sql=(
-                "SELECT geo_id, state_abbrev, year, cost_pressure_index, income_index, affordability_gap_index "
+                "SELECT geo_id, state_abbrev, year, cost_pressure_index, affordability_gap_index "
                 "FROM analytics.mart_cost_pressure_annual "
                 "WHERE state_abbrev = %(state)s "
                 "ORDER BY affordability_gap_index DESC "
