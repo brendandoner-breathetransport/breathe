@@ -40,6 +40,12 @@ type AskPayload = {
     year_range: string;
     row_count_used: number;
     method_note: string;
+    external_sources: Array<{
+      domain: string;
+      source_name: string;
+      publisher: string;
+      source_url: string;
+    }>;
   }>;
   grounding: {
     state: string;
@@ -361,7 +367,7 @@ export default function AffordabilityDashboard() {
                 ) : null}
                 {message.payload?.citations?.length ? (
                   <div className="small" style={{ marginTop: "0.2rem", opacity: 0.85 }}>
-                    Source: {message.payload.citations[0].dataset}
+                    Sources: {(message.payload.citations[0].external_sources ?? []).map((s) => s.publisher).join(", ")}
                   </div>
                 ) : null}
               </div>
@@ -404,8 +410,19 @@ export default function AffordabilityDashboard() {
                 <div style={{ marginTop: "0.55rem" }}>
                   <p className="small muted" style={{ marginBottom: "0.35rem" }}><strong>Sources</strong></p>
                   {selectedResult.citations.map((citation, idx) => (
-                    <div key={`citation-${idx}`} className="small muted" style={{ marginBottom: "0.35rem" }}>
-                      [{idx + 1}] {citation.dataset} | cols: {citation.metric_columns.join(", ")} | years: {citation.year_range} | rows: {citation.row_count_used}
+                    <div key={`citation-${idx}`} className="small muted" style={{ marginBottom: "0.55rem" }}>
+                      <div>[{idx + 1}] Metrics: {citation.metric_columns.join(", ")}</div>
+                      <div>Coverage: {citation.state} | years {citation.year_range} | rows {citation.row_count_used}</div>
+                      <div>Method: {citation.method_note}</div>
+                      {(citation.external_sources ?? []).map((source, sourceIdx) => (
+                        <div key={`citation-${idx}-src-${sourceIdx}`}>
+                          {source.domain}:{" "}
+                          <a href={source.source_url} target="_blank" rel="noreferrer">
+                            {source.source_name}
+                          </a>{" "}
+                          ({source.publisher})
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>

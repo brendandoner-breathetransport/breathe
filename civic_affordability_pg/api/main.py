@@ -76,6 +76,34 @@ TEMPLATE_CITATION_MAP = {
     },
 }
 
+DOMAIN_SOURCE_REFERENCE = {
+    "income": {
+        "source_name": "Historical Income Tables",
+        "publisher": "U.S. Census Bureau",
+        "source_url": "https://www.census.gov/topics/income-poverty/income/data/tables.html",
+    },
+    "housing": {
+        "source_name": "House Price Index (HPI)",
+        "publisher": "Federal Housing Finance Agency (FHFA)",
+        "source_url": "https://www.fhfa.gov/data/hpi",
+    },
+    "healthcare": {
+        "source_name": "National Health Expenditure Data",
+        "publisher": "Centers for Medicare & Medicaid Services (CMS)",
+        "source_url": "https://www.cms.gov/data-research/statistics-trends-and-reports/national-health-expenditure-data",
+    },
+    "childcare": {
+        "source_name": "Child Care Cost Data",
+        "publisher": "Child Care Aware of America",
+        "source_url": "https://www.childcareaware.org/thechildcarechallenge/",
+    },
+    "policy": {
+        "source_name": "Colorado Ballot Measure Archive",
+        "publisher": "Ballotpedia",
+        "source_url": "https://ballotpedia.org/Colorado",
+    },
+}
+
 
 def _format_float(value: Any) -> str:
     try:
@@ -150,6 +178,22 @@ def _build_citations(
         if is_inflation_adjusted
         else config["metric_columns_nominal"]
     )
+    domains_by_category = {
+        "largest_affordability_gap_year": ["income", "housing", "healthcare", "childcare"],
+        "before_after_comparison": ["income", "housing", "healthcare", "childcare"],
+        "component_comparison": ["income", "housing", "healthcare", "childcare"],
+        "trend_summary": ["income", "housing", "healthcare", "childcare"],
+        "policy_year_impact": ["policy", "income", "housing", "healthcare", "childcare"],
+        "policy_events": ["policy"],
+    }
+    external_sources = [
+        {
+            "domain": domain,
+            **DOMAIN_SOURCE_REFERENCE[domain],
+        }
+        for domain in domains_by_category.get(category, [])
+        if domain in DOMAIN_SOURCE_REFERENCE
+    ]
     year_min = grounding.get("year_min")
     year_max = grounding.get("year_max")
     year_range = f"{year_min}-{year_max}" if year_min is not None and year_max is not None else "n/a"
@@ -161,6 +205,7 @@ def _build_citations(
             "year_range": year_range,
             "row_count_used": grounding.get("rows_used", 0),
             "method_note": "Template-based SQL query with approved marts only and MAX_ROWS=50.",
+            "external_sources": external_sources,
         }
     ]
 
