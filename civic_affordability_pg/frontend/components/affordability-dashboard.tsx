@@ -33,6 +33,14 @@ type AskPayload = {
   table_rows: Array<Record<string, unknown>>;
   table_columns: string[];
   approved_marts: string[];
+  citations: Array<{
+    dataset: string;
+    metric_columns: string[];
+    state: string;
+    year_range: string;
+    row_count_used: number;
+    method_note: string;
+  }>;
   grounding: {
     state: string;
     rows_used: number;
@@ -351,6 +359,11 @@ export default function AffordabilityDashboard() {
                     {message.payload.grounding.year_min}-{message.payload.grounding.year_max}
                   </div>
                 ) : null}
+                {message.payload?.citations?.length ? (
+                  <div className="small" style={{ marginTop: "0.2rem", opacity: 0.85 }}>
+                    Source: {message.payload.citations[0].dataset}
+                  </div>
+                ) : null}
               </div>
             ))}
             {loadingAsk && (
@@ -386,6 +399,16 @@ export default function AffordabilityDashboard() {
               ) : null}
               {selectedResult.warnings?.length ? (
                 <p className="small" style={{ color: "#9a3412" }}>{selectedResult.warnings.join(" ")}</p>
+              ) : null}
+              {selectedResult.citations?.length ? (
+                <div style={{ marginTop: "0.55rem" }}>
+                  <p className="small muted" style={{ marginBottom: "0.35rem" }}><strong>Sources</strong></p>
+                  {selectedResult.citations.map((citation, idx) => (
+                    <div key={`citation-${idx}`} className="small muted" style={{ marginBottom: "0.35rem" }}>
+                      [{idx + 1}] {citation.dataset} | cols: {citation.metric_columns.join(", ")} | years: {citation.year_range} | rows: {citation.row_count_used}
+                    </div>
+                  ))}
+                </div>
               ) : null}
               <button
                 type="button"

@@ -43,6 +43,40 @@ SUPPORTED_QUESTION_GUIDE = {
 }
 
 
+TEMPLATE_CITATION_MAP = {
+    "largest_affordability_gap_year": {
+        "dataset": "analytics.mart_cost_pressure_annual",
+        "metric_columns_nominal": ["cost_pressure_index", "affordability_gap_index"],
+        "metric_columns_inflation_adjusted": ["cost_pressure_index", "affordability_gap_index"],
+    },
+    "before_after_comparison": {
+        "dataset": "analytics.mart_affordability_index_annual",
+        "metric_columns_nominal": ["income_index", "housing_index", "healthcare_index", "childcare_index"],
+        "metric_columns_inflation_adjusted": ["income_cpi_2023_index", "housing_index", "healthcare_cpi_2023_index", "childcare_cpi_2023_index"],
+    },
+    "component_comparison": {
+        "dataset": "analytics.mart_affordability_index_annual",
+        "metric_columns_nominal": ["income_index", "housing_index", "healthcare_index", "childcare_index"],
+        "metric_columns_inflation_adjusted": ["income_cpi_2023_index", "housing_index", "healthcare_cpi_2023_index", "childcare_cpi_2023_index"],
+    },
+    "policy_year_impact": {
+        "dataset": "analytics.mart_policy_events_direct + analytics.mart_cost_pressure_annual",
+        "metric_columns_nominal": ["short_label", "category", "cost_pressure_index", "affordability_gap_index"],
+        "metric_columns_inflation_adjusted": ["short_label", "category", "cost_pressure_index", "affordability_gap_index"],
+    },
+    "policy_events": {
+        "dataset": "analytics.mart_policy_events_direct",
+        "metric_columns_nominal": ["year", "short_label", "summary", "category"],
+        "metric_columns_inflation_adjusted": ["year", "short_label", "summary", "category"],
+    },
+    "trend_summary": {
+        "dataset": "analytics.mart_affordability_index_annual",
+        "metric_columns_nominal": ["income_index", "housing_index", "healthcare_index", "childcare_index"],
+        "metric_columns_inflation_adjusted": ["income_cpi_2023_index", "housing_index", "healthcare_cpi_2023_index", "childcare_cpi_2023_index"],
+    },
+}
+
+
 def _format_float(value: Any) -> str:
     try:
         return f"{float(value):.1f}"
@@ -100,6 +134,35 @@ def _build_grounding(rows: list[dict[str, Any]], state: str) -> dict[str, Any]:
         "year_min": year_min,
         "year_max": year_max,
     }
+
+
+def _build_citations(
+    category: str,
+    grounding: dict[str, Any],
+    is_inflation_adjusted: bool,
+) -> list[dict[str, Any]]:
+    config = TEMPLATE_CITATION_MAP.get(category)
+    if not config:
+        return []
+
+    metric_columns = (
+        config["metric_columns_inflation_adjusted"]
+        if is_inflation_adjusted
+        else config["metric_columns_nominal"]
+    )
+    year_min = grounding.get("year_min")
+    year_max = grounding.get("year_max")
+    year_range = f"{year_min}-{year_max}" if year_min is not None and year_max is not None else "n/a"
+    return [
+        {
+            "dataset": config["dataset"],
+            "metric_columns": metric_columns,
+            "state": grounding.get("state"),
+            "year_range": year_range,
+            "row_count_used": grounding.get("rows_used", 0),
+            "method_note": "Template-based SQL query with approved marts only and MAX_ROWS=50.",
+        }
+    ]
 
 
 def _compose_answer(plan_category: str, rows: list[dict[str, Any]], state: str) -> str:
@@ -313,6 +376,11 @@ def ask_data(payload: AskRequest) -> dict[str, Any]:
         "table_columns": list(normalized_rows[0].keys()) if normalized_rows else [],
         "follow_up_suggestions": _follow_up_suggestions(plan.category),
         "grounding": grounding,
+        "citations": _build_citations(
+            category=plan.category,
+            grounding=grounding,
+            is_inflation_adjusted=plan.is_inflation_adjusted,
+        ),
         "question_guide": SUPPORTED_QUESTION_GUIDE,
         "approved_marts": sorted(ALLOWED_TABLES),
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
