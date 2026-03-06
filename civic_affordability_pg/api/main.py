@@ -366,28 +366,6 @@ def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str) ->
     return normalized
 
 
-def _get_upcoming_election_id(client: httpx.Client) -> tuple[str | None, dict[str, Any]]:
-    try:
-        resp = client.get(f"{GOOGLE_CIVIC_BASE_URL}/elections", params={"key": GOOGLE_CIVIC_API_KEY}, timeout=12.0)
-        if resp.status_code >= 400:
-            return None, {}
-        payload = resp.json()
-        elections = payload.get("elections", []) or []
-        if not elections:
-            return None, {}
-
-        today = datetime.now(timezone.utc).date().isoformat()
-        upcoming = [e for e in elections if str(e.get("electionDay", "")) >= today]
-        target = sorted(upcoming, key=lambda e: e.get("electionDay"))[0] if upcoming else elections[0]
-        return str(target.get("id")), {
-            "id": str(target.get("id")),
-            "name": target.get("name"),
-            "date": target.get("electionDay"),
-        }
-    except Exception:
-        return None, {}
-
-
 def _run_query(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
@@ -454,10 +432,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
 
     try:
         with httpx.Client() as client:
-            election_id, election_meta = _get_upcoming_election_id(client)
             params: dict[str, Any] = {"key": GOOGLE_CIVIC_API_KEY, "address": full_address}
-            if election_id:
-                params["electionId"] = election_id
 
             response = client.get(f"{GOOGLE_CIVIC_BASE_URL}/voterinfo", params=params, timeout=15.0)
             if response.status_code >= 400:
@@ -480,23 +455,6 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
             early = _normalize_locations(data.get("earlyVoteSites", []) or [], "early_vote_site")
             drop_off = _normalize_locations(data.get("dropOffLocations", []) or [], "drop_off_location")
             all_locations = polling + early + drop_off
-
-            # If an unrelated electionId was selected globally, retry without electionId
-            # so the API can resolve the address against its default election context.
-            if not all_locations and election_id:
-                fallback_params: dict[str, Any] = {"key": GOOGLE_CIVIC_API_KEY, "address": full_address}
-                fallback_response = client.get(
-                    f"{GOOGLE_CIVIC_BASE_URL}/voterinfo",
-                    params=fallback_params,
-                    timeout=15.0,
-                )
-                if fallback_response.status_code < 400:
-                    fallback_data = fallback_response.json()
-                    polling = _normalize_locations(fallback_data.get("pollingLocations", []) or [], "polling_location")
-                    early = _normalize_locations(fallback_data.get("earlyVoteSites", []) or [], "early_vote_site")
-                    drop_off = _normalize_locations(fallback_data.get("dropOffLocations", []) or [], "drop_off_location")
-                    all_locations = polling + early + drop_off
-                    data = fallback_data
 
             if not all_locations:
                 response_election = data.get("election", {}) if isinstance(data, dict) else {}
