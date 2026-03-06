@@ -28,8 +28,11 @@ type ExpenseShareRow = {
   healthcare_share_cpi_2023_pct_of_monthly_income: number;
   childcare_share_cpi_2023_pct_of_monthly_income: number;
   known_expense_share_cpi_2023_pct_of_monthly_income: number;
-  housing_to_income_index_ratio_pct: number;
-  housing_to_income_cpi_2023_index_ratio_pct: number;
+  estimated_home_price: number;
+  estimated_loan_amount: number;
+  estimated_monthly_mortgage_payment: number;
+  estimated_mortgage_share_pct_of_monthly_income: number;
+  estimated_mortgage_share_cpi_2023_pct_of_monthly_income: number;
 };
 
 type AskPayload = {
@@ -145,8 +148,11 @@ export default function AffordabilityDashboard() {
           healthcare_share_cpi_2023_pct_of_monthly_income: Number(row.healthcare_share_cpi_2023_pct_of_monthly_income),
           childcare_share_cpi_2023_pct_of_monthly_income: Number(row.childcare_share_cpi_2023_pct_of_monthly_income),
           known_expense_share_cpi_2023_pct_of_monthly_income: Number(row.known_expense_share_cpi_2023_pct_of_monthly_income),
-          housing_to_income_index_ratio_pct: Number(row.housing_to_income_index_ratio_pct),
-          housing_to_income_cpi_2023_index_ratio_pct: Number(row.housing_to_income_cpi_2023_index_ratio_pct)
+          estimated_home_price: Number(row.estimated_home_price),
+          estimated_loan_amount: Number(row.estimated_loan_amount),
+          estimated_monthly_mortgage_payment: Number(row.estimated_monthly_mortgage_payment),
+          estimated_mortgage_share_pct_of_monthly_income: Number(row.estimated_mortgage_share_pct_of_monthly_income),
+          estimated_mortgage_share_cpi_2023_pct_of_monthly_income: Number(row.estimated_mortgage_share_cpi_2023_pct_of_monthly_income)
         }))
       );
     };
@@ -198,11 +204,11 @@ export default function AffordabilityDashboard() {
           : latestExpenseShare.known_expense_share_pct_of_monthly_income
       )
     : null;
-  const housingProxyShareVal = latestExpenseShare
+  const mortgageShareVal = latestExpenseShare
     ? Number(
         indexMode === "inflation_adjusted"
-          ? latestExpenseShare.housing_to_income_cpi_2023_index_ratio_pct
-          : latestExpenseShare.housing_to_income_index_ratio_pct
+          ? latestExpenseShare.estimated_mortgage_share_cpi_2023_pct_of_monthly_income
+          : latestExpenseShare.estimated_mortgage_share_pct_of_monthly_income
       )
     : null;
 
@@ -373,13 +379,13 @@ export default function AffordabilityDashboard() {
       <div className="card">
         <h2 style={{ marginBottom: "0.5rem" }}>Marked Expenses as % of Monthly Income</h2>
         <p className="small muted" style={{ marginTop: 0 }}>
-          Healthcare and childcare are direct percent-of-income shares. Housing is shown as an index-ratio proxy in this MVP.
+          Mortgage share is estimated from average home price (HPI-scaled) and fixed loan assumptions.
         </p>
         <div className="grid summary-grid">
           <div className="card"><div className="small muted">Healthcare %</div><h3>{healthcareShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
           <div className="card"><div className="small muted">Childcare %</div><h3>{childcareShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
           <div className="card"><div className="small muted">Known Expense %</div><h3>{knownExpenseShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
-          <div className="card"><div className="small muted">Housing Proxy %</div><h3>{housingProxyShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
+          <div className="card"><div className="small muted">Estimated Mortgage %</div><h3>{mortgageShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
         </div>
       </div>
 
