@@ -1,7 +1,9 @@
 import os
+import re
 from typing import Any
 from datetime import datetime, timezone
 from decimal import Decimal
+from html import unescape
 from urllib.parse import quote_plus
 
 import httpx
@@ -408,6 +410,106 @@ def _build_provider_plan(state_abbrev: str) -> list[dict[str, Any]]:
     ]
 
 
+def _strip_html(value: str) -> str:
+    if not value:
+        return ""
+    no_tags = re.sub(r"<[^>]+>", " ", value)
+    return re.sub(r"\s+", " ", unescape(no_tags)).strip()
+
+
+def _build_maps_url_from_address(address: str) -> str | None:
+    clean = (address or "").strip()
+    if not clean:
+        return None
+    return f"https://www.google.com/maps/search/?api=1&query={quote_plus(clean)}"
+
+
+def _parse_tn_locations_list_page(html: str, type_param: str) -> list[dict[str, Any]]:
+    if not html:
+        return []
+    forms = re.findall(r"<form method=\"GET\">(.*?)</form>", html, flags=re.S | re.I)
+    parsed: list[dict[str, Any]] = []
+    for form in forms:
+        view_match = re.search(r'name=\"view\"\s+value=\"([^\"]+)\"', form, flags=re.I)
+        if not view_match:
+            continue
+        # Top line is the location name; secondary line is street address.
+        div_values = re.findall(r"<div[^>]*>(.*?)</div>", form, flags=re.S | re.I)
+        if not div_values:
+            continue
+        name = _strip_html(div_values[0])
+        address = _strip_html(div_values[1]) if len(div_values) > 1 else ""
+        if not name and not address:
+            continue
+        parsed.append(
+            {
+                "view": view_match.group(1),
+                "type_param": type_param,
+                "name": name or "Polling Location",
+                "address": address,
+            }
+        )
+    return parsed
+
+
+def _parse_tn_location_detail_page(html: str) -> tuple[str | None, str | None]:
+    if not html:
+        return None, None
+    hours_match = re.search(
+        r"<label>\s*Hours:\s*</label>\s*<br/?>\s*<span>(.*?)</span>",
+        html,
+        flags=re.S | re.I,
+    )
+    hours = _strip_html(hours_match.group(1)) if hours_match else None
+    maps_match = re.search(r'<form\s+action=\"(https://www\.google\.com/maps/dir/[^\"]+)\"', html, flags=re.I)
+    maps_url = maps_match.group(1) if maps_match else None
+    return hours, maps_url
+
+
+def _lookup_tn_official_locations(client: httpx.Client, street: str, zip_code: str) -> tuple[list[dict[str, Any]], str | None]:
+    base = TENNESSEE_VOTER_LOOKUP_URL.rstrip("/")
+    # Initialize a session, then perform the official address lookup workflow.
+    client.get(f"{base}/search", timeout=15.0)
+    search_resp = client.post(
+        f"{base}/search/address",
+        data={"address": street.strip(), "zip": zip_code.strip()},
+        headers={"Referer": f"{base}/search"},
+        timeout=20.0,
+    )
+    search_html = search_resp.text
+    if "No Results Returned" in search_html:
+        return [], "No registered voters were found at this address in Tennessee official lookup."
+
+    all_locations: list[dict[str, Any]] = []
+    location_types = [("election-day", "polling_location"), ("early-voting", "early_vote_site")]
+    for type_param, location_type in location_types:
+        list_resp = client.get(f"{base}/locations/list", params={"type": type_param}, timeout=20.0)
+        cards = _parse_tn_locations_list_page(list_resp.text, type_param)
+        for card in cards:
+            detail_resp = client.get(
+                f"{base}/locations/list",
+                params={"type": type_param, "view": card["view"]},
+                timeout=20.0,
+            )
+            hours, maps_url = _parse_tn_location_detail_page(detail_resp.text)
+            location_address = card["address"]
+            all_locations.append(
+                {
+                    "location_type": location_type,
+                    "name": card["name"],
+                    "address": location_address,
+                    "hours": hours,
+                    "notes": None,
+                    "source_name": "Tennessee Secretary of State",
+                    "source_url": base,
+                    "maps_url": maps_url or _build_maps_url_from_address(location_address),
+                }
+            )
+    if not all_locations:
+        return [], "No polling locations were returned by Tennessee official lookup for this address."
+    return all_locations, None
+
+
 def _get_state_election_id(client: httpx.Client, state_abbrev: str) -> str | None:
     state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper())
     if not state_name:
@@ -527,6 +629,34 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
 
     try:
         with httpx.Client() as client:
+            tn_detail: str | None = None
+            if state == "TN":
+                tn_locations, tn_detail = _lookup_tn_official_locations(client, payload.street, payload.zip)
+                if tn_locations:
+                    return {
+                        "status": "ok",
+                        "message": "Polling locations found from Tennessee official lookup.",
+                        "request_address": full_address,
+                        "provider_used": "state_official",
+                        "providers": provider_plan,
+                        "result_count": len(tn_locations),
+                        "locations": tn_locations,
+                        "citations": [
+                            {
+                                "source_name": "Tennessee Secretary of State GoVoteTN",
+                                "publisher": "Tennessee Secretary of State",
+                                "source_url": TENNESSEE_VOTER_LOOKUP_URL,
+                            },
+                            {
+                                "source_name": "Voting Information Project",
+                                "publisher": "Voting Information Project",
+                                "source_url": VOTING_INFO_PROJECT_URL,
+                            },
+                        ],
+                        "official_fallback_url": official_fallback_url,
+                        "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+                    }
+
             params: dict[str, Any] = {"key": GOOGLE_CIVIC_API_KEY, "address": full_address}
 
             response = client.get(f"{GOOGLE_CIVIC_BASE_URL}/voterinfo", params=params, timeout=15.0)
@@ -561,7 +691,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                     return {
                         "status": "official_lookup_recommended",
                         "message": "Civic API could not resolve a polling location. Use official state lookup.",
-                        "provider_detail": detail,
+                        "provider_detail": tn_detail or detail,
                         "request_address": full_address,
                         "provider_used": "state_official",
                         "providers": provider_plan,
@@ -586,6 +716,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                         "name": response_election.get("name"),
                         "date": response_election.get("electionDay"),
                     } if response_election else {},
+                    "provider_detail": tn_detail,
                     "provider_used": "state_official",
                     "providers": provider_plan,
                     "official_fallback_url": official_fallback_url,
