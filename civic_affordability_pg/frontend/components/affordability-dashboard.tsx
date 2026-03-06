@@ -379,13 +379,13 @@ export default function AffordabilityDashboard() {
       <div className="card">
         <h2 style={{ marginBottom: "0.5rem" }}>Marked Expenses as % of Monthly Income</h2>
         <p className="small muted" style={{ marginTop: 0 }}>
-          Mortgage share is estimated from average home price (HPI-scaled) and fixed loan assumptions.
+          Combined known expenses now include healthcare, childcare, and estimated mortgage share.
         </p>
         <div className="grid summary-grid">
           <div className="card"><div className="small muted">Healthcare %</div><h3>{healthcareShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
           <div className="card"><div className="small muted">Childcare %</div><h3>{childcareShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
-          <div className="card"><div className="small muted">Known Expense %</div><h3>{knownExpenseShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
           <div className="card"><div className="small muted">Estimated Mortgage %</div><h3>{mortgageShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
+          <div className="card"><div className="small muted">Known Expenses (Total) %</div><h3>{knownExpenseShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
         </div>
       </div>
 

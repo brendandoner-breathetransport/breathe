@@ -58,10 +58,40 @@ SELECT
     END AS estimated_monthly_mortgage_payment,
     ((healthcare_pc / 12.0) / NULLIF(income_real / 12.0, 0)) * 100.0 AS healthcare_share_pct_of_monthly_income,
     ((childcare_annual / 12.0) / NULLIF(income_real / 12.0, 0)) * 100.0 AS childcare_share_pct_of_monthly_income,
-    (((healthcare_pc + childcare_annual) / 12.0) / NULLIF(income_real / 12.0, 0)) * 100.0 AS known_expense_share_pct_of_monthly_income,
+    (
+        (
+            (healthcare_pc + childcare_annual) / 12.0
+            + (
+                CASE
+                    WHEN monthly_rate = 0 THEN estimated_loan_amount / NULLIF(num_payments, 0)
+                    ELSE
+                        estimated_loan_amount
+                        * (
+                            monthly_rate * POWER(1 + monthly_rate, num_payments)
+                        )
+                        / NULLIF(POWER(1 + monthly_rate, num_payments) - 1, 0)
+                END
+            )
+        ) / NULLIF(income_real / 12.0, 0)
+    ) * 100.0 AS known_expense_share_pct_of_monthly_income,
     ((healthcare_pc_cpi_2023 / 12.0) / NULLIF(income_real_cpi_2023 / 12.0, 0)) * 100.0 AS healthcare_share_cpi_2023_pct_of_monthly_income,
     ((childcare_annual_cpi_2023 / 12.0) / NULLIF(income_real_cpi_2023 / 12.0, 0)) * 100.0 AS childcare_share_cpi_2023_pct_of_monthly_income,
-    (((healthcare_pc_cpi_2023 + childcare_annual_cpi_2023) / 12.0) / NULLIF(income_real_cpi_2023 / 12.0, 0)) * 100.0 AS known_expense_share_cpi_2023_pct_of_monthly_income,
+    (
+        (
+            (healthcare_pc_cpi_2023 + childcare_annual_cpi_2023) / 12.0
+            + (
+                CASE
+                    WHEN monthly_rate = 0 THEN estimated_loan_amount / NULLIF(num_payments, 0)
+                    ELSE
+                        estimated_loan_amount
+                        * (
+                            monthly_rate * POWER(1 + monthly_rate, num_payments)
+                        )
+                        / NULLIF(POWER(1 + monthly_rate, num_payments) - 1, 0)
+                END
+            )
+        ) / NULLIF(income_real_cpi_2023 / 12.0, 0)
+    ) * 100.0 AS known_expense_share_cpi_2023_pct_of_monthly_income,
     (
         (
             CASE
