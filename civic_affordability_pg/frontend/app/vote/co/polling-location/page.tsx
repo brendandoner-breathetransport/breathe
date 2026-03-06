@@ -34,6 +34,7 @@ export default function ColoradoPollingLocationPage() {
   const [street, setStreet] = useState("");
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
+  const [stateAbbrev, setStateAbbrev] = useState<"CO" | "TN">("CO");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PollingResponse | null>(null);
 
@@ -44,7 +45,7 @@ export default function ColoradoPollingLocationPage() {
       const res = await fetch("/api/vote/co/polling-location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ street, city, zip, state_abbrev: "CO" })
+        body: JSON.stringify({ street, city, zip, state_abbrev: stateAbbrev })
       });
       const payload = await res.json();
       setResult(payload);
@@ -55,10 +56,17 @@ export default function ColoradoPollingLocationPage() {
 
   return (
     <main className="grid" style={{ gap: "1rem" }}>
-      <h1>Colorado Polling Location Finder</h1>
-      <p className="muted">Enter your Colorado voting address to find polling location details with official source links.</p>
+      <h1>Polling Location Finder</h1>
+      <p className="muted">Enter your voting address for Colorado or Tennessee to find polling location details with official source links.</p>
 
       <form className="card grid" style={{ gap: "0.6rem" }} onSubmit={onSubmit}>
+        <label>
+          State
+          <select value={stateAbbrev} onChange={(e) => setStateAbbrev(e.target.value as "CO" | "TN")} required>
+            <option value="CO">Colorado (CO)</option>
+            <option value="TN">Tennessee (TN)</option>
+          </select>
+        </label>
         <label>
           Street address
           <input value={street} onChange={(e) => setStreet(e.target.value)} required placeholder="123 Main St" />
@@ -111,7 +119,7 @@ export default function ColoradoPollingLocationPage() {
           ) : null}
 
           <div>
-            <p className="small muted"><strong>Official fallback:</strong> <a href={result.official_fallback_url} target="_blank" rel="noreferrer">Colorado Secretary of State lookup</a></p>
+            <p className="small muted"><strong>Official fallback:</strong> <a href={result.official_fallback_url} target="_blank" rel="noreferrer">State voter lookup</a></p>
             {result.citations?.length ? (
               <div className="small muted">
                 <strong>Sources:</strong>

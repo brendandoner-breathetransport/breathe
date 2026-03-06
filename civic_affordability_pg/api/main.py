@@ -22,6 +22,8 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localho
 GOOGLE_CIVIC_API_KEY = os.getenv("GOOGLE_CIVIC_API_KEY", "")
 GOOGLE_CIVIC_BASE_URL = "https://www.googleapis.com/civicinfo/v2"
 COLORADO_VOTER_LOOKUP_URL = "https://www.sos.state.co.us/voter/pages/pub/olvr/findVoterReg.xhtml"
+TENNESSEE_VOTER_LOOKUP_URL = "https://tnmap.tn.gov/voterlookup/"
+SUPPORTED_POLLING_STATES = {"CO", "TN"}
 
 app = FastAPI(title="Civic Affordability API", version="0.1.0")
 
@@ -337,15 +339,22 @@ def _format_location_address(address: dict[str, Any] | None) -> str:
     return ", ".join([p for p in parts if p])
 
 
-def _extract_source_url(sources: list[dict[str, Any]]) -> str:
+def _state_fallback_lookup_url(state_abbrev: str) -> str:
+    state = (state_abbrev or "").upper()
+    if state == "TN":
+        return TENNESSEE_VOTER_LOOKUP_URL
+    return COLORADO_VOTER_LOOKUP_URL
+
+
+def _extract_source_url(sources: list[dict[str, Any]], state_abbrev: str) -> str:
     for source in sources:
         official = source.get("official")
         if official:
             return str(official)
-    return COLORADO_VOTER_LOOKUP_URL
+    return _state_fallback_lookup_url(state_abbrev)
 
 
-def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str) -> list[dict[str, Any]]:
+def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str, state_abbrev: str) -> list[dict[str, Any]]:
     normalized: list[dict[str, Any]] = []
     for item in raw_items:
         address_obj = item.get("address", {})
@@ -359,7 +368,7 @@ def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str) ->
                 "hours": item.get("pollingHours") or item.get("earlyVoteSiteHours") or None,
                 "notes": item.get("notes"),
                 "source_name": source_list[0].get("name") if source_list else "Voting Information Project",
-                "source_url": _extract_source_url(source_list),
+                "source_url": _extract_source_url(source_list, state_abbrev),
                 "maps_url": f"https://www.google.com/maps/search/?api=1&query={quote_plus(full_address)}" if full_address else None,
             }
         )
@@ -416,15 +425,17 @@ def get_policy(state_abbrev: str = "CO") -> dict[str, Any]:
 @app.post("/api/vote/co/polling-location")
 def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, Any]:
     state = payload.state_abbrev.strip().upper()
-    if state != "CO":
-        raise HTTPException(status_code=400, detail="This endpoint currently supports Colorado addresses only.")
+    if state not in SUPPORTED_POLLING_STATES:
+        raise HTTPException(status_code=400, detail="This endpoint currently supports CO and TN addresses only.")
+
+    official_fallback_url = _state_fallback_lookup_url(state)
 
     if not GOOGLE_CIVIC_API_KEY:
         return {
             "status": "unavailable",
             "message": "Polling lookup provider is not configured.",
             "request_address": _build_full_address(payload.street, payload.city, state, payload.zip),
-            "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+            "official_fallback_url": official_fallback_url,
             "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -446,14 +457,14 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                     "message": "Unable to find polling location for the provided address.",
                     "provider_detail": detail,
                     "request_address": full_address,
-                    "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+                    "official_fallback_url": official_fallback_url,
                     "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
                 }
 
             data = response.json()
-            polling = _normalize_locations(data.get("pollingLocations", []) or [], "polling_location")
-            early = _normalize_locations(data.get("earlyVoteSites", []) or [], "early_vote_site")
-            drop_off = _normalize_locations(data.get("dropOffLocations", []) or [], "drop_off_location")
+            polling = _normalize_locations(data.get("pollingLocations", []) or [], "polling_location", state)
+            early = _normalize_locations(data.get("earlyVoteSites", []) or [], "early_vote_site", state)
+            drop_off = _normalize_locations(data.get("dropOffLocations", []) or [], "drop_off_location", state)
             all_locations = polling + early + drop_off
 
             if not all_locations:
@@ -467,7 +478,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                         "name": response_election.get("name"),
                         "date": response_election.get("electionDay"),
                     } if response_election else {},
-                    "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+                    "official_fallback_url": official_fallback_url,
                     "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
                 }
 
@@ -490,12 +501,12 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                         "source_url": "https://developers.google.com/civic-information/docs/v2/voterinfo",
                     },
                     {
-                        "source_name": "Colorado Voter Lookup",
-                        "publisher": "Colorado Secretary of State",
-                        "source_url": COLORADO_VOTER_LOOKUP_URL,
+                        "source_name": "State Voter Lookup",
+                        "publisher": "Secretary of State",
+                        "source_url": official_fallback_url,
                     },
                 ],
-                "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+                "official_fallback_url": official_fallback_url,
                 "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
             }
     except Exception as exc:
@@ -504,7 +515,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
             "message": "Polling lookup is temporarily unavailable.",
             "provider_detail": str(exc),
             "request_address": full_address,
-            "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+            "official_fallback_url": official_fallback_url,
             "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         }
 
