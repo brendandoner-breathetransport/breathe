@@ -11,7 +11,7 @@ export default function HomePage() {
       </div>
       <div className="card">
         <h2 style={{ marginBottom: "0.75rem" }}>Voter Tools</h2>
-        <Link className="btn" href="/vote/co/polling-location">Find Colorado Polling Location</Link>
+        <Link className="btn" href="/vote/co/polling-location">Find Polling Location</Link>
       </div>
     </main>
   );

@@ -89,6 +89,15 @@ const seriesMeta = [
   { key: "childcare_index", label: "Childcare", color: "#a16207" }
 ] as const;
 
+function policyContext(summary: string, category: string): string {
+  const clean = (summary || "").trim();
+  if (clean) {
+    const firstSentence = clean.split(".")[0]?.trim() || clean;
+    return `${category}: ${firstSentence}`;
+  }
+  return `${category}: policy change`;
+}
+
 export default function AffordabilityDashboard() {
   const [stateAbbrev, setStateAbbrev] = useState("CO");
   const [showPolicyMarkers, setShowPolicyMarkers] = useState(true);
@@ -264,7 +273,41 @@ export default function AffordabilityDashboard() {
           .join("\n")
       : "";
 
-    return `<svg class=\"chart\" viewBox=\"0 0 ${width} ${height}\" preserveAspectRatio=\"none\">\n<line x1=\"${padL}\" y1=\"${height - padB}\" x2=\"${width - padR}\" y2=\"${height - padB}\" stroke=\"#c9d2ca\"/>\n<line x1=\"${padL}\" y1=\"${padT}\" x2=\"${padL}\" y2=\"${height - padB}\" stroke=\"#c9d2ca\"/>\n${markerLines}\n${paths.join("\n")}\n</svg>`;
+    const xTickCount = Math.min(6, years.length);
+    const xTickYears =
+      xTickCount <= 1
+        ? [minX]
+        : Array.from({ length: xTickCount }, (_, i) => {
+            const ratio = i / (xTickCount - 1);
+            return Math.round(minX + ratio * (maxX - minX));
+          });
+    const xTicks = xTickYears
+      .map((year) => {
+        const px = x(year).toFixed(1);
+        return `<line x1="${px}" y1="${height - padB}" x2="${px}" y2="${height - padB + 5}" stroke="#7b8a80" />
+<text x="${px}" y="${height - padB + 18}" font-size="10" text-anchor="middle" fill="#4b5563">${year}</text>`;
+      })
+      .join("\n");
+
+    const yTickCount = 6;
+    const yTicks = Array.from({ length: yTickCount }, (_, i) => {
+      const ratio = i / (yTickCount - 1);
+      const val = minY + ratio * (maxY - minY);
+      const py = y(val).toFixed(1);
+      return `<line x1="${padL - 5}" y1="${py}" x2="${padL}" y2="${py}" stroke="#7b8a80" />
+<text x="${padL - 8}" y="${Number(py) + 3}" font-size="10" text-anchor="end" fill="#4b5563">${val.toFixed(0)}</text>`;
+    }).join("\n");
+
+    return `<svg class=\"chart\" viewBox=\"0 0 ${width} ${height}\" preserveAspectRatio=\"none\">
+<line x1="${padL}" y1="${height - padB}" x2="${width - padR}" y2="${height - padB}" stroke="#c9d2ca"/>
+<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${height - padB}" stroke="#c9d2ca"/>
+${xTicks}
+${yTicks}
+<text x="${(padL + width - padR) / 2}" y="${height - 6}" font-size="11" text-anchor="middle" fill="#374151">Year</text>
+<text x="12" y="${(padT + height - padB) / 2}" font-size="11" text-anchor="middle" transform="rotate(-90 12 ${(padT + height - padB) / 2})" fill="#374151">Index</text>
+${markerLines}
+${paths.join("\n")}
+</svg>`;
   }, [affordability, policy, showPolicyMarkers, metricKeys]);
 
   const onAsk = async () => {
@@ -370,7 +413,9 @@ export default function AffordabilityDashboard() {
         {showPolicyMarkers && (
           <div className="small muted" style={{ marginTop: "0.6rem" }}>
             {policy.map((p, i) => (
-              <div key={`${p.year}-${p.short_label}`}>{i + 1}. {p.year} - {p.short_label}</div>
+              <div key={`${p.year}-${p.short_label}`}>
+                {i + 1}. {p.year} - {p.short_label} ({policyContext(p.summary, p.category)})
+              </div>
             ))}
           </div>
         )}
@@ -538,6 +583,7 @@ export default function AffordabilityDashboard() {
                   <th>Year</th>
                   <th>Label</th>
                   <th>Category</th>
+                  <th>Context</th>
                 </tr>
               )}
             </thead>
@@ -555,6 +601,7 @@ export default function AffordabilityDashboard() {
                       <td>{p.year}</td>
                       <td>{p.short_label}</td>
                       <td>{p.category}</td>
+                      <td>{policyContext(p.summary, p.category)}</td>
                     </tr>
                   ))}
             </tbody>
