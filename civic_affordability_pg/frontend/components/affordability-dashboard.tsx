@@ -142,35 +142,39 @@ export default function AffordabilityDashboard() {
     run();
   }, [stateAbbrev]);
 
+  const getExpenseValue = (row: ExpenseShareRow, key: "healthcare" | "childcare" | "mortgage" | "known_total") => {
+    if (key === "healthcare") {
+      return indexMode === "inflation_adjusted"
+        ? row.healthcare_share_cpi_2023_pct_of_monthly_income
+        : row.healthcare_share_pct_of_monthly_income;
+    }
+    if (key === "childcare") {
+      return indexMode === "inflation_adjusted"
+        ? row.childcare_share_cpi_2023_pct_of_monthly_income
+        : row.childcare_share_pct_of_monthly_income;
+    }
+    if (key === "mortgage") {
+      return indexMode === "inflation_adjusted"
+        ? row.estimated_mortgage_share_cpi_2023_pct_of_monthly_income
+        : row.estimated_mortgage_share_pct_of_monthly_income;
+    }
+    return indexMode === "inflation_adjusted"
+      ? row.known_expense_share_cpi_2023_pct_of_monthly_income
+      : row.known_expense_share_pct_of_monthly_income;
+  };
+
+  const baseExpenseShare =
+    expenseShare.find((r) => r.year === 2003) ??
+    (expenseShare.length ? expenseShare[0] : null);
   const latestExpenseShare = expenseShare[expenseShare.length - 1];
-  const healthcareShareVal = latestExpenseShare
-    ? Number(
-        indexMode === "inflation_adjusted"
-          ? latestExpenseShare.healthcare_share_cpi_2023_pct_of_monthly_income
-          : latestExpenseShare.healthcare_share_pct_of_monthly_income
-      )
-    : null;
-  const childcareShareVal = latestExpenseShare
-    ? Number(
-        indexMode === "inflation_adjusted"
-          ? latestExpenseShare.childcare_share_cpi_2023_pct_of_monthly_income
-          : latestExpenseShare.childcare_share_pct_of_monthly_income
-      )
-    : null;
-  const knownExpenseShareVal = latestExpenseShare
-    ? Number(
-        indexMode === "inflation_adjusted"
-          ? latestExpenseShare.known_expense_share_cpi_2023_pct_of_monthly_income
-          : latestExpenseShare.known_expense_share_pct_of_monthly_income
-      )
-    : null;
-  const mortgageShareVal = latestExpenseShare
-    ? Number(
-        indexMode === "inflation_adjusted"
-          ? latestExpenseShare.estimated_mortgage_share_cpi_2023_pct_of_monthly_income
-          : latestExpenseShare.estimated_mortgage_share_pct_of_monthly_income
-      )
-    : null;
+  const deltaFromBase = (key: "healthcare" | "childcare" | "mortgage" | "known_total"): number | null => {
+    if (!latestExpenseShare || !baseExpenseShare) return null;
+    return getExpenseValue(latestExpenseShare, key) - getExpenseValue(baseExpenseShare, key);
+  };
+  const healthcareShareDelta = deltaFromBase("healthcare");
+  const childcareShareDelta = deltaFromBase("childcare");
+  const mortgageShareDelta = deltaFromBase("mortgage");
+  const knownExpenseShareDelta = deltaFromBase("known_total");
 
   const chartLines = useMemo(() => {
     if (!expenseShare.length) return "";
@@ -181,26 +185,8 @@ export default function AffordabilityDashboard() {
     const padT = 20;
     const padB = 36;
     const minY = 0;
-    const getSeriesValue = (row: ExpenseShareRow, key: (typeof expenseSeriesMeta)[number]["key"]): number => {
-      if (key === "healthcare") {
-        return indexMode === "inflation_adjusted"
-          ? row.healthcare_share_cpi_2023_pct_of_monthly_income
-          : row.healthcare_share_pct_of_monthly_income;
-      }
-      if (key === "childcare") {
-        return indexMode === "inflation_adjusted"
-          ? row.childcare_share_cpi_2023_pct_of_monthly_income
-          : row.childcare_share_pct_of_monthly_income;
-      }
-      if (key === "mortgage") {
-        return indexMode === "inflation_adjusted"
-          ? row.estimated_mortgage_share_cpi_2023_pct_of_monthly_income
-          : row.estimated_mortgage_share_pct_of_monthly_income;
-      }
-      return indexMode === "inflation_adjusted"
-        ? row.known_expense_share_cpi_2023_pct_of_monthly_income
-        : row.known_expense_share_pct_of_monthly_income;
-    };
+    const getSeriesValue = (row: ExpenseShareRow, key: (typeof expenseSeriesMeta)[number]["key"]): number =>
+      getExpenseValue(row, key);
     const maxY = Math.max(
       10,
       ...expenseShare.flatMap((r) => expenseSeriesMeta.map((s) => getSeriesValue(r, s.key)))
@@ -372,15 +358,15 @@ ${paths.join("\n")}
       </div>
 
       <div className="card">
-        <h2 style={{ marginBottom: "0.5rem" }}>Marked Expenses as % of Monthly Income</h2>
+        <h2 style={{ marginBottom: "0.5rem" }}>Change Since 2003 (Percentage Points)</h2>
         <p className="small muted" style={{ marginTop: 0 }}>
-          Combined known expenses now include healthcare, childcare, and estimated mortgage share.
+          Difference between latest year and 2003 baseline for each expense share.
         </p>
         <div className="grid summary-grid">
-          <div className="card"><div className="small muted">Healthcare %</div><h3>{healthcareShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
-          <div className="card"><div className="small muted">Childcare %</div><h3>{childcareShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
-          <div className="card"><div className="small muted">Estimated Mortgage %</div><h3>{mortgageShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
-          <div className="card"><div className="small muted">Known Expenses (Total) %</div><h3>{knownExpenseShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
+          <div className="card"><div className="small muted">Healthcare Δ</div><h3>{healthcareShareDelta != null ? `${healthcareShareDelta >= 0 ? "+" : ""}${healthcareShareDelta.toFixed(1)} pp` : "-"}</h3></div>
+          <div className="card"><div className="small muted">Childcare Δ</div><h3>{childcareShareDelta != null ? `${childcareShareDelta >= 0 ? "+" : ""}${childcareShareDelta.toFixed(1)} pp` : "-"}</h3></div>
+          <div className="card"><div className="small muted">Estimated Mortgage Δ</div><h3>{mortgageShareDelta != null ? `${mortgageShareDelta >= 0 ? "+" : ""}${mortgageShareDelta.toFixed(1)} pp` : "-"}</h3></div>
+          <div className="card"><div className="small muted">Known Expenses (Total) Δ</div><h3>{knownExpenseShareDelta != null ? `${knownExpenseShareDelta >= 0 ? "+" : ""}${knownExpenseShareDelta.toFixed(1)} pp` : "-"}</h3></div>
         </div>
       </div>
 
