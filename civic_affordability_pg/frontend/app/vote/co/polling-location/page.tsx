@@ -26,6 +26,7 @@ type PollingResponse = {
     url: string;
     notes?: string;
   }>;
+  official_lookup_requirements?: string[];
   election?: {
     id?: string;
     name?: string;
@@ -98,6 +99,11 @@ export default function ColoradoPollingLocationPage() {
           <p className="small muted">Address: {result.request_address}</p>
           {result.provider_used ? (
             <p className="small muted">Provider path: {result.provider_used}</p>
+          ) : null}
+          {result.official_lookup_requirements?.length ? (
+            <p className="small muted">
+              Official lookup requires: {result.official_lookup_requirements.join(", ")}
+            </p>
           ) : null}
           {result.election?.name ? (
             <p className="small muted">Election: {result.election.name} ({result.election.date})</p>

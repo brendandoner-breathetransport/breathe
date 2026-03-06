@@ -28,6 +28,13 @@ TENNESSEE_VOTER_LOOKUP_URL = "https://web.go-vote-tn.elections.tn.gov/"
 VOTING_INFO_PROJECT_URL = "https://www.votinginfoproject.org/"
 SUPPORTED_POLLING_STATES = {"CO", "TN"}
 STATE_NAME_BY_ABBREV = {"CO": "Colorado", "TN": "Tennessee"}
+CO_OFFICIAL_LOOKUP_REQUIREMENTS = [
+    "first_name",
+    "last_name",
+    "zip",
+    "date_of_birth_mm_dd_yyyy",
+    "recaptcha",
+]
 
 app = FastAPI(title="Civic Affordability API", version="0.1.0")
 
@@ -382,6 +389,12 @@ def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str, st
 def _build_provider_plan(state_abbrev: str) -> list[dict[str, Any]]:
     official_url = _state_fallback_lookup_url(state_abbrev)
     state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper(), state_abbrev.upper())
+    official_notes = "Most authoritative source for current polling place details."
+    if state_abbrev.upper() == "CO":
+        official_notes = (
+            "Official lookup requires first name, last name, zip, date of birth, "
+            "and reCAPTCHA, so direct server-side automation is restricted."
+        )
     return [
         {
             "provider_id": "state_official",
@@ -389,7 +402,7 @@ def _build_provider_plan(state_abbrev: str) -> list[dict[str, Any]]:
             "priority": 1,
             "mode": "official_lookup",
             "url": official_url,
-            "notes": "Most authoritative source for current polling place details.",
+            "notes": official_notes,
         },
         {
             "provider_id": "vip",
@@ -408,6 +421,23 @@ def _build_provider_plan(state_abbrev: str) -> list[dict[str, Any]]:
             "notes": "Used as a supplementary API source when election context is available.",
         },
     ]
+
+
+def _official_lookup_requirements(state_abbrev: str) -> list[str]:
+    if state_abbrev.upper() == "CO":
+        return CO_OFFICIAL_LOOKUP_REQUIREMENTS
+    return []
+
+
+def _official_lookup_guidance_detail(state_abbrev: str, provider_detail: str | None = None) -> str | None:
+    detail = (provider_detail or "").strip()
+    if state_abbrev.upper() == "CO":
+        guidance = (
+            "Colorado official lookup requires first name, last name, zip, date of birth, "
+            "and reCAPTCHA completion."
+        )
+        return f"{guidance} {detail}".strip() if detail else guidance
+    return detail or None
 
 
 def _strip_html(value: str) -> str:
@@ -615,6 +645,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
     full_address = _build_full_address(payload.street, payload.city, state, payload.zip)
     official_fallback_url = _state_fallback_lookup_url(state)
     provider_plan = _build_provider_plan(state)
+    official_lookup_requirements = _official_lookup_requirements(state)
 
     if not GOOGLE_CIVIC_API_KEY:
         return {
@@ -623,6 +654,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
             "request_address": full_address,
             "provider_used": "state_official",
             "providers": provider_plan,
+            "official_lookup_requirements": official_lookup_requirements,
             "official_fallback_url": official_fallback_url,
             "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         }
@@ -639,6 +671,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                         "request_address": full_address,
                         "provider_used": "state_official",
                         "providers": provider_plan,
+                        "official_lookup_requirements": official_lookup_requirements,
                         "result_count": len(tn_locations),
                         "locations": tn_locations,
                         "citations": [
@@ -691,10 +724,11 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                     return {
                         "status": "official_lookup_recommended",
                         "message": "Civic API could not resolve a polling location. Use official state lookup.",
-                        "provider_detail": tn_detail or detail,
+                        "provider_detail": _official_lookup_guidance_detail(state, tn_detail or detail),
                         "request_address": full_address,
                         "provider_used": "state_official",
                         "providers": provider_plan,
+                        "official_lookup_requirements": official_lookup_requirements,
                         "official_fallback_url": official_fallback_url,
                         "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
                     }
@@ -716,9 +750,10 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                         "name": response_election.get("name"),
                         "date": response_election.get("electionDay"),
                     } if response_election else {},
-                    "provider_detail": tn_detail,
+                    "provider_detail": _official_lookup_guidance_detail(state, tn_detail),
                     "provider_used": "state_official",
                     "providers": provider_plan,
+                    "official_lookup_requirements": official_lookup_requirements,
                     "official_fallback_url": official_fallback_url,
                     "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
                 }
@@ -735,6 +770,7 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                 } if response_election else {},
                 "provider_used": "google_civic",
                 "providers": provider_plan,
+                "official_lookup_requirements": official_lookup_requirements,
                 "result_count": len(all_locations),
                 "locations": all_locations,
                 "citations": [
@@ -756,10 +792,11 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
         return {
             "status": "official_lookup_recommended",
             "message": "Polling API is temporarily unavailable. Use official state lookup.",
-            "provider_detail": str(exc),
+            "provider_detail": _official_lookup_guidance_detail(state, str(exc)),
             "request_address": full_address,
             "provider_used": "state_official",
             "providers": provider_plan,
+            "official_lookup_requirements": official_lookup_requirements,
             "official_fallback_url": official_fallback_url,
             "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         }
