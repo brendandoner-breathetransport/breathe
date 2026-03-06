@@ -45,6 +45,9 @@ export default function ColoradoPollingLocationPage() {
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
   const [stateAbbrev, setStateAbbrev] = useState<"CO" | "TN">("CO");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dob, setDob] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PollingResponse | null>(null);
 
@@ -55,7 +58,15 @@ export default function ColoradoPollingLocationPage() {
       const res = await fetch("/api/vote/co/polling-location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ street, city, zip, state_abbrev: stateAbbrev })
+        body: JSON.stringify({
+          street,
+          city,
+          zip,
+          state_abbrev: stateAbbrev,
+          first_name: firstName,
+          last_name: lastName,
+          date_of_birth_mm_dd_yyyy: dob
+        })
       });
       const payload = await res.json();
       setResult(payload);
@@ -89,6 +100,25 @@ export default function ColoradoPollingLocationPage() {
           ZIP
           <input value={zip} onChange={(e) => setZip(e.target.value)} required placeholder="80202" />
         </label>
+        {stateAbbrev === "CO" ? (
+          <>
+            <p className="small muted">
+              Colorado official lookup needs identity verification. Add these to speed manual lookup.
+            </p>
+            <label>
+              First name (CO lookup)
+              <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" />
+            </label>
+            <label>
+              Last name (CO lookup)
+              <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" />
+            </label>
+            <label>
+              Date of birth (CO lookup, MM/DD/YYYY)
+              <input value={dob} onChange={(e) => setDob(e.target.value)} placeholder="01/31/1990" />
+            </label>
+          </>
+        ) : null}
         <button type="submit" disabled={loading}>{loading ? "Looking up..." : "Find Polling Location"}</button>
       </form>
 
