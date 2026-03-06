@@ -9,6 +9,10 @@ export default function HomePage() {
         <h2 style={{ marginBottom: "0.75rem" }}>Dashboard</h2>
         <Link className="btn" href="/state/co">Open Colorado Dashboard</Link>
       </div>
+      <div className="card">
+        <h2 style={{ marginBottom: "0.75rem" }}>Voter Tools</h2>
+        <Link className="btn" href="/vote/co/polling-location">Find Colorado Polling Location</Link>
+      </div>
     </main>
   );
 }

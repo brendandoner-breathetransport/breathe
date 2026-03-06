@@ -18,6 +18,8 @@ This deploys `civic_affordability_pg/api/main.py` as a public backend for the Ve
 
 - Key: `DATABASE_URL`
 - Value: your Supabase Postgres URL
+- Key: `GOOGLE_CIVIC_API_KEY`
+- Value: your Google Civic Information API key
 
 Recommended Supabase format:
 
@@ -30,6 +32,7 @@ After deploy, verify:
 - `/health`
 - `/api/affordability?state_abbrev=CO`
 - `/api/policy?state_abbrev=CO`
+- `POST /api/vote/co/polling-location`
 
 ## 5) Wire Vercel frontend
 

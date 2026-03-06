@@ -2,7 +2,9 @@ import os
 from typing import Any
 from datetime import datetime, timezone
 from decimal import Decimal
+from urllib.parse import quote_plus
 
+import httpx
 import psycopg
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -17,12 +19,22 @@ ALLOWED_TABLES = {
 }
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/affordability")
+GOOGLE_CIVIC_API_KEY = os.getenv("GOOGLE_CIVIC_API_KEY", "")
+GOOGLE_CIVIC_BASE_URL = "https://www.googleapis.com/civicinfo/v2"
+COLORADO_VOTER_LOOKUP_URL = "https://www.sos.state.co.us/voter/pages/pub/olvr/findVoterReg.xhtml"
 
 app = FastAPI(title="Civic Affordability API", version="0.1.0")
 
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=500)
+    state_abbrev: str = Field(default="CO", min_length=2, max_length=2)
+
+
+class PollingLookupRequest(BaseModel):
+    street: str = Field(min_length=3, max_length=200)
+    city: str = Field(min_length=2, max_length=100)
+    zip: str = Field(min_length=5, max_length=10)
     state_abbrev: str = Field(default="CO", min_length=2, max_length=2)
 
 
@@ -307,6 +319,75 @@ def _follow_up_suggestions(category: str) -> list[str]:
     return options.get(category, ["Show trend summary.", "Compare before and after two years."])
 
 
+def _build_full_address(street: str, city: str, state_abbrev: str, zip_code: str) -> str:
+    return f"{street.strip()}, {city.strip()}, {state_abbrev.strip().upper()} {zip_code.strip()}"
+
+
+def _format_location_address(address: dict[str, Any] | None) -> str:
+    if not address:
+        return ""
+    parts = [
+        address.get("line1"),
+        address.get("line2"),
+        address.get("line3"),
+        ", ".join(
+            p for p in [address.get("city"), address.get("state"), address.get("zip")] if p
+        ),
+    ]
+    return ", ".join([p for p in parts if p])
+
+
+def _extract_source_url(sources: list[dict[str, Any]]) -> str:
+    for source in sources:
+        official = source.get("official")
+        if official:
+            return str(official)
+    return COLORADO_VOTER_LOOKUP_URL
+
+
+def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    for item in raw_items:
+        address_obj = item.get("address", {})
+        full_address = _format_location_address(address_obj)
+        source_list = item.get("sources", []) or []
+        normalized.append(
+            {
+                "location_type": location_type,
+                "name": item.get("addressLocationName") or item.get("name") or "Polling Location",
+                "address": full_address,
+                "hours": item.get("pollingHours") or item.get("earlyVoteSiteHours") or None,
+                "notes": item.get("notes"),
+                "source_name": source_list[0].get("name") if source_list else "Voting Information Project",
+                "source_url": _extract_source_url(source_list),
+                "maps_url": f"https://www.google.com/maps/search/?api=1&query={quote_plus(full_address)}" if full_address else None,
+            }
+        )
+    return normalized
+
+
+def _get_upcoming_election_id(client: httpx.Client) -> tuple[str | None, dict[str, Any]]:
+    try:
+        resp = client.get(f"{GOOGLE_CIVIC_BASE_URL}/elections", params={"key": GOOGLE_CIVIC_API_KEY}, timeout=12.0)
+        if resp.status_code >= 400:
+            return None, {}
+        payload = resp.json()
+        elections = payload.get("elections", []) or []
+        if not elections:
+            return None, {}
+
+        today = datetime.now(timezone.utc).date().isoformat()
+        upcoming = [e for e in elections if str(e.get("electionDay", "")) >= today]
+        target = sorted(upcoming, key=lambda e: e.get("electionDay"))[0] if upcoming else elections[0]
+        return str(target.get("id")), {
+            "id": str(target.get("id")),
+            "name": target.get("name"),
+            "date": target.get("electionDay"),
+        }
+    except Exception:
+        return None, {}
+
+
 def _run_query(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
@@ -352,6 +433,95 @@ def get_policy(state_abbrev: str = "CO") -> dict[str, Any]:
         {"state": state_abbrev.upper(), "limit": MAX_ROWS},
     )
     return {"rows": rows, "row_count": len(rows)}
+
+
+@app.post("/api/vote/co/polling-location")
+def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, Any]:
+    state = payload.state_abbrev.strip().upper()
+    if state != "CO":
+        raise HTTPException(status_code=400, detail="This endpoint currently supports Colorado addresses only.")
+
+    if not GOOGLE_CIVIC_API_KEY:
+        return {
+            "status": "unavailable",
+            "message": "Polling lookup provider is not configured.",
+            "request_address": _build_full_address(payload.street, payload.city, state, payload.zip),
+            "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+            "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+
+    full_address = _build_full_address(payload.street, payload.city, state, payload.zip)
+
+    try:
+        with httpx.Client() as client:
+            election_id, election_meta = _get_upcoming_election_id(client)
+            params: dict[str, Any] = {"key": GOOGLE_CIVIC_API_KEY, "address": full_address}
+            if election_id:
+                params["electionId"] = election_id
+
+            response = client.get(f"{GOOGLE_CIVIC_BASE_URL}/voterinfo", params=params, timeout=15.0)
+            if response.status_code >= 400:
+                detail = ""
+                try:
+                    detail = response.json().get("error", {}).get("message", "")
+                except Exception:
+                    detail = response.text
+                return {
+                    "status": "no_match",
+                    "message": "Unable to find polling location for the provided address.",
+                    "provider_detail": detail,
+                    "request_address": full_address,
+                    "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+                    "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+                }
+
+            data = response.json()
+            polling = _normalize_locations(data.get("pollingLocations", []) or [], "polling_location")
+            early = _normalize_locations(data.get("earlyVoteSites", []) or [], "early_vote_site")
+            drop_off = _normalize_locations(data.get("dropOffLocations", []) or [], "drop_off_location")
+            all_locations = polling + early + drop_off
+
+            if not all_locations:
+                return {
+                    "status": "no_match",
+                    "message": "No polling locations returned for this address.",
+                    "request_address": full_address,
+                    "election": election_meta,
+                    "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+                    "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+                }
+
+            return {
+                "status": "ok",
+                "message": "Polling locations found.",
+                "request_address": full_address,
+                "election": election_meta,
+                "result_count": len(all_locations),
+                "locations": all_locations,
+                "citations": [
+                    {
+                        "source_name": "Google Civic Information API",
+                        "publisher": "Google / Voting Information Project",
+                        "source_url": "https://developers.google.com/civic-information/docs/v2/voterinfo",
+                    },
+                    {
+                        "source_name": "Colorado Voter Lookup",
+                        "publisher": "Colorado Secretary of State",
+                        "source_url": COLORADO_VOTER_LOOKUP_URL,
+                    },
+                ],
+                "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+                "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+            }
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": "Polling lookup is temporarily unavailable.",
+            "provider_detail": str(exc),
+            "request_address": full_address,
+            "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
+            "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
 
 
 @app.post("/api/ask")
