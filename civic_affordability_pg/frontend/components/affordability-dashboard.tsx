@@ -2,17 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type AffordabilityRow = {
-  year: number;
-  income_index: number;
-  housing_index: number;
-  healthcare_index: number;
-  childcare_index: number;
-  income_cpi_2023_index: number;
-  healthcare_cpi_2023_index: number;
-  childcare_cpi_2023_index: number;
-};
-
 type PolicyRow = {
   year: number;
   short_label: string;
@@ -82,11 +71,11 @@ type ChatMessage = {
   createdAt: string;
 };
 
-const seriesMeta = [
-  { key: "income_index", label: "Income", color: "#0e7a4e" },
-  { key: "housing_index", label: "Housing", color: "#b91c1c" },
-  { key: "healthcare_index", label: "Healthcare", color: "#1d4ed8" },
-  { key: "childcare_index", label: "Childcare", color: "#a16207" }
+const expenseSeriesMeta = [
+  { key: "healthcare", label: "Healthcare %", color: "#1d4ed8" },
+  { key: "childcare", label: "Childcare %", color: "#a16207" },
+  { key: "mortgage", label: "Mortgage %", color: "#b91c1c" },
+  { key: "known_total", label: "Known Total %", color: "#0e7a4e" }
 ] as const;
 
 function policyContext(summary: string, category: string): string {
@@ -102,7 +91,6 @@ export default function AffordabilityDashboard() {
   const [stateAbbrev, setStateAbbrev] = useState("CO");
   const [showPolicyMarkers, setShowPolicyMarkers] = useState(true);
   const [indexMode, setIndexMode] = useState<"nominal" | "inflation_adjusted">("nominal");
-  const [affordability, setAffordability] = useState<AffordabilityRow[]>([]);
   const [policy, setPolicy] = useState<PolicyRow[]>([]);
   const [expenseShare, setExpenseShare] = useState<ExpenseShareRow[]>([]);
   const [question, setQuestion] = useState("");
@@ -127,26 +115,12 @@ export default function AffordabilityDashboard() {
 
   useEffect(() => {
     const run = async () => {
-      const [affRes, polRes, expenseRes] = await Promise.all([
-        fetch(`/api/affordability?state_abbrev=${stateAbbrev}`, { cache: "no-store" }),
+      const [polRes, expenseRes] = await Promise.all([
         fetch(`/api/policy?state_abbrev=${stateAbbrev}`, { cache: "no-store" }),
         fetch(`/api/expense-share?state_abbrev=${stateAbbrev}`, { cache: "no-store" })
       ]);
-      const affJson = await affRes.json();
       const polJson = await polRes.json();
       const expenseJson = await expenseRes.json();
-      setAffordability(
-        (affJson.rows ?? []).map((row: Record<string, unknown>) => ({
-          year: Number(row.year),
-          income_index: Number(row.income_index),
-          housing_index: Number(row.housing_index),
-          healthcare_index: Number(row.healthcare_index),
-          childcare_index: Number(row.childcare_index),
-          income_cpi_2023_index: Number(row.income_cpi_2023_index),
-          healthcare_cpi_2023_index: Number(row.healthcare_cpi_2023_index),
-          childcare_cpi_2023_index: Number(row.childcare_cpi_2023_index)
-        }))
-      );
       setPolicy(polJson.rows ?? []);
       setExpenseShare(
         (expenseJson.rows ?? []).map((row: Record<string, unknown>) => ({
@@ -168,29 +142,6 @@ export default function AffordabilityDashboard() {
     run();
   }, [stateAbbrev]);
 
-  const latest = affordability[affordability.length - 1];
-  const metricKeys =
-    indexMode === "inflation_adjusted"
-      ? {
-          income: "income_cpi_2023_index",
-          healthcare: "healthcare_cpi_2023_index",
-          childcare: "childcare_cpi_2023_index"
-        }
-      : {
-          income: "income_index",
-          healthcare: "healthcare_index",
-          childcare: "childcare_index"
-        };
-  const incomeVal = latest ? Number(latest[metricKeys.income as keyof AffordabilityRow]) : null;
-  const housingVal = latest ? Number(latest.housing_index) : null;
-  const healthcareVal = latest ? Number(latest[metricKeys.healthcare as keyof AffordabilityRow]) : null;
-  const childcareVal = latest ? Number(latest[metricKeys.childcare as keyof AffordabilityRow]) : null;
-  const costPressureVal =
-    incomeVal != null && housingVal != null && healthcareVal != null && childcareVal != null
-      ? (housingVal + healthcareVal + childcareVal) / 3
-      : null;
-  const affordabilityGapVal =
-    costPressureVal != null && incomeVal != null ? costPressureVal - incomeVal : null;
   const latestExpenseShare = expenseShare[expenseShare.length - 1];
   const healthcareShareVal = latestExpenseShare
     ? Number(
@@ -222,41 +173,49 @@ export default function AffordabilityDashboard() {
     : null;
 
   const chartLines = useMemo(() => {
-    if (!affordability.length) return "";
+    if (!expenseShare.length) return "";
     const width = 1040;
     const height = 360;
     const padL = 42;
     const padR = 20;
     const padT = 20;
     const padB = 36;
-    const minY = 90;
-    const maxY =
-      Math.max(
-        ...affordability.flatMap((r) => [
-          Number(r[metricKeys.income as keyof AffordabilityRow]),
-          r.housing_index,
-          Number(r[metricKeys.healthcare as keyof AffordabilityRow]),
-          Number(r[metricKeys.childcare as keyof AffordabilityRow])
-        ])
-      ) + 15;
-    const years = affordability.map((r) => r.year);
+    const minY = 0;
+    const getSeriesValue = (row: ExpenseShareRow, key: (typeof expenseSeriesMeta)[number]["key"]): number => {
+      if (key === "healthcare") {
+        return indexMode === "inflation_adjusted"
+          ? row.healthcare_share_cpi_2023_pct_of_monthly_income
+          : row.healthcare_share_pct_of_monthly_income;
+      }
+      if (key === "childcare") {
+        return indexMode === "inflation_adjusted"
+          ? row.childcare_share_cpi_2023_pct_of_monthly_income
+          : row.childcare_share_pct_of_monthly_income;
+      }
+      if (key === "mortgage") {
+        return indexMode === "inflation_adjusted"
+          ? row.estimated_mortgage_share_cpi_2023_pct_of_monthly_income
+          : row.estimated_mortgage_share_pct_of_monthly_income;
+      }
+      return indexMode === "inflation_adjusted"
+        ? row.known_expense_share_cpi_2023_pct_of_monthly_income
+        : row.known_expense_share_pct_of_monthly_income;
+    };
+    const maxY = Math.max(
+      10,
+      ...expenseShare.flatMap((r) => expenseSeriesMeta.map((s) => getSeriesValue(r, s.key)))
+    ) + 5;
+    const years = expenseShare.map((r) => r.year);
     const minX = Math.min(...years);
     const maxX = Math.max(...years);
 
     const x = (year: number) => padL + ((year - minX) / Math.max(1, maxX - minX)) * (width - padL - padR);
     const y = (val: number) => height - padB - ((val - minY) / Math.max(1, maxY - minY)) * (height - padT - padB);
 
-    const paths = seriesMeta.map((s) => {
-      const d = affordability
+    const paths = expenseSeriesMeta.map((s) => {
+      const d = expenseShare
         .map((r, i) => {
-          const value =
-            s.key === "income_index"
-              ? Number(r[metricKeys.income as keyof AffordabilityRow])
-              : s.key === "healthcare_index"
-              ? Number(r[metricKeys.healthcare as keyof AffordabilityRow])
-              : s.key === "childcare_index"
-              ? Number(r[metricKeys.childcare as keyof AffordabilityRow])
-              : Number(r[s.key]);
+          const value = getSeriesValue(r, s.key);
           return `${i === 0 ? "M" : "L"} ${x(r.year).toFixed(1)} ${y(value).toFixed(1)}`;
         })
         .join(" ");
@@ -304,11 +263,11 @@ export default function AffordabilityDashboard() {
 ${xTicks}
 ${yTicks}
 <text x="${(padL + width - padR) / 2}" y="${height - 6}" font-size="11" text-anchor="middle" fill="#374151">Year</text>
-<text x="12" y="${(padT + height - padB) / 2}" font-size="11" text-anchor="middle" transform="rotate(-90 12 ${(padT + height - padB) / 2})" fill="#374151">Index</text>
+<text x="12" y="${(padT + height - padB) / 2}" font-size="11" text-anchor="middle" transform="rotate(-90 12 ${(padT + height - padB) / 2})" fill="#374151">% of monthly income</text>
 ${markerLines}
 ${paths.join("\n")}
 </svg>`;
-  }, [affordability, policy, showPolicyMarkers, metricKeys]);
+  }, [expenseShare, indexMode, policy, showPolicyMarkers]);
 
   const onAsk = async () => {
     if (!question.trim()) {
@@ -361,7 +320,7 @@ ${paths.join("\n")}
   return (
     <main className="grid" style={{ gap: "1rem" }}>
       <h1>Civic Affordability Intelligence</h1>
-      <p className="muted">Base year index = 2003 (100). State scope is Colorado for MVP.</p>
+      <p className="muted">State scope is Colorado for MVP.</p>
 
       <div className="card controls">
         <label>
@@ -371,7 +330,7 @@ ${paths.join("\n")}
           </select>
         </label>
         <label>
-          Index Mode:&nbsp;
+          Series Mode:&nbsp;
           <select value={indexMode} onChange={(e) => setIndexMode(e.target.value as "nominal" | "inflation_adjusted")}>
             <option value="nominal">Nominal</option>
             <option value="inflation_adjusted">Inflation-adjusted (CPI 2023)</option>
@@ -390,22 +349,13 @@ ${paths.join("\n")}
         <a className="btn" href={`/api/policy?state_abbrev=${stateAbbrev}&format=csv`}>Download Policy CSV</a>
       </div>
 
-      <div className="grid summary-grid">
-        <div className="card"><div className="small muted">Income Index</div><h3>{incomeVal?.toFixed?.(1) ?? "-"}</h3></div>
-        <div className="card"><div className="small muted">Housing Index</div><h3>{latest?.housing_index?.toFixed?.(1) ?? "-"}</h3></div>
-        <div className="card"><div className="small muted">Healthcare Index</div><h3>{healthcareVal?.toFixed?.(1) ?? "-"}</h3></div>
-        <div className="card"><div className="small muted">Childcare Index</div><h3>{childcareVal?.toFixed?.(1) ?? "-"}</h3></div>
-        <div className="card"><div className="small muted">Cost Pressure</div><h3>{costPressureVal?.toFixed?.(1) ?? "-"}</h3></div>
-        <div className="card"><div className="small muted">Affordability Gap</div><h3>{affordabilityGapVal?.toFixed?.(1) ?? "-"}</h3></div>
-      </div>
-
       <div className="card">
-        <h2 style={{ marginBottom: "0.5rem" }}>Indexed Trend Chart</h2>
+        <h2 style={{ marginBottom: "0.5rem" }}>Expense Share Trend Chart</h2>
         <p className="small muted" style={{ marginTop: 0 }}>
-          {indexMode === "inflation_adjusted" ? "Using inflation-adjusted income/healthcare/childcare indexes (CPI 2023)." : "Using nominal indexes."}
+          {indexMode === "inflation_adjusted" ? "Using CPI-adjusted income shares where available." : "Using nominal income shares."}
         </p>
         <div className="series">
-          {seriesMeta.map((s) => (
+          {expenseSeriesMeta.map((s) => (
             <span key={s.key} className="legend-item"><span className="dot" style={{ background: s.color }} />{s.label}</span>
           ))}
         </div>
