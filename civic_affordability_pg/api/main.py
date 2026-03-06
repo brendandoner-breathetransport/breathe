@@ -481,6 +481,23 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
             drop_off = _normalize_locations(data.get("dropOffLocations", []) or [], "drop_off_location")
             all_locations = polling + early + drop_off
 
+            # If an unrelated electionId was selected globally, retry without electionId
+            # so the API can resolve the address against its default election context.
+            if not all_locations and election_id:
+                fallback_params: dict[str, Any] = {"key": GOOGLE_CIVIC_API_KEY, "address": full_address}
+                fallback_response = client.get(
+                    f"{GOOGLE_CIVIC_BASE_URL}/voterinfo",
+                    params=fallback_params,
+                    timeout=15.0,
+                )
+                if fallback_response.status_code < 400:
+                    fallback_data = fallback_response.json()
+                    polling = _normalize_locations(fallback_data.get("pollingLocations", []) or [], "polling_location")
+                    early = _normalize_locations(fallback_data.get("earlyVoteSites", []) or [], "early_vote_site")
+                    drop_off = _normalize_locations(fallback_data.get("dropOffLocations", []) or [], "drop_off_location")
+                    all_locations = polling + early + drop_off
+                    data = fallback_data
+
             if not all_locations:
                 return {
                     "status": "no_match",
