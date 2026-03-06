@@ -24,6 +24,7 @@ GOOGLE_CIVIC_BASE_URL = "https://www.googleapis.com/civicinfo/v2"
 COLORADO_VOTER_LOOKUP_URL = "https://www.sos.state.co.us/voter/pages/pub/olvr/findVoterReg.xhtml"
 TENNESSEE_VOTER_LOOKUP_URL = "https://tnmap.tn.gov/voterlookup/"
 SUPPORTED_POLLING_STATES = {"CO", "TN"}
+STATE_NAME_BY_ABBREV = {"CO": "Colorado", "TN": "Tennessee"}
 
 app = FastAPI(title="Civic Affordability API", version="0.1.0")
 
@@ -375,6 +376,35 @@ def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str, st
     return normalized
 
 
+def _get_state_election_id(client: httpx.Client, state_abbrev: str) -> str | None:
+    state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper())
+    if not state_name:
+        return None
+    try:
+        resp = client.get(
+            f"{GOOGLE_CIVIC_BASE_URL}/elections",
+            params={"key": GOOGLE_CIVIC_API_KEY},
+            timeout=12.0,
+        )
+        if resp.status_code >= 400:
+            return None
+        payload = resp.json()
+        elections = payload.get("elections", []) or []
+        today = datetime.now(timezone.utc).date().isoformat()
+        candidates = [
+            e for e in elections
+            if state_name.lower() in str(e.get("name", "")).lower()
+            and str(e.get("electionDay", "")) >= today
+        ]
+        if not candidates:
+            return None
+        target = sorted(candidates, key=lambda e: str(e.get("electionDay", "")))[0]
+        election_id = target.get("id")
+        return str(election_id) if election_id is not None else None
+    except Exception:
+        return None
+
+
 def _run_query(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
@@ -452,14 +482,36 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                     detail = response.json().get("error", {}).get("message", "")
                 except Exception:
                     detail = response.text
-                return {
-                    "status": "no_match",
-                    "message": "Unable to find polling location for the provided address.",
-                    "provider_detail": detail,
-                    "request_address": full_address,
-                    "official_fallback_url": official_fallback_url,
-                    "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
-                }
+                # Retry with a state-specific election id when Civic cannot infer election context.
+                if "election unknown" in detail.lower():
+                    state_election_id = _get_state_election_id(client, state)
+                    if state_election_id:
+                        retry_params: dict[str, Any] = {
+                            "key": GOOGLE_CIVIC_API_KEY,
+                            "address": full_address,
+                            "electionId": state_election_id,
+                        }
+                        retry_response = client.get(
+                            f"{GOOGLE_CIVIC_BASE_URL}/voterinfo",
+                            params=retry_params,
+                            timeout=15.0,
+                        )
+                        if retry_response.status_code < 400:
+                            response = retry_response
+                        else:
+                            try:
+                                detail = retry_response.json().get("error", {}).get("message", detail)
+                            except Exception:
+                                detail = retry_response.text or detail
+                if response.status_code >= 400:
+                    return {
+                        "status": "no_match",
+                        "message": "Unable to find polling location for the provided address.",
+                        "provider_detail": detail,
+                        "request_address": full_address,
+                        "official_fallback_url": official_fallback_url,
+                        "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+                    }
 
             data = response.json()
             polling = _normalize_locations(data.get("pollingLocations", []) or [], "polling_location", state)
