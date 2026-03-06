@@ -496,21 +496,83 @@ def _parse_tn_location_detail_page(html: str) -> tuple[str | None, str | None]:
     return hours, maps_url
 
 
-def _lookup_tn_official_locations(client: httpx.Client, street: str, zip_code: str) -> tuple[list[dict[str, Any]], str | None]:
-    base = TENNESSEE_VOTER_LOOKUP_URL.rstrip("/")
-    # Initialize a session, then perform the official address lookup workflow.
-    client.get(f"{base}/search", timeout=15.0)
+def _tn_address_search_candidates(street: str) -> list[str]:
+    raw = re.sub(r"\s+", " ", (street or "").strip())
+    if not raw:
+        return []
+    candidates: list[str] = [raw]
+    # Strip unit designators for fallback matching.
+    no_unit = re.sub(r"\s+(apt|apartment|unit|#)\s*\S+.*$", "", raw, flags=re.I).strip()
+    if no_unit:
+        candidates.append(no_unit)
+    # Strip common street suffixes if county data is abbreviated differently.
+    no_suffix = re.sub(
+        r"\s+(drive|dr|road|rd|street|st|avenue|ave|lane|ln|court|ct|boulevard|blvd|way|circle|cir|place|pl|parkway|pkwy|terrace|ter)\.?\s*$",
+        "",
+        no_unit or raw,
+        flags=re.I,
+    ).strip()
+    if no_suffix:
+        candidates.append(no_suffix)
+    # If city/state got included accidentally in street field, keep first comma chunk.
+    pre_comma = (raw.split(",")[0] or "").strip()
+    if pre_comma:
+        candidates.append(pre_comma)
+
+    deduped: list[str] = []
+    for item in candidates:
+        if item and item not in deduped:
+            deduped.append(item)
+    return deduped
+
+
+def _extract_tn_address_selector_forms(html: str) -> list[tuple[str, dict[str, str]]]:
+    forms: list[tuple[str, dict[str, str]]] = []
+    if not html:
+        return forms
+    for action, body in re.findall(r'<form[^>]*action=\"([^\"]+)\"[^>]*>(.*?)</form>', html, flags=re.S | re.I):
+        if "/search/address" not in action:
+            continue
+        payload: dict[str, str] = {}
+        for input_tag in re.findall(r"<input[^>]*>", body, flags=re.S | re.I):
+            name_match = re.search(r'name=\"([^\"]+)\"', input_tag, flags=re.I)
+            if not name_match:
+                continue
+            value_match = re.search(r'value=\"([^\"]*)\"', input_tag, flags=re.I)
+            payload[name_match.group(1)] = value_match.group(1) if value_match else ""
+        # Selector forms should carry a concrete address value.
+        if payload.get("address"):
+            forms.append((action, payload))
+    return forms
+
+
+def _submit_tn_search(client: httpx.Client, base: str, street: str, zip_code: str) -> str:
     search_resp = client.post(
         f"{base}/search/address",
         data={"address": street.strip(), "zip": zip_code.strip()},
         headers={"Referer": f"{base}/search"},
         timeout=20.0,
     )
-    search_html = search_resp.text
-    if "No Results Returned" in search_html:
-        return [], "No registered voters were found at this address in Tennessee official lookup."
+    html = search_resp.text
+    # Some addresses return an intermediate selector page; follow first resolved option.
+    for _ in range(3):
+        selector_forms = _extract_tn_address_selector_forms(html)
+        if not selector_forms:
+            break
+        action, payload = selector_forms[0]
+        next_url = f"{base}{action}" if action.startswith("/") else f"{base}/{action.lstrip('/')}"
+        follow_resp = client.post(
+            next_url,
+            data=payload,
+            headers={"Referer": f"{base}/search/address"},
+            timeout=20.0,
+        )
+        html = follow_resp.text
+    return html
 
-    all_locations: list[dict[str, Any]] = []
+
+def _collect_tn_locations(client: httpx.Client, base: str) -> list[dict[str, Any]]:
+    locations: list[dict[str, Any]] = []
     location_types = [("election-day", "polling_location"), ("early-voting", "early_vote_site")]
     for type_param, location_type in location_types:
         list_resp = client.get(f"{base}/locations/list", params={"type": type_param}, timeout=20.0)
@@ -523,7 +585,7 @@ def _lookup_tn_official_locations(client: httpx.Client, street: str, zip_code: s
             )
             hours, maps_url = _parse_tn_location_detail_page(detail_resp.text)
             location_address = card["address"]
-            all_locations.append(
+            locations.append(
                 {
                     "location_type": location_type,
                     "name": card["name"],
@@ -535,9 +597,29 @@ def _lookup_tn_official_locations(client: httpx.Client, street: str, zip_code: s
                     "maps_url": maps_url or _build_maps_url_from_address(location_address),
                 }
             )
-    if not all_locations:
-        return [], "No polling locations were returned by Tennessee official lookup for this address."
-    return all_locations, None
+    return locations
+
+
+def _lookup_tn_official_locations(client: httpx.Client, street: str, zip_code: str) -> tuple[list[dict[str, Any]], str | None]:
+    base = TENNESSEE_VOTER_LOOKUP_URL.rstrip("/")
+    # Initialize a session, then perform the official address lookup workflow.
+    client.get(f"{base}/search", timeout=15.0)
+    last_detail = "No polling locations were returned by Tennessee official lookup for this address."
+    selected_candidate = street.strip()
+    for candidate in _tn_address_search_candidates(street):
+        search_html = _submit_tn_search(client, base, candidate, zip_code)
+        selected_candidate = candidate
+        if "No Results Returned" in search_html:
+            last_detail = "No registered voters were found at this address in Tennessee official lookup."
+            continue
+        if "We're sorry, an error has occurred." in search_html:
+            last_detail = "Tennessee official lookup returned an error for this address format."
+            continue
+        all_locations = _collect_tn_locations(client, base)
+        if all_locations:
+            return all_locations, None
+        last_detail = f"No polling locations were returned by Tennessee official lookup for '{candidate}'."
+    return [], last_detail if selected_candidate else "No polling locations were returned by Tennessee official lookup for this address."
 
 
 def _get_state_election_id(client: httpx.Client, state_abbrev: str) -> str | None:
