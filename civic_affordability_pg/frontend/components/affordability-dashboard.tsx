@@ -20,6 +20,18 @@ type PolicyRow = {
   category: string;
 };
 
+type ExpenseShareRow = {
+  year: number;
+  healthcare_share_pct_of_monthly_income: number;
+  childcare_share_pct_of_monthly_income: number;
+  known_expense_share_pct_of_monthly_income: number;
+  healthcare_share_cpi_2023_pct_of_monthly_income: number;
+  childcare_share_cpi_2023_pct_of_monthly_income: number;
+  known_expense_share_cpi_2023_pct_of_monthly_income: number;
+  housing_to_income_index_ratio_pct: number;
+  housing_to_income_cpi_2023_index_ratio_pct: number;
+};
+
 type AskPayload = {
   category: string;
   summary: string;
@@ -80,6 +92,7 @@ export default function AffordabilityDashboard() {
   const [indexMode, setIndexMode] = useState<"nominal" | "inflation_adjusted">("nominal");
   const [affordability, setAffordability] = useState<AffordabilityRow[]>([]);
   const [policy, setPolicy] = useState<PolicyRow[]>([]);
+  const [expenseShare, setExpenseShare] = useState<ExpenseShareRow[]>([]);
   const [question, setQuestion] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -102,12 +115,14 @@ export default function AffordabilityDashboard() {
 
   useEffect(() => {
     const run = async () => {
-      const [affRes, polRes] = await Promise.all([
+      const [affRes, polRes, expenseRes] = await Promise.all([
         fetch(`/api/affordability?state_abbrev=${stateAbbrev}`, { cache: "no-store" }),
-        fetch(`/api/policy?state_abbrev=${stateAbbrev}`, { cache: "no-store" })
+        fetch(`/api/policy?state_abbrev=${stateAbbrev}`, { cache: "no-store" }),
+        fetch(`/api/expense-share?state_abbrev=${stateAbbrev}`, { cache: "no-store" })
       ]);
       const affJson = await affRes.json();
       const polJson = await polRes.json();
+      const expenseJson = await expenseRes.json();
       setAffordability(
         (affJson.rows ?? []).map((row: Record<string, unknown>) => ({
           year: Number(row.year),
@@ -121,6 +136,19 @@ export default function AffordabilityDashboard() {
         }))
       );
       setPolicy(polJson.rows ?? []);
+      setExpenseShare(
+        (expenseJson.rows ?? []).map((row: Record<string, unknown>) => ({
+          year: Number(row.year),
+          healthcare_share_pct_of_monthly_income: Number(row.healthcare_share_pct_of_monthly_income),
+          childcare_share_pct_of_monthly_income: Number(row.childcare_share_pct_of_monthly_income),
+          known_expense_share_pct_of_monthly_income: Number(row.known_expense_share_pct_of_monthly_income),
+          healthcare_share_cpi_2023_pct_of_monthly_income: Number(row.healthcare_share_cpi_2023_pct_of_monthly_income),
+          childcare_share_cpi_2023_pct_of_monthly_income: Number(row.childcare_share_cpi_2023_pct_of_monthly_income),
+          known_expense_share_cpi_2023_pct_of_monthly_income: Number(row.known_expense_share_cpi_2023_pct_of_monthly_income),
+          housing_to_income_index_ratio_pct: Number(row.housing_to_income_index_ratio_pct),
+          housing_to_income_cpi_2023_index_ratio_pct: Number(row.housing_to_income_cpi_2023_index_ratio_pct)
+        }))
+      );
     };
     run();
   }, [stateAbbrev]);
@@ -148,6 +176,35 @@ export default function AffordabilityDashboard() {
       : null;
   const affordabilityGapVal =
     costPressureVal != null && incomeVal != null ? costPressureVal - incomeVal : null;
+  const latestExpenseShare = expenseShare[expenseShare.length - 1];
+  const healthcareShareVal = latestExpenseShare
+    ? Number(
+        indexMode === "inflation_adjusted"
+          ? latestExpenseShare.healthcare_share_cpi_2023_pct_of_monthly_income
+          : latestExpenseShare.healthcare_share_pct_of_monthly_income
+      )
+    : null;
+  const childcareShareVal = latestExpenseShare
+    ? Number(
+        indexMode === "inflation_adjusted"
+          ? latestExpenseShare.childcare_share_cpi_2023_pct_of_monthly_income
+          : latestExpenseShare.childcare_share_pct_of_monthly_income
+      )
+    : null;
+  const knownExpenseShareVal = latestExpenseShare
+    ? Number(
+        indexMode === "inflation_adjusted"
+          ? latestExpenseShare.known_expense_share_cpi_2023_pct_of_monthly_income
+          : latestExpenseShare.known_expense_share_pct_of_monthly_income
+      )
+    : null;
+  const housingProxyShareVal = latestExpenseShare
+    ? Number(
+        indexMode === "inflation_adjusted"
+          ? latestExpenseShare.housing_to_income_cpi_2023_index_ratio_pct
+          : latestExpenseShare.housing_to_income_index_ratio_pct
+      )
+    : null;
 
   const chartLines = useMemo(() => {
     if (!affordability.length) return "";
@@ -280,6 +337,7 @@ export default function AffordabilityDashboard() {
           &nbsp;Show policy markers
         </label>
         <a className="btn" href={`/api/affordability?state_abbrev=${stateAbbrev}&format=csv`}>Download Affordability CSV</a>
+        <a className="btn" href={`/api/expense-share?state_abbrev=${stateAbbrev}&format=csv`}>Download Expense Share CSV</a>
         <a className="btn" href={`/api/policy?state_abbrev=${stateAbbrev}&format=csv`}>Download Policy CSV</a>
       </div>
 
@@ -310,6 +368,19 @@ export default function AffordabilityDashboard() {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="card">
+        <h2 style={{ marginBottom: "0.5rem" }}>Marked Expenses as % of Monthly Income</h2>
+        <p className="small muted" style={{ marginTop: 0 }}>
+          Healthcare and childcare are direct percent-of-income shares. Housing is shown as an index-ratio proxy in this MVP.
+        </p>
+        <div className="grid summary-grid">
+          <div className="card"><div className="small muted">Healthcare %</div><h3>{healthcareShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
+          <div className="card"><div className="small muted">Childcare %</div><h3>{childcareShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
+          <div className="card"><div className="small muted">Known Expense %</div><h3>{knownExpenseShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
+          <div className="card"><div className="small muted">Housing Proxy %</div><h3>{housingProxyShareVal?.toFixed?.(1) ?? "-"}%</h3></div>
+        </div>
       </div>
 
       <div className="grid two-col">

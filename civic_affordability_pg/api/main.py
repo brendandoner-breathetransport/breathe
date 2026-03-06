@@ -18,6 +18,7 @@ ALLOWED_TABLES = {
     "analytics.mart_affordability_index_annual",
     "analytics.mart_cost_pressure_annual",
     "analytics.mart_policy_events_direct",
+    "analytics.mart_expense_share_monthly_income_annual",
 }
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/affordability")
@@ -709,6 +710,29 @@ def get_policy(state_abbrev: str = "CO") -> dict[str, Any]:
         (
             "SELECT event_id, geo_id, state_abbrev, year, short_label, summary, category "
             "FROM analytics.mart_policy_events_direct "
+            "WHERE state_abbrev = %(state)s "
+            "ORDER BY year "
+            "LIMIT %(limit)s"
+        ),
+        {"state": state_abbrev.upper(), "limit": MAX_ROWS},
+    )
+    return {"rows": rows, "row_count": len(rows)}
+
+
+@app.get("/api/expense-share")
+def get_expense_share(state_abbrev: str = "CO") -> dict[str, Any]:
+    rows = _run_query(
+        (
+            "SELECT geo_id, state_abbrev, year, "
+            "healthcare_share_pct_of_monthly_income, "
+            "childcare_share_pct_of_monthly_income, "
+            "known_expense_share_pct_of_monthly_income, "
+            "healthcare_share_cpi_2023_pct_of_monthly_income, "
+            "childcare_share_cpi_2023_pct_of_monthly_income, "
+            "known_expense_share_cpi_2023_pct_of_monthly_income, "
+            "housing_to_income_index_ratio_pct, "
+            "housing_to_income_cpi_2023_index_ratio_pct "
+            "FROM analytics.mart_expense_share_monthly_income_annual "
             "WHERE state_abbrev = %(state)s "
             "ORDER BY year "
             "LIMIT %(limit)s"
