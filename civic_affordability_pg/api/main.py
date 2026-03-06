@@ -499,20 +499,30 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                     data = fallback_data
 
             if not all_locations:
+                response_election = data.get("election", {}) if isinstance(data, dict) else {}
                 return {
                     "status": "no_match",
                     "message": "No polling locations returned for this address.",
                     "request_address": full_address,
-                    "election": election_meta,
+                    "election": {
+                        "id": str(response_election.get("id")) if response_election.get("id") is not None else None,
+                        "name": response_election.get("name"),
+                        "date": response_election.get("electionDay"),
+                    } if response_election else {},
                     "official_fallback_url": COLORADO_VOTER_LOOKUP_URL,
                     "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
                 }
 
+            response_election = data.get("election", {}) if isinstance(data, dict) else {}
             return {
                 "status": "ok",
                 "message": "Polling locations found.",
                 "request_address": full_address,
-                "election": election_meta,
+                "election": {
+                    "id": str(response_election.get("id")) if response_election.get("id") is not None else None,
+                    "name": response_election.get("name"),
+                    "date": response_election.get("electionDay"),
+                } if response_election else {},
                 "result_count": len(all_locations),
                 "locations": all_locations,
                 "citations": [
