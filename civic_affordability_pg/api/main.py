@@ -22,7 +22,8 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localho
 GOOGLE_CIVIC_API_KEY = os.getenv("GOOGLE_CIVIC_API_KEY", "")
 GOOGLE_CIVIC_BASE_URL = "https://www.googleapis.com/civicinfo/v2"
 COLORADO_VOTER_LOOKUP_URL = "https://www.sos.state.co.us/voter/pages/pub/olvr/findVoterReg.xhtml"
-TENNESSEE_VOTER_LOOKUP_URL = "https://tnmap.tn.gov/voterlookup/"
+TENNESSEE_VOTER_LOOKUP_URL = "https://web.go-vote-tn.elections.tn.gov/"
+VOTING_INFO_PROJECT_URL = "https://www.votinginfoproject.org/"
 SUPPORTED_POLLING_STATES = {"CO", "TN"}
 STATE_NAME_BY_ABBREV = {"CO": "Colorado", "TN": "Tennessee"}
 
@@ -376,6 +377,37 @@ def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str, st
     return normalized
 
 
+def _build_provider_plan(state_abbrev: str) -> list[dict[str, Any]]:
+    official_url = _state_fallback_lookup_url(state_abbrev)
+    state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper(), state_abbrev.upper())
+    return [
+        {
+            "provider_id": "state_official",
+            "provider_name": f"{state_name} Secretary of State Lookup",
+            "priority": 1,
+            "mode": "official_lookup",
+            "url": official_url,
+            "notes": "Most authoritative source for current polling place details.",
+        },
+        {
+            "provider_id": "vip",
+            "provider_name": "Voting Information Project",
+            "priority": 2,
+            "mode": "national_nonprofit",
+            "url": VOTING_INFO_PROJECT_URL,
+            "notes": "National voter information provider with broader coverage tools.",
+        },
+        {
+            "provider_id": "google_civic",
+            "provider_name": "Google Civic Information API",
+            "priority": 3,
+            "mode": "api",
+            "url": "https://developers.google.com/civic-information/docs/v2/voterinfo",
+            "notes": "Used as a supplementary API source when election context is available.",
+        },
+    ]
+
+
 def _get_state_election_id(client: httpx.Client, state_abbrev: str) -> str | None:
     state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper())
     if not state_name:
@@ -403,6 +435,26 @@ def _get_state_election_id(client: httpx.Client, state_abbrev: str) -> str | Non
         return str(election_id) if election_id is not None else None
     except Exception:
         return None
+
+
+def _list_state_elections(client: httpx.Client, state_abbrev: str) -> list[dict[str, Any]]:
+    state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper())
+    if not state_name:
+        return []
+    resp = client.get(
+        f"{GOOGLE_CIVIC_BASE_URL}/elections",
+        params={"key": GOOGLE_CIVIC_API_KEY},
+        timeout=12.0,
+    )
+    if resp.status_code >= 400:
+        return []
+    payload = resp.json()
+    elections = payload.get("elections", []) or []
+    matches = [
+        e for e in elections
+        if state_name.lower() in str(e.get("name", "")).lower()
+    ]
+    return sorted(matches, key=lambda e: str(e.get("electionDay", "")))
 
 
 def _run_query(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
@@ -458,18 +510,20 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
     if state not in SUPPORTED_POLLING_STATES:
         raise HTTPException(status_code=400, detail="This endpoint currently supports CO and TN addresses only.")
 
+    full_address = _build_full_address(payload.street, payload.city, state, payload.zip)
     official_fallback_url = _state_fallback_lookup_url(state)
+    provider_plan = _build_provider_plan(state)
 
     if not GOOGLE_CIVIC_API_KEY:
         return {
-            "status": "unavailable",
-            "message": "Polling lookup provider is not configured.",
-            "request_address": _build_full_address(payload.street, payload.city, state, payload.zip),
+            "status": "official_lookup_recommended",
+            "message": "Primary official lookup is available. Civic API is not configured.",
+            "request_address": full_address,
+            "provider_used": "state_official",
+            "providers": provider_plan,
             "official_fallback_url": official_fallback_url,
             "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         }
-
-    full_address = _build_full_address(payload.street, payload.city, state, payload.zip)
 
     try:
         with httpx.Client() as client:
@@ -505,10 +559,12 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                                 detail = retry_response.text or detail
                 if response.status_code >= 400:
                     return {
-                        "status": "no_match",
-                        "message": "Unable to find polling location for the provided address.",
+                        "status": "official_lookup_recommended",
+                        "message": "Civic API could not resolve a polling location. Use official state lookup.",
                         "provider_detail": detail,
                         "request_address": full_address,
+                        "provider_used": "state_official",
+                        "providers": provider_plan,
                         "official_fallback_url": official_fallback_url,
                         "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
                     }
@@ -522,14 +578,16 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
             if not all_locations:
                 response_election = data.get("election", {}) if isinstance(data, dict) else {}
                 return {
-                    "status": "no_match",
-                    "message": "No polling locations returned for this address.",
+                    "status": "official_lookup_recommended",
+                    "message": "No polling locations were returned by Civic. Use official state lookup.",
                     "request_address": full_address,
                     "election": {
                         "id": str(response_election.get("id")) if response_election.get("id") is not None else None,
                         "name": response_election.get("name"),
                         "date": response_election.get("electionDay"),
                     } if response_election else {},
+                    "provider_used": "state_official",
+                    "providers": provider_plan,
                     "official_fallback_url": official_fallback_url,
                     "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
                 }
@@ -544,6 +602,8 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
                     "name": response_election.get("name"),
                     "date": response_election.get("electionDay"),
                 } if response_election else {},
+                "provider_used": "google_civic",
+                "providers": provider_plan,
                 "result_count": len(all_locations),
                 "locations": all_locations,
                 "citations": [
@@ -563,11 +623,119 @@ def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, An
             }
     except Exception as exc:
         return {
-            "status": "error",
-            "message": "Polling lookup is temporarily unavailable.",
+            "status": "official_lookup_recommended",
+            "message": "Polling API is temporarily unavailable. Use official state lookup.",
             "provider_detail": str(exc),
             "request_address": full_address,
+            "provider_used": "state_official",
+            "providers": provider_plan,
             "official_fallback_url": official_fallback_url,
+            "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+
+
+@app.get("/api/vote/debug/elections")
+def debug_state_elections(
+    state_abbrev: str = "TN",
+    address: str | None = None,
+    street: str | None = None,
+    city: str | None = None,
+    zip: str | None = None,
+    limit: int = 8,
+) -> dict[str, Any]:
+    state = state_abbrev.strip().upper()
+    if state not in SUPPORTED_POLLING_STATES:
+        raise HTTPException(status_code=400, detail="Supported debug states: CO, TN.")
+    if not GOOGLE_CIVIC_API_KEY:
+        return {
+            "status": "unavailable",
+            "message": "Google Civic API key is not configured.",
+            "state_abbrev": state,
+            "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+
+    if address and address.strip():
+        full_address = address.strip()
+    elif street and city and zip:
+        full_address = _build_full_address(street, city, state, zip)
+    else:
+        full_address = None
+
+    safe_limit = max(1, min(limit, 25))
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    try:
+        with httpx.Client() as client:
+            elections = _list_state_elections(client, state)
+            upcoming = [e for e in elections if str(e.get("electionDay", "")) >= today]
+            selected = (upcoming or elections)[:safe_limit]
+
+            probes: list[dict[str, Any]] = []
+            if full_address:
+                for e in selected:
+                    election_id = e.get("id")
+                    params: dict[str, Any] = {
+                        "key": GOOGLE_CIVIC_API_KEY,
+                        "address": full_address,
+                    }
+                    if election_id is not None:
+                        params["electionId"] = str(election_id)
+                    resp = client.get(
+                        f"{GOOGLE_CIVIC_BASE_URL}/voterinfo",
+                        params=params,
+                        timeout=15.0,
+                    )
+                    detail = ""
+                    payload: dict[str, Any] = {}
+                    if resp.status_code >= 400:
+                        try:
+                            payload = resp.json()
+                            detail = payload.get("error", {}).get("message", "")
+                        except Exception:
+                            detail = resp.text
+                    else:
+                        try:
+                            payload = resp.json()
+                        except Exception:
+                            payload = {}
+
+                    probes.append(
+                        {
+                            "election_id": str(election_id) if election_id is not None else None,
+                            "election_name": e.get("name"),
+                            "election_day": e.get("electionDay"),
+                            "http_status": resp.status_code,
+                            "provider_detail": detail or None,
+                            "polling_count": len(payload.get("pollingLocations", []) or []) if isinstance(payload, dict) else 0,
+                            "early_vote_count": len(payload.get("earlyVoteSites", []) or []) if isinstance(payload, dict) else 0,
+                            "dropoff_count": len(payload.get("dropOffLocations", []) or []) if isinstance(payload, dict) else 0,
+                        }
+                    )
+
+            return {
+                "status": "ok",
+                "state_abbrev": state,
+                "state_name": STATE_NAME_BY_ABBREV.get(state, state),
+                "today_utc": today,
+                "candidate_elections_count": len(elections),
+                "candidate_elections": [
+                    {
+                        "id": str(e.get("id")) if e.get("id") is not None else None,
+                        "name": e.get("name"),
+                        "date": e.get("electionDay"),
+                    }
+                    for e in selected
+                ],
+                "probe_address": full_address,
+                "probes": probes,
+                "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+            }
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": "Election debug lookup failed.",
+            "provider_detail": str(exc),
+            "state_abbrev": state,
             "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         }
 

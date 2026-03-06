@@ -14,9 +14,18 @@ type PollingLocation = {
 };
 
 type PollingResponse = {
-  status: "ok" | "no_match" | "unavailable" | "error";
+  status: "ok" | "no_match" | "unavailable" | "error" | "official_lookup_recommended";
   message: string;
   request_address: string;
+  provider_used?: string;
+  providers?: Array<{
+    provider_id: string;
+    provider_name: string;
+    priority: number;
+    mode: string;
+    url: string;
+    notes?: string;
+  }>;
   election?: {
     id?: string;
     name?: string;
@@ -87,6 +96,9 @@ export default function ColoradoPollingLocationPage() {
           <h2 style={{ marginBottom: "0.2rem" }}>{result.status === "ok" ? "Polling Locations" : "Lookup Result"}</h2>
           <p className="muted">{result.message}</p>
           <p className="small muted">Address: {result.request_address}</p>
+          {result.provider_used ? (
+            <p className="small muted">Provider path: {result.provider_used}</p>
+          ) : null}
           {result.election?.name ? (
             <p className="small muted">Election: {result.election.name} ({result.election.date})</p>
           ) : null}
@@ -120,6 +132,20 @@ export default function ColoradoPollingLocationPage() {
 
           <div>
             <p className="small muted"><strong>Official fallback:</strong> <a href={result.official_fallback_url} target="_blank" rel="noreferrer">State voter lookup</a></p>
+            {result.providers?.length ? (
+              <div className="small muted">
+                <strong>Provider priority:</strong>
+                {result.providers
+                  .slice()
+                  .sort((a, b) => a.priority - b.priority)
+                  .map((provider) => (
+                    <div key={provider.provider_id}>
+                      [{provider.priority}] <a href={provider.url} target="_blank" rel="noreferrer">{provider.provider_name}</a>
+                      {provider.notes ? ` - ${provider.notes}` : ""}
+                    </div>
+                  ))}
+              </div>
+            ) : null}
             {result.citations?.length ? (
               <div className="small muted">
                 <strong>Sources:</strong>
