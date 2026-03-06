@@ -31,9 +31,26 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
     q = (question or "").strip().lower()
     years = _extract_years(q)
     inflation_adjusted = _is_inflation_adjusted_question(q)
-    income_col = "income_cpi_2023_index" if inflation_adjusted else "income_index"
-    healthcare_col = "healthcare_cpi_2023_index" if inflation_adjusted else "healthcare_index"
-    childcare_col = "childcare_cpi_2023_index" if inflation_adjusted else "childcare_index"
+    healthcare_col = (
+        "healthcare_share_cpi_2023_pct_of_monthly_income"
+        if inflation_adjusted
+        else "healthcare_share_pct_of_monthly_income"
+    )
+    childcare_col = (
+        "childcare_share_cpi_2023_pct_of_monthly_income"
+        if inflation_adjusted
+        else "childcare_share_pct_of_monthly_income"
+    )
+    mortgage_col = (
+        "estimated_mortgage_share_cpi_2023_pct_of_monthly_income"
+        if inflation_adjusted
+        else "estimated_mortgage_share_pct_of_monthly_income"
+    )
+    known_total_col = (
+        "known_expense_share_cpi_2023_pct_of_monthly_income"
+        if inflation_adjusted
+        else "known_expense_share_pct_of_monthly_income"
+    )
 
     if not q:
         raise ValueError("Question cannot be empty.")
@@ -44,16 +61,16 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
             template_id="largest_affordability_gap_year_v1",
             intent="largest_gap",
             sql=(
-                "SELECT geo_id, state_abbrev, year, cost_pressure_index, affordability_gap_index "
-                "FROM analytics.mart_cost_pressure_annual "
+                f"SELECT geo_id, state_abbrev, year, {known_total_col} AS known_total_share "
+                "FROM analytics.mart_expense_share_monthly_income_annual "
                 "WHERE state_abbrev = %(state)s "
-                "ORDER BY affordability_gap_index DESC "
+                "ORDER BY known_total_share DESC "
                 "LIMIT 1"
             ),
             params={"state": state},
-            summary="Largest affordability gap year",
+            summary="Year with highest combined expense share",
             extracted_years=years,
-            is_inflation_adjusted=False,
+            is_inflation_adjusted=inflation_adjusted,
         )
 
     if "before" in q and "after" in q and len(years) >= 2:
@@ -63,14 +80,15 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
             template_id="before_after_comparison_v1",
             intent="before_after",
             sql=(
-                f"SELECT year, {income_col} AS income_index, housing_index, {healthcare_col} AS healthcare_index, {childcare_col} AS childcare_index "
-                "FROM analytics.mart_affordability_index_annual "
+                f"SELECT year, {healthcare_col} AS healthcare_share, {childcare_col} AS childcare_share, "
+                f"{mortgage_col} AS mortgage_share, {known_total_col} AS known_total_share "
+                "FROM analytics.mart_expense_share_monthly_income_annual "
                 "WHERE state_abbrev = %(state)s AND year IN (%(year_one)s, %(year_two)s) "
                 "ORDER BY year "
                 "LIMIT %(limit)s"
             ),
             params={"state": state, "year_one": y1, "year_two": y2, "limit": MAX_ROWS},
-            summary=f"Before/after comparison for {y1} and {y2}" + (" (inflation-adjusted)" if inflation_adjusted else ""),
+            summary=f"Before/after expense-share comparison for {y1} and {y2}" + (" (inflation-adjusted)" if inflation_adjusted else ""),
             extracted_years=years,
             is_inflation_adjusted=inflation_adjusted,
         )
@@ -81,14 +99,15 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
             template_id="component_comparison_latest_v1",
             intent="component_comparison",
             sql=(
-                f"SELECT year, {income_col} AS income_index, housing_index, {healthcare_col} AS healthcare_index, {childcare_col} AS childcare_index "
-                "FROM analytics.mart_affordability_index_annual "
+                f"SELECT year, {healthcare_col} AS healthcare_share, {childcare_col} AS childcare_share, "
+                f"{mortgage_col} AS mortgage_share, {known_total_col} AS known_total_share "
+                "FROM analytics.mart_expense_share_monthly_income_annual "
                 "WHERE state_abbrev = %(state)s "
                 "ORDER BY year DESC "
                 "LIMIT 1"
             ),
             params={"state": state},
-            summary="Latest component comparison" + (" (inflation-adjusted)" if inflation_adjusted else ""),
+            summary="Latest expense-share comparison" + (" (inflation-adjusted)" if inflation_adjusted else ""),
             extracted_years=years,
             is_inflation_adjusted=inflation_adjusted,
         )
@@ -100,18 +119,20 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
                 template_id="policy_year_impact_v1",
                 intent="policy_impact",
                 sql=(
-                    "SELECT p.year, p.short_label, p.category, c.cost_pressure_index, c.affordability_gap_index "
+                    f"SELECT p.year, p.short_label, p.category, "
+                    f"e.{known_total_col} AS known_total_share, "
+                    f"e.{mortgage_col} AS mortgage_share "
                     "FROM analytics.mart_policy_events_direct p "
-                    "LEFT JOIN analytics.mart_cost_pressure_annual c "
-                    "ON p.geo_id = c.geo_id AND p.year = c.year "
+                    "LEFT JOIN analytics.mart_expense_share_monthly_income_annual e "
+                    "ON p.geo_id = e.geo_id AND p.year = e.year "
                     "WHERE p.state_abbrev = %(state)s AND p.year = %(year)s "
                     "ORDER BY p.year, p.short_label "
                     "LIMIT %(limit)s"
                 ),
                 params={"state": state, "year": years[0], "limit": MAX_ROWS},
-                summary=f"Policy impact in {years[0]}",
+                summary=f"Policy and expense-share context for {years[0]}",
                 extracted_years=years,
-                is_inflation_adjusted=False,
+                is_inflation_adjusted=inflation_adjusted,
             )
         return QueryPlan(
             category="policy_events",
@@ -135,14 +156,15 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
         template_id="trend_summary_v1",
         intent="trend_summary",
         sql=(
-            f"SELECT year, {income_col} AS income_index, housing_index, {healthcare_col} AS healthcare_index, {childcare_col} AS childcare_index "
-            "FROM analytics.mart_affordability_index_annual "
+            f"SELECT year, {healthcare_col} AS healthcare_share, {childcare_col} AS childcare_share, "
+            f"{mortgage_col} AS mortgage_share, {known_total_col} AS known_total_share "
+            "FROM analytics.mart_expense_share_monthly_income_annual "
             "WHERE state_abbrev = %(state)s "
             "ORDER BY year "
             "LIMIT %(limit)s"
         ),
         params={"state": state, "limit": MAX_ROWS},
-        summary="Trend summary" + (" (inflation-adjusted)" if inflation_adjusted else ""),
+        summary="Expense-share trend summary" + (" (inflation-adjusted)" if inflation_adjusted else ""),
         extracted_years=years,
         is_inflation_adjusted=inflation_adjusted,
     )

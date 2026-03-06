@@ -104,7 +104,6 @@ export default function AffordabilityDashboard() {
   ]);
   const [selectedResult, setSelectedResult] = useState<AskPayload | null>(null);
   const [loadingAsk, setLoadingAsk] = useState(false);
-  const [showQueryDetails, setShowQueryDetails] = useState(false);
 
   const suggestionPrompts = [
     "What was the largest affordability gap year?",
@@ -414,7 +413,7 @@ ${paths.join("\n")}
                 <div style={{ fontSize: "0.9rem" }}>{message.text}</div>
                 {message.payload && (
                   <div className="small" style={{ marginTop: "0.35rem", opacity: 0.85 }}>
-                    {message.payload.category} · confidence {message.payload.confidence}
+                    Confidence {message.payload.confidence}
                   </div>
                 )}
                 {message.payload?.grounding && message.payload.grounding.year_min != null ? (
@@ -452,9 +451,7 @@ ${paths.join("\n")}
           </div>
           {selectedResult && (
             <div style={{ marginTop: "0.8rem" }}>
-              <p><strong>{selectedResult.summary}</strong> <span className="badge">{selectedResult.category}</span></p>
-              <p className="small muted">Rows: {selectedResult.row_count} · Template: {selectedResult.query_template}</p>
-              <p className="small muted">Allowed marts: {selectedResult.approved_marts?.join(", ")}</p>
+              <p><strong>{selectedResult.summary}</strong></p>
               {selectedResult.grounding?.year_min != null ? (
                 <p className="small muted">
                   Grounded on {selectedResult.grounding.rows_used} row(s) in {selectedResult.grounding.state} for years{" "}
@@ -469,9 +466,7 @@ ${paths.join("\n")}
                   <p className="small muted" style={{ marginBottom: "0.35rem" }}><strong>Sources</strong></p>
                   {selectedResult.citations.map((citation, idx) => (
                     <div key={`citation-${idx}`} className="small muted" style={{ marginBottom: "0.55rem" }}>
-                      <div>[{idx + 1}] Metrics: {citation.metric_columns.join(", ")}</div>
-                      <div>Coverage: {citation.state} | years {citation.year_range} | rows {citation.row_count_used}</div>
-                      <div>Method: {citation.method_note}</div>
+                      <div>[{idx + 1}] Coverage: {citation.state} | years {citation.year_range}</div>
                       {(citation.external_sources ?? []).map((source, sourceIdx) => (
                         <div key={`citation-${idx}-src-${sourceIdx}`}>
                           {source.domain}:{" "}
@@ -484,21 +479,6 @@ ${paths.join("\n")}
                     </div>
                   ))}
                 </div>
-              ) : null}
-              <button
-                type="button"
-                className="btn"
-                style={{ marginTop: "0.4rem", background: "#374151" }}
-                onClick={() => setShowQueryDetails((v) => !v)}
-              >
-                {showQueryDetails ? "Hide query details" : "Show query details"}
-              </button>
-              {showQueryDetails ? (
-                <pre className="small" style={{ marginTop: "0.55rem", whiteSpace: "pre-wrap" }}>
-                  SQL: {selectedResult.query_sql}
-                  {"\n"}
-                  Params: {JSON.stringify(selectedResult.query_params)}
-                </pre>
               ) : null}
             </div>
           )}

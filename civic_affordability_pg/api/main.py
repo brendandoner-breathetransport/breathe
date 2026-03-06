@@ -71,24 +71,24 @@ SUPPORTED_QUESTION_GUIDE = {
 
 TEMPLATE_CITATION_MAP = {
     "largest_affordability_gap_year": {
-        "dataset": "analytics.mart_cost_pressure_annual",
-        "metric_columns_nominal": ["cost_pressure_index", "affordability_gap_index"],
-        "metric_columns_inflation_adjusted": ["cost_pressure_index", "affordability_gap_index"],
+        "dataset": "analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["known_expense_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["known_expense_share_cpi_2023_pct_of_monthly_income"],
     },
     "before_after_comparison": {
-        "dataset": "analytics.mart_affordability_index_annual",
-        "metric_columns_nominal": ["income_index", "housing_index", "healthcare_index", "childcare_index"],
-        "metric_columns_inflation_adjusted": ["income_cpi_2023_index", "housing_index", "healthcare_cpi_2023_index", "childcare_cpi_2023_index"],
+        "dataset": "analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["healthcare_share_pct_of_monthly_income", "childcare_share_pct_of_monthly_income", "estimated_mortgage_share_pct_of_monthly_income", "known_expense_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["healthcare_share_cpi_2023_pct_of_monthly_income", "childcare_share_cpi_2023_pct_of_monthly_income", "estimated_mortgage_share_cpi_2023_pct_of_monthly_income", "known_expense_share_cpi_2023_pct_of_monthly_income"],
     },
     "component_comparison": {
-        "dataset": "analytics.mart_affordability_index_annual",
-        "metric_columns_nominal": ["income_index", "housing_index", "healthcare_index", "childcare_index"],
-        "metric_columns_inflation_adjusted": ["income_cpi_2023_index", "housing_index", "healthcare_cpi_2023_index", "childcare_cpi_2023_index"],
+        "dataset": "analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["healthcare_share_pct_of_monthly_income", "childcare_share_pct_of_monthly_income", "estimated_mortgage_share_pct_of_monthly_income", "known_expense_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["healthcare_share_cpi_2023_pct_of_monthly_income", "childcare_share_cpi_2023_pct_of_monthly_income", "estimated_mortgage_share_cpi_2023_pct_of_monthly_income", "known_expense_share_cpi_2023_pct_of_monthly_income"],
     },
     "policy_year_impact": {
-        "dataset": "analytics.mart_policy_events_direct + analytics.mart_cost_pressure_annual",
-        "metric_columns_nominal": ["short_label", "category", "cost_pressure_index", "affordability_gap_index"],
-        "metric_columns_inflation_adjusted": ["short_label", "category", "cost_pressure_index", "affordability_gap_index"],
+        "dataset": "analytics.mart_policy_events_direct + analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["short_label", "category", "known_expense_share_pct_of_monthly_income", "estimated_mortgage_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["short_label", "category", "known_expense_share_cpi_2023_pct_of_monthly_income", "estimated_mortgage_share_cpi_2023_pct_of_monthly_income"],
     },
     "policy_events": {
         "dataset": "analytics.mart_policy_events_direct",
@@ -96,9 +96,9 @@ TEMPLATE_CITATION_MAP = {
         "metric_columns_inflation_adjusted": ["year", "short_label", "summary", "category"],
     },
     "trend_summary": {
-        "dataset": "analytics.mart_affordability_index_annual",
-        "metric_columns_nominal": ["income_index", "housing_index", "healthcare_index", "childcare_index"],
-        "metric_columns_inflation_adjusted": ["income_cpi_2023_index", "housing_index", "healthcare_cpi_2023_index", "childcare_cpi_2023_index"],
+        "dataset": "analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["healthcare_share_pct_of_monthly_income", "childcare_share_pct_of_monthly_income", "estimated_mortgage_share_pct_of_monthly_income", "known_expense_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["healthcare_share_cpi_2023_pct_of_monthly_income", "childcare_share_cpi_2023_pct_of_monthly_income", "estimated_mortgage_share_cpi_2023_pct_of_monthly_income", "known_expense_share_cpi_2023_pct_of_monthly_income"],
     },
 }
 
@@ -238,54 +238,55 @@ def _build_citations(
 
 def _compose_answer(plan_category: str, rows: list[dict[str, Any]], state: str) -> str:
     if not rows:
-        return f"No matching data was found for {state} with the current query template."
+        return f"I could not find matching results for {state}."
 
     first = rows[0]
 
     if plan_category == "largest_affordability_gap_year":
         year = first.get("year")
-        gap = _format_float(first.get("affordability_gap_index"))
-        return f"The largest affordability gap in {state} occurred in {year}, at approximately {gap} index points."
+        total_share = _format_float(first.get("known_total_share"))
+        return f"The highest combined expense burden in {state} was in {year}, at about {total_share}% of monthly income."
 
     if plan_category == "before_after_comparison":
         if len(rows) >= 2:
             start = rows[0]
             end = rows[-1]
-            delta_income = float(end.get("income_index", 0)) - float(start.get("income_index", 0))
-            delta_housing = float(end.get("housing_index", 0)) - float(start.get("housing_index", 0))
+            delta_total = float(end.get("known_total_share", 0)) - float(start.get("known_total_share", 0))
+            delta_mortgage = float(end.get("mortgage_share", 0)) - float(start.get("mortgage_share", 0))
             return (
                 f"From {start.get('year')} to {end.get('year')} in {state}, "
-                f"income index changed by {delta_income:+.1f} and housing index changed by {delta_housing:+.1f}."
+                f"the combined expense share changed by {delta_total:+.1f} percentage points, "
+                f"and the mortgage share changed by {delta_mortgage:+.1f} percentage points."
             )
-        return "I found one of the requested years, but not enough rows to compare both years."
+        return "I found one year, but not enough data to compare both years."
 
     if plan_category == "component_comparison":
         components = {
-            "income": float(first.get("income_index", 0)),
-            "housing": float(first.get("housing_index", 0)),
-            "healthcare": float(first.get("healthcare_index", 0)),
-            "childcare": float(first.get("childcare_index", 0)),
+            "healthcare": float(first.get("healthcare_share", 0)),
+            "childcare": float(first.get("childcare_share", 0)),
+            "mortgage": float(first.get("mortgage_share", 0)),
         }
         top_component, top_value = max(components.items(), key=lambda item: item[1])
         return (
-            f"For {state} in {first.get('year')}, the highest indexed component is "
-            f"{top_component} at {top_value:.1f}."
+            f"For {state} in {first.get('year')}, the largest share of monthly income is "
+            f"{top_component}, at about {top_value:.1f}%."
         )
 
     if plan_category == "policy_year_impact":
         year = first.get("year")
-        return f"I found {len(rows)} direct policy event row(s) for {state} in {year} with affordability context."
+        avg_total = sum(float(row.get("known_total_share", 0) or 0) for row in rows) / max(1, len(rows))
+        return f"I found {len(rows)} policy event(s) in {state} for {year}. Around that year, combined expenses were about {avg_total:.1f}% of monthly income."
 
     if plan_category == "policy_events":
-        return f"I found {len(rows)} recent direct policy event row(s) for {state}."
+        return f"I found {len(rows)} recent policy event(s) for {state}."
 
     if plan_category == "trend_summary":
         start = rows[0]
         end = rows[-1]
         return (
             f"Trend summary for {state}: from {start.get('year')} to {end.get('year')}, "
-            f"income index moved from {_format_float(start.get('income_index'))} to {_format_float(end.get('income_index'))}, "
-            f"while housing moved from {_format_float(start.get('housing_index'))} to {_format_float(end.get('housing_index'))}."
+            f"combined expenses moved from {_format_float(start.get('known_total_share'))}% to {_format_float(end.get('known_total_share'))}% of monthly income, "
+            f"with mortgage moving from {_format_float(start.get('mortgage_share'))}% to {_format_float(end.get('mortgage_share'))}%."
         )
 
     return "I found matching data and returned the result rows."
