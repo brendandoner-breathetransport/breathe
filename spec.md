@@ -14,6 +14,65 @@ This is a lean MVP intended to validate demand before multi-state expansion.
 
 ---
 
+# Project Status Update (March 7, 2026)
+
+## Completed Since Initial Spec
+
+- Postgres-backed implementation is live with Supabase + dbt + FastAPI + Next.js.
+- Frontend is deployed on Vercel and backend is deployed on Render.
+- Core dashboard is implemented for Colorado with:
+  - indexed affordability series
+  - inflation-adjusted companion metrics
+  - policy event overlays
+  - axis labels and policy context labels
+- Added new mart and UI flow for expense burden as percentage of monthly income:
+  - `analytics.mart_expense_share_monthly_income_annual`
+  - includes estimated mortgage share and known-expense share rollups
+- Ask API is live with:
+  - allowlisted marts only
+  - guarded SQL templates
+  - plain-language response formatting
+  - citation support (human-readable source labels)
+- Polling location feature added:
+  - dedicated voter lookup page and API route
+  - Colorado + Tennessee support
+  - official-state-fallback guidance when provider lookup is incomplete
+- Notebook workspace added under `civic_affordability_pg/notebooks` with:
+  - secure env-based DB access
+  - `civic_io` helper package
+  - `io.read("schema.table")` now powered by Polars
+  - `io.list_objects()` for schema/table/view discovery
+- Security hardening progress:
+  - dedicated read-only notebook database role created
+  - local notebook secrets moved to non-committed `.env`
+
+## In Progress / Outstanding For MVP Closure
+
+- Complete end-to-end QA on Ask API to ensure consistent non-technical responses across supported prompt types.
+- Expand and validate polling-location reliability:
+  - more address test coverage
+  - clearer UX when upstream providers return partial/no data
+- Add/finish test coverage:
+  - dbt tests for new marts and constraints
+  - API route tests for affordability, ask, and polling endpoints
+  - frontend regression checks for chart cards/toggles and polling workflow
+- Final deployment hardening:
+  - verify production env vars across Vercel/Render/Supabase
+  - confirm stable branch/deploy workflow and rollback path
+- Documentation closeout:
+  - one runbook for local setup, deploy, and troubleshooting
+  - team handoff notes for notebook access and database credentials handling
+
+## Current MVP Readiness Snapshot
+
+- Data platform: mostly complete
+- Dashboard UX: mostly complete
+- Ask AI: functional, needs final QA polish
+- Polling lookup: functional, needs broader validation
+- Testing and ops hardening: partially complete
+
+---
+
 # 🧱 System Architecture
 
 ## Backend
