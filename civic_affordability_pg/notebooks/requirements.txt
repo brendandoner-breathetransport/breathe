@@ -1,0 +1,6 @@
+jupyter
+pandas
+polars
+sqlalchemy
+psycopg[binary]
+python-dotenv
