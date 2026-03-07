@@ -63,3 +63,18 @@ uvicorn main:app --reload --port 8000
 
 - This is an MVP scaffold aligned to `spec.md` for Colorado-only data.
 - The existing root-level app remains unchanged.
+
+## Inflation Adjustment
+
+- `scripts/sync_postgres.py` now computes inflation-adjusted companion metrics for monetary fields (`income_real`, `healthcare_pc`, `childcare_annual`) and stores them in `raw.fact_metric`.
+- Nominal/original metrics are preserved; adjusted metrics are added as:
+  - `income_real_cpi_2023`
+  - `healthcare_pc_cpi_2023`
+  - `childcare_annual_cpi_2023`
+- Source file: `data_raw/inflation_annual-index-value_annual-percent-change.xls` (C-CPI-U series).
+- Default deflation target is base year `2023` (`--inflation-base-year` to override).
+- Disable adjustment with:
+
+```bash
+python scripts/sync_postgres.py --skip-inflation-adjustment
+```

@@ -12,7 +12,10 @@ VALUES
     (1, 'income_real', 'income', 'usd', 'level'),
     (2, 'housing_hpi', 'housing', 'index', 'level'),
     (3, 'healthcare_pc', 'healthcare', 'usd', 'level'),
-    (4, 'childcare_annual', 'childcare', 'usd', 'level')
+    (4, 'childcare_annual', 'childcare', 'usd', 'level'),
+    (5, 'income_real_cpi_2023', 'income', 'usd_2023', 'level'),
+    (6, 'healthcare_pc_cpi_2023', 'healthcare', 'usd_2023', 'level'),
+    (7, 'childcare_annual_cpi_2023', 'childcare', 'usd_2023', 'level')
 ON CONFLICT (metric_id) DO UPDATE
 SET metric_name = EXCLUDED.metric_name,
     domain = EXCLUDED.domain,
