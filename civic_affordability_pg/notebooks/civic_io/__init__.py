@@ -1,3 +1,6 @@
-from .core import PostgresSparkIO, io
+from .core import PostgresPolarsIO, io
 
-__all__ = ["PostgresSparkIO", "io"]
+# Backward-compatible alias for older notebook imports.
+PostgresSparkIO = PostgresPolarsIO
+
+__all__ = ["PostgresPolarsIO", "PostgresSparkIO", "io"]
