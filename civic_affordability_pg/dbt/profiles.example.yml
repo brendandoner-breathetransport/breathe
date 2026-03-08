@@ -1,0 +1,12 @@
+civic_affordability:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: postgres
+      password: postgres
+      port: 5432
+      dbname: affordability
+      schema: analytics
+      threads: 4

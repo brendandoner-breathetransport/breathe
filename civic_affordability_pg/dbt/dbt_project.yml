@@ -1,0 +1,16 @@
+name: civic_affordability
+version: 1.0.0
+config-version: 2
+
+profile: civic_affordability
+
+model-paths: ["models"]
+seed-paths: ["../seeds"]
+
+models:
+  civic_affordability:
+    marts:
+      +materialized: view
+
+vars:
+  base_year: 2003

@@ -1,10 +1,10 @@
 import pandas as pd
 import polars as pl
+import pickle
+import json
+
 from pathlib import Path
 from datetime import date, datetime
-
-from htmltools.tags import table
-
 
 def get_path(schema, table_name, filetype):
     path = str(Path(__file__).parent / f"data/{schema}/{table_name}{filetype}")
@@ -142,7 +142,7 @@ def write_data_to_python_data_file(
     
 # --- Run script -------------------------------------------------------------------------------
 if __name__ == "__main__":
-
+    # CSV Data
     datasets = [
         dict(schema='economy', table_name='n_workers_full_time'),
         dict(schema='economy', table_name='shares_wid'),
@@ -175,3 +175,22 @@ if __name__ == "__main__":
             table_name=table_name,
             path_output=f"data/{schema}_{table_name}.py"
         )
+
+    for dataset in datasets:
+        schema=dataset['schema']
+        table_name=dataset['table_name']
+
+        print(f"from data.{schema}_{table_name} import {table_name}")
+
+    # JSON Data
+    try:
+        schema='common'
+        table_name='counties_json'
+        with open(f"data/race/{table_name}.pickle", 'rb') as f:
+            data = pickle.load(f)
+        json_string = json.dumps(data)
+        with open(f"data/{schema}_{table_name}.py", 'w') as f:
+            f.write(f"{table_name} = {repr(json_string)}\n")
+        print(f"Embedded {table_name} as json at: data/{schema}_{table_name}.py")
+    except Exception as message:
+        print(f"Failed to embed json. {message}")

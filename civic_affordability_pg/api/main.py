@@ -1,0 +1,1096 @@
+import os
+import re
+from typing import Any
+from datetime import datetime, timezone
+from decimal import Decimal
+from html import unescape
+from urllib.parse import quote_plus
+
+import httpx
+import psycopg
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+
+from query_templates import MAX_ROWS, build_query_plan
+
+
+ALLOWED_TABLES = {
+    "analytics.mart_affordability_index_annual",
+    "analytics.mart_cost_pressure_annual",
+    "analytics.mart_policy_events_direct",
+    "analytics.mart_expense_share_monthly_income_annual",
+}
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/affordability")
+GOOGLE_CIVIC_API_KEY = os.getenv("GOOGLE_CIVIC_API_KEY", "")
+GOOGLE_CIVIC_BASE_URL = "https://www.googleapis.com/civicinfo/v2"
+COLORADO_VOTER_LOOKUP_URL = "https://www.sos.state.co.us/voter/pages/pub/olvr/findVoterReg.xhtml"
+TENNESSEE_VOTER_LOOKUP_URL = "https://web.go-vote-tn.elections.tn.gov/"
+VOTING_INFO_PROJECT_URL = "https://www.votinginfoproject.org/"
+SUPPORTED_POLLING_STATES = {"CO", "TN"}
+STATE_NAME_BY_ABBREV = {"CO": "Colorado", "TN": "Tennessee"}
+CO_OFFICIAL_LOOKUP_REQUIREMENTS = [
+    "first_name",
+    "last_name",
+    "zip",
+    "date_of_birth_mm_dd_yyyy",
+    "recaptcha",
+]
+
+app = FastAPI(title="Civic Affordability API", version="0.1.0")
+
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+    state_abbrev: str = Field(default="CO", min_length=2, max_length=2)
+
+
+class PollingLookupRequest(BaseModel):
+    street: str = Field(min_length=3, max_length=200)
+    city: str = Field(min_length=2, max_length=100)
+    zip: str = Field(min_length=5, max_length=10)
+    state_abbrev: str = Field(default="CO", min_length=2, max_length=2)
+
+
+SUPPORTED_QUESTION_GUIDE = {
+    "supported_categories": [
+        "trend summary",
+        "before/after year comparison",
+        "largest affordability gap year",
+        "component comparison",
+        "policy year impact",
+    ],
+    "example_prompts": [
+        "What was the largest affordability gap year?",
+        "Compare before and after 2010 and 2023.",
+        "Compare before and after 2010 and 2023 in inflation adjusted terms.",
+        "How did policy impact in 2020?",
+    ],
+}
+
+
+TEMPLATE_CITATION_MAP = {
+    "largest_affordability_gap_year": {
+        "dataset": "analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["known_expense_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["known_expense_share_cpi_2023_pct_of_monthly_income"],
+    },
+    "before_after_comparison": {
+        "dataset": "analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["healthcare_share_pct_of_monthly_income", "childcare_share_pct_of_monthly_income", "estimated_mortgage_share_pct_of_monthly_income", "known_expense_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["healthcare_share_cpi_2023_pct_of_monthly_income", "childcare_share_cpi_2023_pct_of_monthly_income", "estimated_mortgage_share_cpi_2023_pct_of_monthly_income", "known_expense_share_cpi_2023_pct_of_monthly_income"],
+    },
+    "component_comparison": {
+        "dataset": "analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["healthcare_share_pct_of_monthly_income", "childcare_share_pct_of_monthly_income", "estimated_mortgage_share_pct_of_monthly_income", "known_expense_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["healthcare_share_cpi_2023_pct_of_monthly_income", "childcare_share_cpi_2023_pct_of_monthly_income", "estimated_mortgage_share_cpi_2023_pct_of_monthly_income", "known_expense_share_cpi_2023_pct_of_monthly_income"],
+    },
+    "policy_year_impact": {
+        "dataset": "analytics.mart_policy_events_direct + analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["short_label", "category", "known_expense_share_pct_of_monthly_income", "estimated_mortgage_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["short_label", "category", "known_expense_share_cpi_2023_pct_of_monthly_income", "estimated_mortgage_share_cpi_2023_pct_of_monthly_income"],
+    },
+    "policy_events": {
+        "dataset": "analytics.mart_policy_events_direct",
+        "metric_columns_nominal": ["year", "short_label", "summary", "category"],
+        "metric_columns_inflation_adjusted": ["year", "short_label", "summary", "category"],
+    },
+    "trend_summary": {
+        "dataset": "analytics.mart_expense_share_monthly_income_annual",
+        "metric_columns_nominal": ["healthcare_share_pct_of_monthly_income", "childcare_share_pct_of_monthly_income", "estimated_mortgage_share_pct_of_monthly_income", "known_expense_share_pct_of_monthly_income"],
+        "metric_columns_inflation_adjusted": ["healthcare_share_cpi_2023_pct_of_monthly_income", "childcare_share_cpi_2023_pct_of_monthly_income", "estimated_mortgage_share_cpi_2023_pct_of_monthly_income", "known_expense_share_cpi_2023_pct_of_monthly_income"],
+    },
+}
+
+DOMAIN_SOURCE_REFERENCE = {
+    "income": {
+        "source_name": "Historical Income Tables",
+        "publisher": "U.S. Census Bureau",
+        "source_url": "https://www.census.gov/topics/income-poverty/income/data/tables.html",
+    },
+    "housing": {
+        "source_name": "House Price Index (HPI)",
+        "publisher": "Federal Housing Finance Agency (FHFA)",
+        "source_url": "https://www.fhfa.gov/data/hpi",
+    },
+    "healthcare": {
+        "source_name": "National Health Expenditure Data",
+        "publisher": "Centers for Medicare & Medicaid Services (CMS)",
+        "source_url": "https://www.cms.gov/data-research/statistics-trends-and-reports/national-health-expenditure-data",
+    },
+    "childcare": {
+        "source_name": "Child Care Cost Data",
+        "publisher": "Child Care Aware of America",
+        "source_url": "https://www.childcareaware.org/thechildcarechallenge/",
+    },
+    "policy": {
+        "source_name": "Colorado Ballot Measure Archive",
+        "publisher": "Ballotpedia",
+        "source_url": "https://ballotpedia.org/Colorado",
+    },
+}
+
+
+def _format_float(value: Any) -> str:
+    try:
+        return f"{float(value):.1f}"
+    except Exception:
+        return str(value)
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
+
+
+def _normalize_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{k: _json_safe(v) for k, v in row.items()} for row in rows]
+
+
+def _validate_question_text(question: str) -> None:
+    q = (question or "").strip().lower()
+    if not q:
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+
+    blocked_patterns = [
+        "drop ",
+        "delete ",
+        "truncate ",
+        "alter ",
+        "insert ",
+        "update ",
+        "select * from",
+        "information_schema",
+        "pg_catalog",
+    ]
+    if any(pattern in q for pattern in blocked_patterns):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This assistant only supports predefined affordability question templates. "
+                "Please ask a trend, comparison, largest-gap, component, or policy-impact question."
+            ),
+        )
+
+
+def _build_grounding(rows: list[dict[str, Any]], state: str) -> dict[str, Any]:
+    years = [
+        int(row["year"])
+        for row in rows
+        if "year" in row and str(row["year"]).isdigit()
+    ]
+    year_min = min(years) if years else None
+    year_max = max(years) if years else None
+    return {
+        "state": state,
+        "rows_used": len(rows),
+        "year_min": year_min,
+        "year_max": year_max,
+    }
+
+
+def _build_citations(
+    category: str,
+    grounding: dict[str, Any],
+    is_inflation_adjusted: bool,
+) -> list[dict[str, Any]]:
+    config = TEMPLATE_CITATION_MAP.get(category)
+    if not config:
+        return []
+
+    metric_columns = (
+        config["metric_columns_inflation_adjusted"]
+        if is_inflation_adjusted
+        else config["metric_columns_nominal"]
+    )
+    domains_by_category = {
+        "largest_affordability_gap_year": ["income", "housing", "healthcare", "childcare"],
+        "before_after_comparison": ["income", "housing", "healthcare", "childcare"],
+        "component_comparison": ["income", "housing", "healthcare", "childcare"],
+        "trend_summary": ["income", "housing", "healthcare", "childcare"],
+        "policy_year_impact": ["policy", "income", "housing", "healthcare", "childcare"],
+        "policy_events": ["policy"],
+    }
+    external_sources = [
+        {
+            "domain": domain,
+            **DOMAIN_SOURCE_REFERENCE[domain],
+        }
+        for domain in domains_by_category.get(category, [])
+        if domain in DOMAIN_SOURCE_REFERENCE
+    ]
+    year_min = grounding.get("year_min")
+    year_max = grounding.get("year_max")
+    year_range = f"{year_min}-{year_max}" if year_min is not None and year_max is not None else "n/a"
+    return [
+        {
+            "dataset": config["dataset"],
+            "metric_columns": metric_columns,
+            "state": grounding.get("state"),
+            "year_range": year_range,
+            "row_count_used": grounding.get("rows_used", 0),
+            "method_note": "Template-based SQL query with approved marts only and MAX_ROWS=50.",
+            "external_sources": external_sources,
+        }
+    ]
+
+
+def _compose_answer(plan_category: str, rows: list[dict[str, Any]], state: str) -> str:
+    if not rows:
+        return f"I could not find matching results for {state}."
+
+    first = rows[0]
+
+    if plan_category == "largest_affordability_gap_year":
+        year = first.get("year")
+        total_share = _format_float(first.get("known_total_share"))
+        return f"The highest combined expense burden in {state} was in {year}, at about {total_share}% of monthly income."
+
+    if plan_category == "before_after_comparison":
+        if len(rows) >= 2:
+            start = rows[0]
+            end = rows[-1]
+            delta_total = float(end.get("known_total_share", 0)) - float(start.get("known_total_share", 0))
+            delta_mortgage = float(end.get("mortgage_share", 0)) - float(start.get("mortgage_share", 0))
+            return (
+                f"From {start.get('year')} to {end.get('year')} in {state}, "
+                f"the combined expense share changed by {delta_total:+.1f} percentage points, "
+                f"and the mortgage share changed by {delta_mortgage:+.1f} percentage points."
+            )
+        return "I found one year, but not enough data to compare both years."
+
+    if plan_category == "component_comparison":
+        components = {
+            "healthcare": float(first.get("healthcare_share", 0)),
+            "childcare": float(first.get("childcare_share", 0)),
+            "mortgage": float(first.get("mortgage_share", 0)),
+        }
+        top_component, top_value = max(components.items(), key=lambda item: item[1])
+        return (
+            f"For {state} in {first.get('year')}, the largest share of monthly income is "
+            f"{top_component}, at about {top_value:.1f}%."
+        )
+
+    if plan_category == "policy_year_impact":
+        year = first.get("year")
+        avg_total = sum(float(row.get("known_total_share", 0) or 0) for row in rows) / max(1, len(rows))
+        return f"I found {len(rows)} policy event(s) in {state} for {year}. Around that year, combined expenses were about {avg_total:.1f}% of monthly income."
+
+    if plan_category == "policy_events":
+        return f"I found {len(rows)} recent policy event(s) for {state}."
+
+    if plan_category == "trend_summary":
+        start = rows[0]
+        end = rows[-1]
+        return (
+            f"Trend summary for {state}: from {start.get('year')} to {end.get('year')}, "
+            f"combined expenses moved from {_format_float(start.get('known_total_share'))}% to {_format_float(end.get('known_total_share'))}% of monthly income, "
+            f"with mortgage moving from {_format_float(start.get('mortgage_share'))}% to {_format_float(end.get('mortgage_share'))}%."
+        )
+
+    return "I found matching data and returned the result rows."
+
+
+def _confidence_for_result(category: str, row_count: int, warnings: list[str]) -> str:
+    if row_count == 0:
+        return "low"
+    if warnings:
+        return "medium"
+    if category in {"largest_affordability_gap_year", "component_comparison"} and row_count >= 1:
+        return "high"
+    if category in {"trend_summary", "before_after_comparison"} and row_count >= 2:
+        return "high"
+    return "medium"
+
+
+def _follow_up_suggestions(category: str) -> list[str]:
+    options = {
+        "largest_affordability_gap_year": [
+            "Compare the gap in that year versus 2010.",
+            "What policy events happened around that year?",
+        ],
+        "before_after_comparison": [
+            "Compare another year pair before and after a policy year.",
+            "Show component comparison for the latest year.",
+        ],
+        "component_comparison": [
+            "Show trend summary across all years.",
+            "What was the largest affordability gap year?",
+        ],
+        "policy_year_impact": [
+            "Compare affordability before and after that policy year.",
+            "List all recent direct policy events.",
+        ],
+        "policy_events": [
+            "Show policy impact for a specific year.",
+            "Which year had the largest affordability gap?",
+        ],
+        "trend_summary": [
+            "Compare before and after two specific years.",
+            "Which year had the largest affordability gap?",
+        ],
+    }
+    return options.get(category, ["Show trend summary.", "Compare before and after two years."])
+
+
+def _build_full_address(street: str, city: str, state_abbrev: str, zip_code: str) -> str:
+    return f"{street.strip()}, {city.strip()}, {state_abbrev.strip().upper()} {zip_code.strip()}"
+
+
+def _format_location_address(address: dict[str, Any] | None) -> str:
+    if not address:
+        return ""
+    parts = [
+        address.get("line1"),
+        address.get("line2"),
+        address.get("line3"),
+        ", ".join(
+            p for p in [address.get("city"), address.get("state"), address.get("zip")] if p
+        ),
+    ]
+    return ", ".join([p for p in parts if p])
+
+
+def _state_fallback_lookup_url(state_abbrev: str) -> str:
+    state = (state_abbrev or "").upper()
+    if state == "TN":
+        return TENNESSEE_VOTER_LOOKUP_URL
+    return COLORADO_VOTER_LOOKUP_URL
+
+
+def _extract_source_url(sources: list[dict[str, Any]], state_abbrev: str) -> str:
+    for source in sources:
+        official = source.get("official")
+        if official:
+            return str(official)
+    return _state_fallback_lookup_url(state_abbrev)
+
+
+def _normalize_locations(raw_items: list[dict[str, Any]], location_type: str, state_abbrev: str) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    for item in raw_items:
+        address_obj = item.get("address", {})
+        full_address = _format_location_address(address_obj)
+        source_list = item.get("sources", []) or []
+        normalized.append(
+            {
+                "location_type": location_type,
+                "name": item.get("addressLocationName") or item.get("name") or "Polling Location",
+                "address": full_address,
+                "hours": item.get("pollingHours") or item.get("earlyVoteSiteHours") or None,
+                "notes": item.get("notes"),
+                "source_name": source_list[0].get("name") if source_list else "Voting Information Project",
+                "source_url": _extract_source_url(source_list, state_abbrev),
+                "maps_url": f"https://www.google.com/maps/search/?api=1&query={quote_plus(full_address)}" if full_address else None,
+            }
+        )
+    return normalized
+
+
+def _build_provider_plan(state_abbrev: str) -> list[dict[str, Any]]:
+    official_url = _state_fallback_lookup_url(state_abbrev)
+    state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper(), state_abbrev.upper())
+    official_notes = "Most authoritative source for current polling place details."
+    if state_abbrev.upper() == "CO":
+        official_notes = (
+            "Official lookup requires first name, last name, zip, date of birth, "
+            "and reCAPTCHA, so direct server-side automation is restricted."
+        )
+    return [
+        {
+            "provider_id": "state_official",
+            "provider_name": f"{state_name} Secretary of State Lookup",
+            "priority": 1,
+            "mode": "official_lookup",
+            "url": official_url,
+            "notes": official_notes,
+        },
+        {
+            "provider_id": "vip",
+            "provider_name": "Voting Information Project",
+            "priority": 2,
+            "mode": "national_nonprofit",
+            "url": VOTING_INFO_PROJECT_URL,
+            "notes": "National voter information provider with broader coverage tools.",
+        },
+        {
+            "provider_id": "google_civic",
+            "provider_name": "Google Civic Information API",
+            "priority": 3,
+            "mode": "api",
+            "url": "https://developers.google.com/civic-information/docs/v2/voterinfo",
+            "notes": "Used as a supplementary API source when election context is available.",
+        },
+    ]
+
+
+def _official_lookup_requirements(state_abbrev: str) -> list[str]:
+    if state_abbrev.upper() == "CO":
+        return CO_OFFICIAL_LOOKUP_REQUIREMENTS
+    return []
+
+
+def _official_lookup_guidance_detail(state_abbrev: str, provider_detail: str | None = None) -> str | None:
+    detail = (provider_detail or "").strip()
+    if state_abbrev.upper() == "CO":
+        guidance = (
+            "Colorado official lookup requires first name, last name, zip, date of birth, "
+            "and reCAPTCHA completion."
+        )
+        return f"{guidance} {detail}".strip() if detail else guidance
+    return detail or None
+
+
+def _strip_html(value: str) -> str:
+    if not value:
+        return ""
+    no_tags = re.sub(r"<[^>]+>", " ", value)
+    return re.sub(r"\s+", " ", unescape(no_tags)).strip()
+
+
+def _build_maps_url_from_address(address: str) -> str | None:
+    clean = (address or "").strip()
+    if not clean:
+        return None
+    return f"https://www.google.com/maps/search/?api=1&query={quote_plus(clean)}"
+
+
+def _parse_tn_locations_list_page(html: str, type_param: str) -> list[dict[str, Any]]:
+    if not html:
+        return []
+    forms = re.findall(r"<form method=\"GET\">(.*?)</form>", html, flags=re.S | re.I)
+    parsed: list[dict[str, Any]] = []
+    for form in forms:
+        view_match = re.search(r'name=\"view\"\s+value=\"([^\"]+)\"', form, flags=re.I)
+        if not view_match:
+            continue
+        # Top line is the location name; secondary line is street address.
+        div_values = re.findall(r"<div[^>]*>(.*?)</div>", form, flags=re.S | re.I)
+        if not div_values:
+            continue
+        name = _strip_html(div_values[0])
+        address = _strip_html(div_values[1]) if len(div_values) > 1 else ""
+        if not name and not address:
+            continue
+        parsed.append(
+            {
+                "view": view_match.group(1),
+                "type_param": type_param,
+                "name": name or "Polling Location",
+                "address": address,
+            }
+        )
+    return parsed
+
+
+def _parse_tn_location_detail_page(html: str) -> tuple[str | None, str | None]:
+    if not html:
+        return None, None
+    hours_match = re.search(
+        r"<label>\s*Hours:\s*</label>\s*<br/?>\s*<span>(.*?)</span>",
+        html,
+        flags=re.S | re.I,
+    )
+    hours = _strip_html(hours_match.group(1)) if hours_match else None
+    maps_match = re.search(r'<form\s+action=\"(https://www\.google\.com/maps/dir/[^\"]+)\"', html, flags=re.I)
+    maps_url = maps_match.group(1) if maps_match else None
+    return hours, maps_url
+
+
+def _tn_address_search_candidates(street: str) -> list[str]:
+    raw = re.sub(r"\s+", " ", (street or "").strip())
+    if not raw:
+        return []
+    candidates: list[str] = [raw]
+    # Strip unit designators for fallback matching.
+    no_unit = re.sub(r"\s+(apt|apartment|unit|#)\s*\S+.*$", "", raw, flags=re.I).strip()
+    if no_unit:
+        candidates.append(no_unit)
+    # Strip common street suffixes if county data is abbreviated differently.
+    no_suffix = re.sub(
+        r"\s+(drive|dr|road|rd|street|st|avenue|ave|lane|ln|court|ct|boulevard|blvd|way|circle|cir|place|pl|parkway|pkwy|terrace|ter)\.?\s*$",
+        "",
+        no_unit or raw,
+        flags=re.I,
+    ).strip()
+    if no_suffix:
+        candidates.append(no_suffix)
+    # If city/state got included accidentally in street field, keep first comma chunk.
+    pre_comma = (raw.split(",")[0] or "").strip()
+    if pre_comma:
+        candidates.append(pre_comma)
+
+    deduped: list[str] = []
+    for item in candidates:
+        if item and item not in deduped:
+            deduped.append(item)
+    return deduped
+
+
+def _extract_tn_address_selector_forms(html: str) -> list[tuple[str, dict[str, str]]]:
+    forms: list[tuple[str, dict[str, str]]] = []
+    if not html:
+        return forms
+    for action, body in re.findall(r'<form[^>]*action=\"([^\"]+)\"[^>]*>(.*?)</form>', html, flags=re.S | re.I):
+        if "/search/address" not in action:
+            continue
+        payload: dict[str, str] = {}
+        for input_tag in re.findall(r"<input[^>]*>", body, flags=re.S | re.I):
+            name_match = re.search(r'name=\"([^\"]+)\"', input_tag, flags=re.I)
+            if not name_match:
+                continue
+            value_match = re.search(r'value=\"([^\"]*)\"', input_tag, flags=re.I)
+            payload[name_match.group(1)] = value_match.group(1) if value_match else ""
+        # Selector forms should carry a concrete address value.
+        if payload.get("address"):
+            forms.append((action, payload))
+    return forms
+
+
+def _submit_tn_search(client: httpx.Client, base: str, street: str, zip_code: str) -> str:
+    search_resp = client.post(
+        f"{base}/search/address",
+        data={"address": street.strip(), "zip": zip_code.strip()},
+        headers={"Referer": f"{base}/search"},
+        timeout=20.0,
+    )
+    html = search_resp.text
+    # Some addresses return an intermediate selector page; follow first resolved option.
+    for _ in range(3):
+        selector_forms = _extract_tn_address_selector_forms(html)
+        if not selector_forms:
+            break
+        action, payload = selector_forms[0]
+        next_url = f"{base}{action}" if action.startswith("/") else f"{base}/{action.lstrip('/')}"
+        follow_resp = client.post(
+            next_url,
+            data=payload,
+            headers={"Referer": f"{base}/search/address"},
+            timeout=20.0,
+        )
+        html = follow_resp.text
+    return html
+
+
+def _collect_tn_locations(client: httpx.Client, base: str) -> list[dict[str, Any]]:
+    locations: list[dict[str, Any]] = []
+    location_types = [("election-day", "polling_location"), ("early-voting", "early_vote_site")]
+    for type_param, location_type in location_types:
+        list_resp = client.get(f"{base}/locations/list", params={"type": type_param}, timeout=20.0)
+        cards = _parse_tn_locations_list_page(list_resp.text, type_param)
+        for card in cards:
+            detail_resp = client.get(
+                f"{base}/locations/list",
+                params={"type": type_param, "view": card["view"]},
+                timeout=20.0,
+            )
+            hours, maps_url = _parse_tn_location_detail_page(detail_resp.text)
+            location_address = card["address"]
+            locations.append(
+                {
+                    "location_type": location_type,
+                    "name": card["name"],
+                    "address": location_address,
+                    "hours": hours,
+                    "notes": None,
+                    "source_name": "Tennessee Secretary of State",
+                    "source_url": base,
+                    "maps_url": maps_url or _build_maps_url_from_address(location_address),
+                }
+            )
+    return locations
+
+
+def _lookup_tn_official_locations(client: httpx.Client, street: str, zip_code: str) -> tuple[list[dict[str, Any]], str | None]:
+    base = TENNESSEE_VOTER_LOOKUP_URL.rstrip("/")
+    # Initialize a session, then perform the official address lookup workflow.
+    client.get(f"{base}/search", timeout=15.0)
+    last_detail = "No polling locations were returned by Tennessee official lookup for this address."
+    selected_candidate = street.strip()
+    for candidate in _tn_address_search_candidates(street):
+        search_html = _submit_tn_search(client, base, candidate, zip_code)
+        selected_candidate = candidate
+        if "No Results Returned" in search_html:
+            last_detail = "No registered voters were found at this address in Tennessee official lookup."
+            continue
+        if "We're sorry, an error has occurred." in search_html:
+            last_detail = "Tennessee official lookup returned an error for this address format."
+            continue
+        all_locations = _collect_tn_locations(client, base)
+        if all_locations:
+            return all_locations, None
+        last_detail = f"No polling locations were returned by Tennessee official lookup for '{candidate}'."
+    return [], last_detail if selected_candidate else "No polling locations were returned by Tennessee official lookup for this address."
+
+
+def _get_state_election_id(client: httpx.Client, state_abbrev: str) -> str | None:
+    state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper())
+    if not state_name:
+        return None
+    try:
+        resp = client.get(
+            f"{GOOGLE_CIVIC_BASE_URL}/elections",
+            params={"key": GOOGLE_CIVIC_API_KEY},
+            timeout=12.0,
+        )
+        if resp.status_code >= 400:
+            return None
+        payload = resp.json()
+        elections = payload.get("elections", []) or []
+        today = datetime.now(timezone.utc).date().isoformat()
+        candidates = [
+            e for e in elections
+            if state_name.lower() in str(e.get("name", "")).lower()
+            and str(e.get("electionDay", "")) >= today
+        ]
+        if not candidates:
+            return None
+        target = sorted(candidates, key=lambda e: str(e.get("electionDay", "")))[0]
+        election_id = target.get("id")
+        return str(election_id) if election_id is not None else None
+    except Exception:
+        return None
+
+
+def _list_state_elections(client: httpx.Client, state_abbrev: str) -> list[dict[str, Any]]:
+    state_name = STATE_NAME_BY_ABBREV.get(state_abbrev.upper())
+    if not state_name:
+        return []
+    resp = client.get(
+        f"{GOOGLE_CIVIC_BASE_URL}/elections",
+        params={"key": GOOGLE_CIVIC_API_KEY},
+        timeout=12.0,
+    )
+    if resp.status_code >= 400:
+        return []
+    payload = resp.json()
+    elections = payload.get("elections", []) or []
+    matches = [
+        e for e in elections
+        if state_name.lower() in str(e.get("name", "")).lower()
+    ]
+    return sorted(matches, key=lambda e: str(e.get("electionDay", "")))
+
+
+def _run_query(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, params or {})
+            columns = [desc.name for desc in cur.description]
+            rows = cur.fetchall()
+    return [dict(zip(columns, row)) for row in rows]
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.get("/api/affordability")
+def get_affordability(state_abbrev: str = "CO") -> dict[str, Any]:
+    rows = _run_query(
+        (
+            "SELECT geo_id, state_abbrev, year, income_real, housing_hpi, healthcare_pc, childcare_annual, "
+            "income_real_cpi_2023, healthcare_pc_cpi_2023, childcare_annual_cpi_2023, "
+            "income_index, housing_index, healthcare_index, childcare_index, "
+            "income_cpi_2023_index, healthcare_cpi_2023_index, childcare_cpi_2023_index "
+            "FROM analytics.mart_affordability_index_annual "
+            "WHERE state_abbrev = %(state)s "
+            "ORDER BY year "
+            "LIMIT %(limit)s"
+        ),
+        {"state": state_abbrev.upper(), "limit": MAX_ROWS},
+    )
+    return {"rows": rows, "row_count": len(rows)}
+
+
+@app.get("/api/policy")
+def get_policy(state_abbrev: str = "CO") -> dict[str, Any]:
+    rows = _run_query(
+        (
+            "SELECT event_id, geo_id, state_abbrev, year, short_label, summary, category "
+            "FROM analytics.mart_policy_events_direct "
+            "WHERE state_abbrev = %(state)s "
+            "ORDER BY year "
+            "LIMIT %(limit)s"
+        ),
+        {"state": state_abbrev.upper(), "limit": MAX_ROWS},
+    )
+    return {"rows": rows, "row_count": len(rows)}
+
+
+@app.get("/api/expense-share")
+def get_expense_share(state_abbrev: str = "CO") -> dict[str, Any]:
+    rows = _run_query(
+        (
+            "SELECT geo_id, state_abbrev, year, "
+            "healthcare_share_pct_of_monthly_income, "
+            "childcare_share_pct_of_monthly_income, "
+            "known_expense_share_pct_of_monthly_income, "
+            "healthcare_share_cpi_2023_pct_of_monthly_income, "
+            "childcare_share_cpi_2023_pct_of_monthly_income, "
+            "known_expense_share_cpi_2023_pct_of_monthly_income, "
+            "estimated_home_price, "
+            "estimated_loan_amount, "
+            "estimated_monthly_mortgage_payment, "
+            "estimated_mortgage_share_pct_of_monthly_income, "
+            "estimated_mortgage_share_cpi_2023_pct_of_monthly_income "
+            "FROM analytics.mart_expense_share_monthly_income_annual "
+            "WHERE state_abbrev = %(state)s "
+            "ORDER BY year "
+            "LIMIT %(limit)s"
+        ),
+        {"state": state_abbrev.upper(), "limit": MAX_ROWS},
+    )
+    return {"rows": rows, "row_count": len(rows)}
+
+
+@app.post("/api/vote/co/polling-location")
+def get_colorado_polling_location(payload: PollingLookupRequest) -> dict[str, Any]:
+    state = payload.state_abbrev.strip().upper()
+    if state not in SUPPORTED_POLLING_STATES:
+        raise HTTPException(status_code=400, detail="This endpoint currently supports CO and TN addresses only.")
+
+    full_address = _build_full_address(payload.street, payload.city, state, payload.zip)
+    official_fallback_url = _state_fallback_lookup_url(state)
+    provider_plan = _build_provider_plan(state)
+    official_lookup_requirements = _official_lookup_requirements(state)
+
+    if not GOOGLE_CIVIC_API_KEY:
+        return {
+            "status": "official_lookup_recommended",
+            "message": "Primary official lookup is available. Civic API is not configured.",
+            "request_address": full_address,
+            "provider_used": "state_official",
+            "providers": provider_plan,
+            "official_lookup_requirements": official_lookup_requirements,
+            "official_fallback_url": official_fallback_url,
+            "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+
+    try:
+        with httpx.Client() as client:
+            tn_detail: str | None = None
+            if state == "TN":
+                tn_locations, tn_detail = _lookup_tn_official_locations(client, payload.street, payload.zip)
+                if tn_locations:
+                    return {
+                        "status": "ok",
+                        "message": "Polling locations found from Tennessee official lookup.",
+                        "request_address": full_address,
+                        "provider_used": "state_official",
+                        "providers": provider_plan,
+                        "official_lookup_requirements": official_lookup_requirements,
+                        "result_count": len(tn_locations),
+                        "locations": tn_locations,
+                        "citations": [
+                            {
+                                "source_name": "Tennessee Secretary of State GoVoteTN",
+                                "publisher": "Tennessee Secretary of State",
+                                "source_url": TENNESSEE_VOTER_LOOKUP_URL,
+                            },
+                            {
+                                "source_name": "Voting Information Project",
+                                "publisher": "Voting Information Project",
+                                "source_url": VOTING_INFO_PROJECT_URL,
+                            },
+                        ],
+                        "official_fallback_url": official_fallback_url,
+                        "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+                    }
+
+            params: dict[str, Any] = {"key": GOOGLE_CIVIC_API_KEY, "address": full_address}
+
+            response = client.get(f"{GOOGLE_CIVIC_BASE_URL}/voterinfo", params=params, timeout=15.0)
+            if response.status_code >= 400:
+                detail = ""
+                try:
+                    detail = response.json().get("error", {}).get("message", "")
+                except Exception:
+                    detail = response.text
+                # Retry with a state-specific election id when Civic cannot infer election context.
+                if "election unknown" in detail.lower():
+                    state_election_id = _get_state_election_id(client, state)
+                    if state_election_id:
+                        retry_params: dict[str, Any] = {
+                            "key": GOOGLE_CIVIC_API_KEY,
+                            "address": full_address,
+                            "electionId": state_election_id,
+                        }
+                        retry_response = client.get(
+                            f"{GOOGLE_CIVIC_BASE_URL}/voterinfo",
+                            params=retry_params,
+                            timeout=15.0,
+                        )
+                        if retry_response.status_code < 400:
+                            response = retry_response
+                        else:
+                            try:
+                                detail = retry_response.json().get("error", {}).get("message", detail)
+                            except Exception:
+                                detail = retry_response.text or detail
+                if response.status_code >= 400:
+                    return {
+                        "status": "official_lookup_recommended",
+                        "message": "Civic API could not resolve a polling location. Use official state lookup.",
+                        "provider_detail": _official_lookup_guidance_detail(state, tn_detail or detail),
+                        "request_address": full_address,
+                        "provider_used": "state_official",
+                        "providers": provider_plan,
+                        "official_lookup_requirements": official_lookup_requirements,
+                        "official_fallback_url": official_fallback_url,
+                        "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+                    }
+
+            data = response.json()
+            polling = _normalize_locations(data.get("pollingLocations", []) or [], "polling_location", state)
+            early = _normalize_locations(data.get("earlyVoteSites", []) or [], "early_vote_site", state)
+            drop_off = _normalize_locations(data.get("dropOffLocations", []) or [], "drop_off_location", state)
+            all_locations = polling + early + drop_off
+
+            if not all_locations:
+                response_election = data.get("election", {}) if isinstance(data, dict) else {}
+                return {
+                    "status": "official_lookup_recommended",
+                    "message": "No polling locations were returned by Civic. Use official state lookup.",
+                    "request_address": full_address,
+                    "election": {
+                        "id": str(response_election.get("id")) if response_election.get("id") is not None else None,
+                        "name": response_election.get("name"),
+                        "date": response_election.get("electionDay"),
+                    } if response_election else {},
+                    "provider_detail": _official_lookup_guidance_detail(state, tn_detail),
+                    "provider_used": "state_official",
+                    "providers": provider_plan,
+                    "official_lookup_requirements": official_lookup_requirements,
+                    "official_fallback_url": official_fallback_url,
+                    "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+                }
+
+            response_election = data.get("election", {}) if isinstance(data, dict) else {}
+            return {
+                "status": "ok",
+                "message": "Polling locations found.",
+                "request_address": full_address,
+                "election": {
+                    "id": str(response_election.get("id")) if response_election.get("id") is not None else None,
+                    "name": response_election.get("name"),
+                    "date": response_election.get("electionDay"),
+                } if response_election else {},
+                "provider_used": "google_civic",
+                "providers": provider_plan,
+                "official_lookup_requirements": official_lookup_requirements,
+                "result_count": len(all_locations),
+                "locations": all_locations,
+                "citations": [
+                    {
+                        "source_name": "Google Civic Information API",
+                        "publisher": "Google / Voting Information Project",
+                        "source_url": "https://developers.google.com/civic-information/docs/v2/voterinfo",
+                    },
+                    {
+                        "source_name": "State Voter Lookup",
+                        "publisher": "Secretary of State",
+                        "source_url": official_fallback_url,
+                    },
+                ],
+                "official_fallback_url": official_fallback_url,
+                "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+            }
+    except Exception as exc:
+        return {
+            "status": "official_lookup_recommended",
+            "message": "Polling API is temporarily unavailable. Use official state lookup.",
+            "provider_detail": _official_lookup_guidance_detail(state, str(exc)),
+            "request_address": full_address,
+            "provider_used": "state_official",
+            "providers": provider_plan,
+            "official_lookup_requirements": official_lookup_requirements,
+            "official_fallback_url": official_fallback_url,
+            "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+
+
+@app.get("/api/vote/debug/elections")
+def debug_state_elections(
+    state_abbrev: str = "TN",
+    address: str | None = None,
+    street: str | None = None,
+    city: str | None = None,
+    zip: str | None = None,
+    limit: int = 8,
+) -> dict[str, Any]:
+    state = state_abbrev.strip().upper()
+    if state not in SUPPORTED_POLLING_STATES:
+        raise HTTPException(status_code=400, detail="Supported debug states: CO, TN.")
+    if not GOOGLE_CIVIC_API_KEY:
+        return {
+            "status": "unavailable",
+            "message": "Google Civic API key is not configured.",
+            "state_abbrev": state,
+            "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+
+    if address and address.strip():
+        full_address = address.strip()
+    elif street and city and zip:
+        full_address = _build_full_address(street, city, state, zip)
+    else:
+        full_address = None
+
+    safe_limit = max(1, min(limit, 25))
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    try:
+        with httpx.Client() as client:
+            elections = _list_state_elections(client, state)
+            upcoming = [e for e in elections if str(e.get("electionDay", "")) >= today]
+            selected = (upcoming or elections)[:safe_limit]
+
+            probes: list[dict[str, Any]] = []
+            if full_address:
+                for e in selected:
+                    election_id = e.get("id")
+                    params: dict[str, Any] = {
+                        "key": GOOGLE_CIVIC_API_KEY,
+                        "address": full_address,
+                    }
+                    if election_id is not None:
+                        params["electionId"] = str(election_id)
+                    resp = client.get(
+                        f"{GOOGLE_CIVIC_BASE_URL}/voterinfo",
+                        params=params,
+                        timeout=15.0,
+                    )
+                    detail = ""
+                    payload: dict[str, Any] = {}
+                    if resp.status_code >= 400:
+                        try:
+                            payload = resp.json()
+                            detail = payload.get("error", {}).get("message", "")
+                        except Exception:
+                            detail = resp.text
+                    else:
+                        try:
+                            payload = resp.json()
+                        except Exception:
+                            payload = {}
+
+                    probes.append(
+                        {
+                            "election_id": str(election_id) if election_id is not None else None,
+                            "election_name": e.get("name"),
+                            "election_day": e.get("electionDay"),
+                            "http_status": resp.status_code,
+                            "provider_detail": detail or None,
+                            "polling_count": len(payload.get("pollingLocations", []) or []) if isinstance(payload, dict) else 0,
+                            "early_vote_count": len(payload.get("earlyVoteSites", []) or []) if isinstance(payload, dict) else 0,
+                            "dropoff_count": len(payload.get("dropOffLocations", []) or []) if isinstance(payload, dict) else 0,
+                        }
+                    )
+
+            return {
+                "status": "ok",
+                "state_abbrev": state,
+                "state_name": STATE_NAME_BY_ABBREV.get(state, state),
+                "today_utc": today,
+                "candidate_elections_count": len(elections),
+                "candidate_elections": [
+                    {
+                        "id": str(e.get("id")) if e.get("id") is not None else None,
+                        "name": e.get("name"),
+                        "date": e.get("electionDay"),
+                    }
+                    for e in selected
+                ],
+                "probe_address": full_address,
+                "probes": probes,
+                "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+            }
+    except Exception as exc:
+        return {
+            "status": "error",
+            "message": "Election debug lookup failed.",
+            "provider_detail": str(exc),
+            "state_abbrev": state,
+            "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+
+
+@app.post("/api/ask")
+def ask_data(payload: AskRequest) -> dict[str, Any]:
+    state = payload.state_abbrev.upper()
+    _validate_question_text(payload.question)
+    try:
+        plan = build_query_plan(payload.question, state=state)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"{exc} Supported asks: "
+                + ", ".join(SUPPORTED_QUESTION_GUIDE["supported_categories"])
+            ),
+        ) from exc
+
+    # Guardrail: only analytics mart access and read-only SQL templates.
+    normalized_sql = " ".join(plan.sql.lower().split())
+    if not normalized_sql.startswith("select "):
+        raise HTTPException(status_code=400, detail="Only SELECT statements are allowed.")
+    if any(token in normalized_sql for token in ["insert", "update", "delete", "drop", "alter", "truncate"]):
+        raise HTTPException(status_code=400, detail="DDL/DML operations are blocked.")
+    if not any(table in normalized_sql for table in ALLOWED_TABLES):
+        raise HTTPException(status_code=400, detail="Query must target approved marts only.")
+
+    try:
+        rows = _run_query(plan.sql, plan.params)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Query execution failed: {exc}") from exc
+
+    warnings: list[str] = []
+    if not plan.extracted_years and plan.category == "before_after_comparison":
+        warnings.append("No valid comparison years detected.")
+    if len(rows) == 0:
+        warnings.append("No rows matched this question. Try adding a specific year or metric.")
+    elif len(rows) < 2 and plan.category in {"before_after_comparison", "trend_summary", "policy_year_impact"}:
+        warnings.append("Limited result rows reduced comparison confidence.")
+    if plan.is_inflation_adjusted:
+        warnings.append("Inflation-adjusted mode inferred from your question keywords.")
+
+    normalized_rows = _normalize_rows(rows)
+    confidence = _confidence_for_result(plan.category, len(normalized_rows), warnings)
+    grounding = _build_grounding(normalized_rows, state)
+    answer_text = _compose_answer(plan.category, normalized_rows, state)
+    if grounding["year_min"] is not None:
+        answer_text += (
+            f" Based on {grounding['rows_used']} row(s) from {grounding['state']} "
+            f"covering {grounding['year_min']} to {grounding['year_max']}."
+        )
+
+    return {
+        "status": "ok",
+        "category": plan.category,
+        "intent": plan.intent,
+        "summary": plan.summary,
+        "answer_text": answer_text,
+        "query_template": plan.template_id,
+        "query_sql": plan.sql,
+        "query_params": plan.params,
+        "is_inflation_adjusted": plan.is_inflation_adjusted,
+        "extracted_years": plan.extracted_years,
+        "confidence": confidence,
+        "warnings": warnings,
+        "row_count": len(normalized_rows),
+        "table_rows": normalized_rows[:MAX_ROWS],
+        "table_columns": list(normalized_rows[0].keys()) if normalized_rows else [],
+        "follow_up_suggestions": _follow_up_suggestions(plan.category),
+        "grounding": grounding,
+        "citations": _build_citations(
+            category=plan.category,
+            grounding=grounding,
+            is_inflation_adjusted=plan.is_inflation_adjusted,
+        ),
+        "question_guide": SUPPORTED_QUESTION_GUIDE,
+        "approved_marts": sorted(ALLOWED_TABLES),
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+    }

@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -18,6 +19,28 @@ from pathlib import Path
 from htmltools import HTML, div
 from shiny import App, reactive, ui, render
 from shinywidgets import output_widget, render_widget
+
+# Data
+from data.common_counties_json import counties_json
+
+from data.economy_n_workers_full_time import n_workers_full_time
+from data.economy_shares_wid import shares_wid
+from data.economy_shares_wid_full_distribution import shares_wid_full_distribution
+from data.economy_tax import tax
+from data.economy_income_total import income_total
+from data.economy_population import population
+from data.economy_workers_ratio import workers_ratio
+from data.economy_f150 import f150
+from data.american_dream_american_dream_kids import american_dream_kids
+from data.american_dream_mobility_international import mobility_international
+from data.healthcare_healthcare_cost_per_capita import healthcare_cost_per_capita
+from data.healthcare_healthcare_life_expectancy import healthcare_life_expectancy
+from data.healthcare_healthcare_infant_mortality import healthcare_infant_mortality
+from data.healthcare_healthcare_maternal_mortality import healthcare_maternal_mortality
+from data.healthcare_healthcare_suicide_rates import healthcare_suicide_rates
+from data.environment_electricity_cost import electricity_cost
+from data.race_outcomes_upward_mobility_jail import outcomes_upward_mobility_jail
+
 
 
 def get_path(folder, file_name):
@@ -84,62 +107,65 @@ config = dict(
 
 )
 
-#-----------------------------------------------------------------------------------------
-# Race Data
-#-----------------------------------------------------------------------------------------
-outcomes_upward_mobility_jail = read_data(
-    folder='race',
-    file_name='outcomes_upward_mobility_jail.csv',
-    dtype={
-        'fips_county': str,
-        'fips_state': str,
-        'value': float,
-        'state': str
-    },
-)
-with open(get_path(folder='race', file_name='counties_json.pickle'), 'rb') as f:
-    counties_json = pickle.load(f)
-#-----------------------------------------------------------------------------------------
-# Economy Data
-#-----------------------------------------------------------------------------------------
-n_workers_full_time = read_data(folder='economy', file_name='n_workers_full_time.csv')
-shares_wid = read_data(folder='economy', file_name="shares_wid.csv")
-shares_wid_full_distribution = read_data(folder='economy', file_name="shares_wid_full_distribution.csv")
+# #-----------------------------------------------------------------------------------------
+# # Race Data
+# #-----------------------------------------------------------------------------------------
+# outcomes_upward_mobility_jail = read_data(
+#     folder='race',
+#     file_name='outcomes_upward_mobility_jail.csv',
+#     dtype={
+#         'fips_county': str,
+#         'fips_state': str,
+#         'value': float,
+#         'state': str
+#     },
+# )
+# #-----------------------------------------------------------------------------------------
+# # Economy Data
+# #-----------------------------------------------------------------------------------------
+# n_workers_full_time = read_data(folder='economy', file_name='n_workers_full_time.csv')
+# shares_wid = read_data(folder='economy', file_name="shares_wid.csv")
+# shares_wid_full_distribution = read_data(folder='economy', file_name="shares_wid_full_distribution.csv")
+#
+#
+# tax = read_data(folder='economy', file_name="tax.csv")
+# income_total = read_data(folder='economy', file_name="income_total.csv")
+# population = read_data(folder='economy', file_name="population.csv")
+# workers_ratio = read_data(folder='economy', file_name="workers_ratio.csv")
+# f150 = read_data(folder='economy', file_name="f150.csv")
+#
+# #-----------------------------------------------------------------------------------------
+# # Healthcare Data
+# #-----------------------------------------------------------------------------------------
+# healthcare_cost_per_capita = read_data(folder='healthcare', file_name='healthcare_cost_per_capita.csv')
+# healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcare_life_expectancy.csv')
+# healthcare_infant_mortality = read_data(folder='healthcare', file_name='healthcare_infant_mortality.csv')
+# healthcare_maternal_mortality = read_data(folder='healthcare', file_name='healthcare_maternal_mortality.csv')
+# healthcare_suicide = read_data(folder='healthcare', file_name='healthcare_suicide_rates.csv')
+#
+# #-----------------------------------------------------------------------------------------
+# # American Dream Data
+# #-----------------------------------------------------------------------------------------
+# american_dream_kids = read_data(folder='american_dream', file_name='american_dream_kids.csv')
+# mobility_international = read_data(folder='american_dream', file_name='mobility_international.csv')
+#
+# #-----------------------------------------------------------------------------------------
+# #-----------------------------------------------------------------------------------------
+# #-----------------------------------------------------------------------------------------
+# # Environment
+# #-----------------------------------------------------------------------------------------
+# electricity_cost = (
+#     read_data(folder='environment', file_name='electricity_cost.csv')
+#     .sort(['LCOE_Low_USD_MWh'], descending=True)
+# )
+# #-----------------------------------------------------------------------------------------
+# #-----------------------------------------------------------------------------------------
 
-
-tax = read_data(folder='economy', file_name="tax.csv")
-income_total = read_data(folder='economy', file_name="income_total.csv")
-population = read_data(folder='economy', file_name="population.csv")
-workers_ratio = read_data(folder='economy', file_name="workers_ratio.csv")
-f150 = read_data(folder='economy', file_name="f150.csv")
-
-#-----------------------------------------------------------------------------------------
-# Healthcare Data
-#-----------------------------------------------------------------------------------------
-healthcare_cost_per_capita = read_data(folder='healthcare', file_name='healthcare_cost_per_capita.csv')
-healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcare_life_expectancy.csv')
-healthcare_infant_mortality = read_data(folder='healthcare', file_name='healthcare_infant_mortality.csv')
-healthcare_maternal_mortality = read_data(folder='healthcare', file_name='healthcare_maternal_mortality.csv')
-healthcare_suicide = read_data(folder='healthcare', file_name='healthcare_suicide_rates.csv')
-
-#-----------------------------------------------------------------------------------------
-# American Dream Data
-#-----------------------------------------------------------------------------------------
-american_dream_kids = read_data(folder='american_dream', file_name='american_dream_kids.csv')
-mobility_international = read_data(folder='american_dream', file_name='mobility_international.csv')
-
-#-----------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------
-# Environment
-#-----------------------------------------------------------------------------------------
-electricity_cost = (
-    read_data(folder='environment', file_name='levelized_cost_of_energy_comparison_lazard.csv')
-    .sort(['LCOE_Low_USD_MWh'], descending=True)
-)
-#-----------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------
-
+# Data Processing
+# with open(get_path(folder='race', file_name='counties_json.pickle'), 'rb') as f:
+#     counties_json = pickle.load(f)
+counties_json = json.loads(counties_json)
+electricity_cost = electricity_cost.sort(['LCOE_Low_USD_MWh'], descending=True)
 year_max = shares_wid.select(pl.max('year')).to_numpy().flatten()[0]
 
 
