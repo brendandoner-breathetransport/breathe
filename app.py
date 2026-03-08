@@ -106,7 +106,7 @@ n_workers_full_time = read_data(folder='economy', file_name='n_workers_full_time
 shares_wid = read_data(folder='economy', file_name="shares_wid.csv")
 shares_wid_full_distribution = read_data(folder='economy', file_name="shares_wid_full_distribution.csv")
 
-year_max = shares_wid.select(pl.max('year')).to_numpy().flatten()[0]
+
 tax = read_data(folder='economy', file_name="tax.csv")
 income_total = read_data(folder='economy', file_name="income_total.csv")
 population = read_data(folder='economy', file_name="population.csv")
@@ -139,6 +139,9 @@ electricity_cost = (
 )
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
+
+year_max = shares_wid.select(pl.max('year')).to_numpy().flatten()[0]
+
 
 axis_title_income = "<b>income/yr average</b>"
 axis_title_income_format = ',.2s'
