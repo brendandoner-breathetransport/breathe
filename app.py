@@ -31,15 +31,17 @@ from data.economy_income_total import income_total
 from data.economy_population import population
 from data.economy_workers_ratio import workers_ratio
 from data.economy_f150 import f150
+from data.economy_house_purchase_cost_as_percent_of_income import house_purchase_cost_as_percent_of_income
 from data.american_dream_american_dream_kids import american_dream_kids
 from data.american_dream_mobility_international import mobility_international
+
 from data.healthcare_healthcare_cost_per_capita import healthcare_cost_per_capita
 from data.healthcare_healthcare_life_expectancy import healthcare_life_expectancy
 from data.healthcare_healthcare_infant_mortality import healthcare_infant_mortality
 from data.healthcare_healthcare_maternal_mortality import healthcare_maternal_mortality
 from data.healthcare_healthcare_suicide_rates import healthcare_suicide_rates
 from data.environment_electricity_cost import electricity_cost
-from data.race_outcomes_upward_mobility_jail import outcomes_upward_mobility_jail
+from data.justice_outcomes_upward_mobility_jail import outcomes_upward_mobility_jail
 
 
 
@@ -141,7 +143,7 @@ config = dict(
 # healthcare_life_expectancy = read_data(folder='healthcare', file_name='healthcare_life_expectancy.csv')
 # healthcare_infant_mortality = read_data(folder='healthcare', file_name='healthcare_infant_mortality.csv')
 # healthcare_maternal_mortality = read_data(folder='healthcare', file_name='healthcare_maternal_mortality.csv')
-# healthcare_suicide = read_data(folder='healthcare', file_name='healthcare_suicide_rates.csv')
+# healthcare_suicide_rates = read_data(folder='healthcare', file_name='healthcare_healthcare_suicide_rates.csv')
 #
 # #-----------------------------------------------------------------------------------------
 # # American Dream Data
@@ -198,6 +200,7 @@ def get_source(name, link):
 sources = {
     'economy': get_source(name='Sources', link='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy'),
     'economy_f150': get_source(name='Sources', link='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#ford-f-seriesf-150-historical-msrp-1950-2025'),
+    'economy_house_purchase_price': get_source(name='Sources', link='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#housing'),
     'wid': get_source(name='Source: World Inequality Database', link='https://wid.world/wid-world/'),
     'irs': get_source(name='Source: Internal Revenue Service', link='https://www.irs.gov/statistics/soi-tax-stats-historical-table-23'),
     '1619': get_source(name='Source: The 1619 Project', link='https://www.nytimes.com/interactive/2019/08/14/magazine/1619-america-slavery.html'),
@@ -797,14 +800,16 @@ app_ui = ui.page_fillable(
                 )
             ),
             # Cost of Living
-            ui.row(ui.h2(ui.span("How has the cost of food & shelter changed?", style="color:rgba(255,255,255,0.9)"))),
+            ui.row(ui.h2(ui.span("How has the cost of living changed?", style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
+                    ui.card(output_widget("plot_economy_house_purchase_cost_as_percent_of_income")),
                     ui.card(output_widget("plot_economy_f150")),
                     # Stack on mobile, side-by-side on desktop
                     col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
                 )
             ),
+
             # ui.row(
             #     ui.layout_columns(
             #         ui.card(ui.h3(ui.span("main_street_income_avg vs rent/mortgage, over time", style="color:rgba(0,0,0,0.9)"))),
@@ -821,16 +826,12 @@ app_ui = ui.page_fillable(
             #         col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
             #     )
             # ),
-        ),
-        #--------------------------------------------------------------------------------------------------
-        # American Dream
-        #--------------------------------------------------------------------------------------------------
-        ui.nav_panel(
-            "American Dream",
-            # education, sick care, justice, laws/rules,
-            ui.row(ui.h1(ui.span(
-                HTML("How healthy is the American Dream?"),
-                style="color:rgba(255,255,255,0.9)"))),
+
+            # --------------------------------------------------------------------------------------------------
+            # American Dream
+            # --------------------------------------------------------------------------------------------------
+
+            ui.row(ui.h2(ui.span("How healthy is the American Dream?", style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_american_dream_kids")),
@@ -866,7 +867,9 @@ app_ui = ui.page_fillable(
             #         col_widths={"xs": (12, 12, 12), "sm": (12, 12, 12), "md": (4, 4, 4)},
             #     )
             # ),
+
         ),
+
         # --------------------------------------------------------------------------------------------------
         # Healthcare
         # --------------------------------------------------------------------------------------------------
@@ -889,8 +892,8 @@ app_ui = ui.page_fillable(
             ),
             ui.row(
                 ui.layout_columns(
-                    ui.card(output_widget("plot_healthcare_suicide")),
-                    # ui.card(output_widget("plot_healthcare_suicide")),
+                    ui.card(output_widget("plot_healthcare_suicide_rates")),
+                    # ui.card(output_widget("plot_healthcare_suicide_rates")),
                     col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
                 )
             ),
@@ -901,7 +904,7 @@ app_ui = ui.page_fillable(
         # --------------------------------------------------------------------------------------------------
         ui.nav_panel(
             "Justice",
-            ui.row(ui.h1(ui.span(HTML("How many Americans are in jail?"), style="color:rgba(255,255,255,0.9)"))),
+            ui.row(ui.h1(ui.span(HTML("Is there racial bias in the American justice system?"), style="color:rgba(255,255,255,0.9)"))),
             ui.row(
                 ui.layout_columns(
                     ui.card(output_widget("plot_white_jail")),
@@ -1242,7 +1245,7 @@ def server(input, output, session):
         yaxis_min, yaxis_max = get_yaxis_range(y_data=data[income_level])
         fig.update_layout(
             title=dict(
-                text=f"<b>{income_level if income_level != 'Gap' else 'the ' + income_level + ' of'} Paycheck</b><br><sup>{year_max} dollars</sup>",
+                text=f"<b>{input.income_level()} Paycheck</b><br><sup>{year_max} dollars</sup>",
                 #
             ),
             title_x=0.5,
@@ -1603,7 +1606,7 @@ def server(input, output, session):
         yaxis_min, yaxis_max = get_yaxis_range(y_data=data['price_ratio'])
         fig.update_layout(
             title=dict(
-                text=f"<b>Ford F-150 Price</b>",
+                text=f"<b>Percent of {input.income_level()} Income to Purchase a Ford F-150</b>",
             ),
             title_x=0.5,
             yaxis_title=f"<b>% of {input.income_level()} Paycheck</b>",
@@ -1614,6 +1617,90 @@ def server(input, output, session):
                 fixedrange=config['fixedrange'],  # This prevents zooming
             ),
             xaxis_title=f"{sources['economy_f150']}",
+            xaxis=dict(
+                # range=layout_economy['range'],
+                range=[data['year'].min() - 4, data['year'].max() + 4],
+                tickmode='array',
+                fixedrange=config['fixedrange'],  # This prevents zooming
+                # tickvals=layout_economy['tickvals'],
+                # ticktext=layout_economy['ticktext'],
+            ),
+            showlegend=True,
+            template=get_color_template(dark_mode),
+            paper_bgcolor=get_background_color_plotly(dark_mode),
+        )
+
+        for trace in fig['data']:
+            if ('min' in trace['name']) | ('NONE' in trace['name']):
+                trace['showlegend'] = False
+
+        fig = go.FigureWidget(fig)
+        fig._config = fig._config | config['plotly_mobile']
+        return fig
+
+
+    @output
+    @render_widget
+    def plot_economy_house_purchase_cost_as_percent_of_income():
+        """
+        Source: claude.ai compiling of prices
+
+        :return:
+        """
+        income_level = income_levels[input.income_level()]
+        income = (
+            shares_wid.filter(pl.col('country') == 'usa')
+            .filter(pl.col('year') >= 1880)
+        )
+        data = (
+            house_purchase_cost_as_percent_of_income
+            .join(
+                other=income,
+                on=['year'],
+                how='inner',
+            )
+            .with_columns(
+                house_purchase_cost_as_percent_of_income = pl.col('cost')/pl.col(income_level)
+            )
+        )
+
+        dark_mode=input.dark_mode()
+
+        fig = go.Figure(data=(
+            [
+                go.Scatter(
+                    name='NONE',
+                    x=data['year'],
+                    y=data['house_purchase_cost_as_percent_of_income'],
+                    line=dict(color=color_light_dark[dark_mode], width=3),
+                    text=f"<b>U.S.</b>",
+                ),
+            ] + get_highlights_line_min_max(
+            data=data,
+            col_date='year',
+            col_metric='house_purchase_cost_as_percent_of_income',
+            number_type='percentage',
+            max_or_min='min',
+        )
+        ))
+
+        # plot_period_dashed_line(fig=fig)
+        # plot_period_shading(fig=fig)
+
+        yaxis_min, yaxis_max = get_yaxis_range(y_data=data['house_purchase_cost_as_percent_of_income'])
+        fig.update_layout(
+            title=dict(
+                text=f"<b>Percent of {input.income_level()} Income to Purchase a Home</b>",
+            ),
+            title_x=0.5,
+            yaxis_title=f"<b>% of {input.income_level()} Paycheck</b>",
+            yaxis=dict(
+                range=[yaxis_min, yaxis_max],
+                # tickprefix="$",
+                tickformat=',.0%',
+                fixedrange=config['fixedrange'],  # This prevents zooming
+            ),
+            xaxis_title=f"{sources['economy_house_purchase_price']}",
             xaxis=dict(
                 # range=layout_economy['range'],
                 range=[data['year'].min() - 4, data['year'].max() + 4],
@@ -2001,9 +2088,9 @@ def server(input, output, session):
 
     @output
     @render_widget
-    def plot_healthcare_suicide():
+    def plot_healthcare_suicide_rates():
         fig = plot_timeseries_multiple_countries(
-            data=healthcare_suicide,
+            data=healthcare_suicide_rates,
             title="Suicide Rates",
             yaxis_title="deaths per 100,000",
             dark_mode=input.dark_mode(),
