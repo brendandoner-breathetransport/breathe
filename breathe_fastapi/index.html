@@ -18,6 +18,7 @@
       --accent: #4a90e2;
       --border: rgba(255,255,255,0.12);
       --tab-active: #4a90e2;
+      --nav-h: 52px;
     }
 
     body {
@@ -39,6 +40,7 @@
       z-index: 100;
       border-bottom: 1px solid var(--border);
       flex-wrap: wrap;
+      min-height: var(--nav-h);
     }
 
     nav img { height: 40px; margin-right: 0.75rem; }
@@ -58,7 +60,6 @@
 
     .nav-spacer { flex: 1; }
 
-    /* Dark-mode toggle */
     .dark-toggle {
       display: flex;
       align-items: center;
@@ -69,6 +70,138 @@
       user-select: none;
     }
     .dark-toggle input { cursor: pointer; }
+
+    /* ── Pick Area bar ───────────────────────────────────────────────── */
+    #pick-area-bar {
+      background: #161c20;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: var(--nav-h);
+      z-index: 90;
+    }
+
+    #pick-area-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    #pick-area-header:hover { background: rgba(255,255,255,0.04); }
+
+    #pick-area-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    #pick-area-selection {
+      font-size: 0.9rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    #pick-area-arrow {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--muted);
+      transition: transform 0.25s;
+    }
+    #pick-area-bar.open #pick-area-arrow { transform: rotate(180deg); }
+
+    #pick-area-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    #pick-area-bar.open #pick-area-content { max-height: 380px; }
+
+    #pick-area-inner {
+      padding: 0.5rem 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #area-map { width: 100%; height: 300px; }
+
+    .area-legend {
+      display: flex;
+      gap: 1.25rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-right: 0.3rem;
+      vertical-align: middle;
+    }
+
+    /* ── Area selector chips ─────────────────────────────────────────── */
+    .area-selector-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .area-chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0.35rem 1rem;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .area-chip:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+    .area-chip.selected {
+      background: rgba(74,144,226,0.2);
+      border-color: var(--accent);
+      color: #7ab8f5;
+      font-weight: 600;
+    }
+
+    .area-divider {
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0 0.25rem;
+    }
+
+    /* ── State placeholder card ──────────────────────────────────────── */
+    .state-placeholder {
+      position: absolute; inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-align: center;
+      padding: 1.5rem;
+    }
+    .placeholder-state-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .placeholder-msg {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+    .placeholder-hint {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.3);
+      margin-top: 0.25rem;
+    }
 
     /* ── Main content ────────────────────────────────────────────────── */
     main { padding: 1.25rem; max-width: 1400px; margin: 0 auto; }
@@ -106,9 +239,6 @@
     }
     .radio-group label:hover { background: rgba(255,255,255,0.1); }
     .radio-group input[type=radio] { display: none; }
-    .radio-group input[type=radio]:checked + span {
-      /* handled by parent label styling */
-    }
     .radio-group label.checked {
       background: rgba(74,144,226,0.18);
       border-color: var(--accent);
@@ -160,6 +290,8 @@
     @media (max-width: 600px) {
       .chart-grid { grid-template-columns: 1fr; }
       nav img { height: 30px; }
+      #area-map { height: 220px; }
+      #pick-area-bar.open #pick-area-content { max-height: 300px; }
     }
   </style>
 </head>
@@ -178,6 +310,31 @@
     <span>Dark charts</span>
   </label>
 </nav>
+
+<!-- ── Pick Area bar ─────────────────────────────────────────────────── -->
+<div id="pick-area-bar">
+  <div id="pick-area-header" onclick="togglePickArea()">
+    <span id="pick-area-label">Pick Area</span>
+    <span id="pick-area-selection">United States</span>
+    <span id="pick-area-arrow">▼</span>
+  </div>
+  <div id="pick-area-content">
+    <div id="pick-area-inner">
+      <div class="area-selector-row">
+        <button id="btn-us" class="area-chip selected" onclick="selectArea('United States')">
+          🇺🇸 United States
+        </button>
+        <span class="area-divider">— or click a state on the map</span>
+      </div>
+      <div id="area-map"></div>
+      <div class="area-legend">
+        <span><span class="legend-dot" style="background:#4a90e2"></span>Available</span>
+        <span><span class="legend-dot" style="background:#63e6be"></span>Selected</span>
+        <span><span class="legend-dot" style="background:#2d3f50"></span>Coming soon</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── Main ──────────────────────────────────────────────────────────── -->
 <main>
@@ -258,13 +415,13 @@
 <footer>Breathe © 2025</footer>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────────
+// ── App state ──────────────────────────────────────────────────────────────
 const state = {
   darkMode: false,
   incomeLevel: "Bottom 50%",
   country: "usa",
   activeTab: "economy",
-  loaded: {},   // tracks which charts have been loaded
+  selectedArea: "United States",   // current area selection
 };
 
 const PLOTLY_CONFIG = {
@@ -274,14 +431,206 @@ const PLOTLY_CONFIG = {
   scrollZoom: false,
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Pick Area map data ─────────────────────────────────────────────────────
+const ALL_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
+  'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+];
+
+// States that have data and can be selected
+const SELECTABLE_STATES = new Set(['CO', 'MT', 'TN']);
+
+const STATE_NAMES = {
+  AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
+  CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',
+  HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',
+  KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',
+  MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',
+  MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',
+  NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',
+  OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',
+  SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',
+  VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',
+};
+
+// z values: 0 = unavailable, 1 = available, 2 = selected
+function getStateZ(abbrev) {
+  if (abbrev === state.selectedArea) return 2;   // selected (won't match until a state is picked)
+  return SELECTABLE_STATES.has(abbrev) ? 1 : 0;
+}
+
+// Colorscale: z is normalized to [0,1] over zmin=0, zmax=2
+// z=0 → 0/2=0.00 → unavailable (dark muted)
+// z=1 → 1/2=0.50 → available  (accent blue)
+// z=2 → 2/2=1.00 → selected   (teal highlight)
+const MAP_COLORSCALE = [
+  [0.00, '#2d3f50'],
+  [0.49, '#2d3f50'],
+  [0.50, '#4a90e2'],
+  [0.74, '#4a90e2'],
+  [0.75, '#63e6be'],
+  [1.00, '#63e6be'],
+];
+
+let areaMapInitialized = false;
+
+function buildMapTrace() {
+  const zValues = ALL_STATES.map(s => getStateZ(s));
+  const hovertexts = ALL_STATES.map(s => {
+    if (!SELECTABLE_STATES.has(s)) return `${STATE_NAMES[s]}<br><i>Coming soon</i>`;
+    return `${STATE_NAMES[s]}<br><i>Click to select</i>`;
+  });
+
+  return {
+    type: 'choropleth',
+    locationmode: 'USA-states',
+    locations: ALL_STATES,
+    z: zValues,
+    zmin: 0,
+    zmax: 2,
+    colorscale: MAP_COLORSCALE,
+    showscale: false,
+    hovertemplate: '%{text}<extra></extra>',
+    text: hovertexts,
+    marker: { line: { color: 'rgba(255,255,255,0.15)', width: 1 } },
+  };
+}
+
+function buildMapLayout() {
+  return {
+    geo: {
+      scope: 'usa',
+      projection: { type: 'albers usa' },
+      bgcolor: 'rgba(0,0,0,0)',
+      showlakes: false,
+      showframe: false,
+      showcoastlines: false,
+      landcolor: '#1a2430',
+    },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    margin: { t: 0, b: 0, l: 0, r: 0 },
+    dragmode: false,
+  };
+}
+
+function initAreaMap() {
+  const mapDiv = document.getElementById('area-map');
+  Plotly.newPlot(mapDiv, [buildMapTrace()], buildMapLayout(), {
+    ...PLOTLY_CONFIG,
+    scrollZoom: false,
+    displayModeBar: false,
+  });
+
+  // Click handler
+  mapDiv.on('plotly_click', (eventData) => {
+    if (!eventData || !eventData.points || !eventData.points.length) return;
+    const abbrev = eventData.points[0].location;
+    if (!SELECTABLE_STATES.has(abbrev)) return;   // not yet available — ignore
+    selectArea(abbrev);
+  });
+}
+
+// ── Area selection ─────────────────────────────────────────────────────────
+function selectArea(area) {
+  // Toggle: clicking the already-selected state reverts to United States
+  if (area !== 'United States' && state.selectedArea === area) {
+    area = 'United States';
+  }
+  state.selectedArea = area;
+
+  // Update header label
+  const label = area === 'United States'
+    ? 'United States'
+    : `${STATE_NAMES[area] || area} (${area})`;
+  document.getElementById('pick-area-selection').textContent = label;
+
+  // Update US chip highlight
+  document.getElementById('btn-us').classList.toggle('selected', area === 'United States');
+
+  // Re-draw map colors
+  const mapDiv = document.getElementById('area-map');
+  if (mapDiv && mapDiv.data) {
+    Plotly.restyle(mapDiv, { z: [ALL_STATES.map(s => getStateZ(s))] }, [0]);
+  }
+
+  // Update tab content
+  if (area === 'United States') {
+    restoreCharts();
+  } else {
+    showAllPlaceholders(STATE_NAMES[area] || area);
+  }
+}
+
+function showPlaceholder(cardId, stateName) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  // Remove existing plot and placeholder
+  card.querySelector('.plot-div')?.remove();
+  card.querySelector('.state-placeholder')?.remove();
+  const loader = card.querySelector('.chart-loading');
+  if (loader) loader.style.display = 'none';
+
+  const el = document.createElement('div');
+  el.className = 'state-placeholder';
+  el.innerHTML = `
+    <div class="placeholder-state-name">${stateName}</div>
+    <div class="placeholder-msg">State-level data coming soon</div>
+    <div class="placeholder-hint">Select United States above to view national data</div>
+  `;
+  card.appendChild(el);
+}
+
+function showAllPlaceholders(stateName) {
+  for (const ids of Object.values(TAB_CHARTS)) {
+    for (const id of ids) showPlaceholder(id, stateName);
+  }
+}
+
+function restoreCharts() {
+  // Remove placeholders and loading indicators, then reload charts
+  for (const [tab, ids] of Object.entries(TAB_CHARTS)) {
+    for (const id of ids) {
+      const card = document.getElementById(id);
+      if (!card) continue;
+      card.querySelector('.state-placeholder')?.remove();
+      const loader = card.querySelector('.chart-loading');
+      if (loader) loader.style.display = 'flex';
+      // Remove stale plot divs from non-active tabs so they re-fetch on next visit
+      if (tab !== state.activeTab) {
+        card.querySelector('.plot-div')?.remove();
+      }
+    }
+  }
+  // Immediately reload the active tab
+  loadTabCharts(state.activeTab);
+}
+
+// ── Pick Area toggle ───────────────────────────────────────────────────────
+function togglePickArea() {
+  const bar = document.getElementById('pick-area-bar');
+  const isNowOpen = bar.classList.toggle('open');
+
+  if (isNowOpen && !areaMapInitialized) {
+    areaMapInitialized = true;
+    // Small delay so the CSS transition has started and the div has height
+    setTimeout(initAreaMap, 50);
+  } else if (isNowOpen) {
+    // Already initialized — trigger a resize in case the window changed
+    setTimeout(() => Plotly.Plots.resize(document.getElementById('area-map')), 50);
+  }
+}
+
+// ── Chart helpers ──────────────────────────────────────────────────────────
 function dm() { return state.darkMode ? "dark" : "light"; }
 function enc(v) { return encodeURIComponent(v); }
 
 async function loadChart(cardId, url) {
   const card = document.getElementById(cardId);
   if (!card) return;
-  // Show loading indicator
   const loader = card.querySelector(".chart-loading");
   if (loader) loader.style.display = "flex";
 
@@ -290,7 +639,6 @@ async function loadChart(cardId, url) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const fig = await res.json();
 
-    // Make the div for Plotly inside the card
     let plotDiv = card.querySelector(".plot-div");
     if (!plotDiv) {
       plotDiv = document.createElement("div");
@@ -299,7 +647,6 @@ async function loadChart(cardId, url) {
       card.appendChild(plotDiv);
     }
     if (loader) loader.style.display = "none";
-
     Plotly.react(plotDiv, fig.data, fig.layout, PLOTLY_CONFIG);
   } catch (err) {
     if (loader) loader.textContent = "Failed to load chart.";
@@ -316,27 +663,22 @@ function incomeParams() {
 }
 
 const CHARTS = {
-  // Economy – income-sensitive
   "card-income":        () => `/api/economy/income?${economyParams()}`,
   "card-barchart":      () => `/api/economy/barchart?${incomeParams()}`,
   "card-income-taxes":  () => `/api/economy/income-taxes?${incomeParams()}`,
   "card-house-purchase":() => `/api/economy/house-purchase-cost?${incomeParams()}`,
   "card-f150":          () => `/api/economy/f150?${incomeParams()}`,
-  // Economy – dark-mode only
   "card-american-dream-kids":    () => `/api/economy/american-dream-kids?dark_mode=${dm()}`,
   "card-mobility-international": () => `/api/economy/mobility-international?dark_mode=${dm()}`,
   "card-upward-mobility-white":  () => `/api/economy/upward-mobility?dark_mode=${dm()}&race=white`,
   "card-upward-mobility-black":  () => `/api/economy/upward-mobility?dark_mode=${dm()}&race=black`,
-  // Healthcare
   "card-hc-cost":    () => `/api/healthcare/cost-per-capita?dark_mode=${dm()}`,
   "card-hc-life":    () => `/api/healthcare/life-expectancy?dark_mode=${dm()}`,
   "card-hc-infant":  () => `/api/healthcare/infant-mortality?dark_mode=${dm()}`,
   "card-hc-maternal":() => `/api/healthcare/maternal-mortality?dark_mode=${dm()}`,
   "card-hc-suicide": () => `/api/healthcare/suicide-rates?dark_mode=${dm()}`,
-  // Justice
   "card-jail-white": () => `/api/justice/jail?dark_mode=${dm()}&race=white`,
   "card-jail-black": () => `/api/justice/jail?dark_mode=${dm()}&race=black`,
-  // Environment
   "card-electricity":() => `/api/environment/electricity-cost?dark_mode=${dm()}`,
 };
 
@@ -349,37 +691,28 @@ const TAB_CHARTS = {
   environment: ["card-electricity"],
 };
 
-// Income-sensitive charts (re-fetch when income level or country changes)
 const INCOME_CHARTS = [
   "card-income","card-barchart","card-income-taxes","card-house-purchase","card-f150",
 ];
 
-// ── Load helpers ──────────────────────────────────────────────────────────
 function loadTabCharts(tab) {
-  for (const id of TAB_CHARTS[tab]) {
-    loadChart(id, CHARTS[id]());
-  }
+  for (const id of TAB_CHARTS[tab]) loadChart(id, CHARTS[id]());
 }
 
 function reloadIncomeCharts() {
-  for (const id of INCOME_CHARTS) {
-    loadChart(id, CHARTS[id]());
-  }
+  for (const id of INCOME_CHARTS) loadChart(id, CHARTS[id]());
 }
 
 function reloadAllLoaded() {
-  // Re-fetch every chart that has already been rendered (e.g. dark-mode change)
   for (const tab of Object.keys(TAB_CHARTS)) {
     for (const id of TAB_CHARTS[tab]) {
       const card = document.getElementById(id);
-      if (card && card.querySelector(".plot-div")) {
-        loadChart(id, CHARTS[id]());
-      }
+      if (card && card.querySelector(".plot-div")) loadChart(id, CHARTS[id]());
     }
   }
 }
 
-// ── Countries dropdown ────────────────────────────────────────────────────
+// ── Countries dropdown ─────────────────────────────────────────────────────
 async function loadCountries() {
   try {
     const res = await fetch("/api/countries");
@@ -388,30 +721,23 @@ async function loadCountries() {
     sel.innerHTML = "";
     for (const c of json.countries) {
       const opt = document.createElement("option");
-      opt.value = c;
-      opt.textContent = c;
+      opt.value = c; opt.textContent = c;
       if (c === "usa") opt.selected = true;
       sel.appendChild(opt);
     }
-  } catch (e) {
-    console.error("Could not load countries", e);
-  }
+  } catch (e) { console.error("Could not load countries", e); }
 }
 
-// ── Event wiring ──────────────────────────────────────────────────────────
+// ── Event wiring ───────────────────────────────────────────────────────────
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const tab = btn.dataset.tab;
     if (tab === state.activeTab) return;
-
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");
-
     state.activeTab = tab;
-
-    // Only load charts that haven't been rendered yet
     const needsLoad = TAB_CHARTS[tab].some(id => {
       const card = document.getElementById(id);
       return card && !card.querySelector(".plot-div");
@@ -420,11 +746,9 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   });
 });
 
-// Income level radio buttons
 document.getElementById("incomeLevelGroup").addEventListener("change", e => {
   if (e.target.type === "radio") {
     state.incomeLevel = e.target.value;
-    // Update visual state
     document.querySelectorAll("#incomeLevelGroup label").forEach(l => {
       l.classList.toggle("checked", l.querySelector("input").value === state.incomeLevel);
     });
@@ -432,19 +756,17 @@ document.getElementById("incomeLevelGroup").addEventListener("change", e => {
   }
 });
 
-// Country select
 document.getElementById("countrySelect").addEventListener("change", e => {
   state.country = e.target.value;
   loadChart("card-income", CHARTS["card-income"]());
 });
 
-// Dark mode toggle
 document.getElementById("darkModeToggle").addEventListener("change", e => {
   state.darkMode = e.target.checked;
   reloadAllLoaded();
 });
 
-// ── Init ──────────────────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────────────────
 (async () => {
   await loadCountries();
   loadTabCharts("economy");

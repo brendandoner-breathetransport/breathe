@@ -8,3 +8,9 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+
+  - type: web
+    name: breathe-dashboard
+    runtime: python
+    buildCommand: pip install -r breathe_fastapi/requirements.txt
+    startCommand: uvicorn breathe_fastapi.main:app --host 0.0.0.0 --port $PORT
