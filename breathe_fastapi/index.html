@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Breathe</title>
+  <link rel="icon" href="/static/images/browser.png" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1d2021;
+      --nav-bg: #111;
+      --card-bg: rgba(255,255,255,0.05);
+      --text: rgba(255,255,255,0.88);
+      --muted: rgba(255,255,255,0.5);
+      --accent: #4a90e2;
+      --border: rgba(255,255,255,0.12);
+      --tab-active: #4a90e2;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Navbar ─────────────────────────────────────────────────────── */
+    nav {
+      background: var(--nav-bg);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    nav img { height: 40px; margin-right: 0.75rem; }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.95rem;
+      padding: 0.4rem 0.85rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+    .tab-btn.active { color: var(--tab-active); font-weight: 600; }
+
+    .nav-spacer { flex: 1; }
+
+    /* Dark-mode toggle */
+    .dark-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .dark-toggle input { cursor: pointer; }
+
+    /* ── Main content ────────────────────────────────────────────────── */
+    main { padding: 1.25rem; max-width: 1400px; margin: 0 auto; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
+    h2 { font-size: 1.15rem; font-weight: 600; margin: 1.25rem 0 0.75rem; color: var(--text); }
+
+    /* ── Controls ────────────────────────────────────────────────────── */
+    .controls {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1.1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: flex-start;
+      margin-bottom: 1.25rem;
+    }
+
+    .control-group { display: flex; flex-direction: column; gap: 0.35rem; }
+    .control-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+
+    .radio-group { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .radio-group label {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.875rem; color: var(--text); cursor: pointer;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 0.3rem 0.65rem;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .radio-group label:hover { background: rgba(255,255,255,0.1); }
+    .radio-group input[type=radio] { display: none; }
+    .radio-group input[type=radio]:checked + span {
+      /* handled by parent label styling */
+    }
+    .radio-group label.checked {
+      background: rgba(74,144,226,0.18);
+      border-color: var(--accent);
+      color: #7ab8f5;
+    }
+
+    .country-select {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 0.3rem 0.6rem;
+      font-size: 0.875rem;
+    }
+
+    /* ── Chart grid ──────────────────────────────────────────────────── */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 1rem;
+    }
+    .chart-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+      min-height: 380px;
+      position: relative;
+    }
+    .chart-card.full-width { grid-column: 1 / -1; }
+
+    .chart-loading {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 0.875rem;
+      border-radius: 12px;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      .chart-grid { grid-template-columns: 1fr; }
+      nav img { height: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ────────────────────────────────────────────────────────── -->
+<nav>
+  <img src="/static/images/logo_street.png" alt="Breathe" onerror="this.style.display='none'" />
+  <button class="tab-btn active" data-tab="economy">Economy</button>
+  <button class="tab-btn" data-tab="healthcare">Healthcare</button>
+  <button class="tab-btn" data-tab="justice">Justice</button>
+  <button class="tab-btn" data-tab="environment">Environment</button>
+  <div class="nav-spacer"></div>
+  <label class="dark-toggle">
+    <input type="checkbox" id="darkModeToggle" />
+    <span>Dark charts</span>
+  </label>
+</nav>
+
+<!-- ── Main ──────────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Economy Tab -->
+  <div class="tab-panel active" id="tab-economy">
+    <h1>How healthy is the economy for Americans?</h1>
+
+    <div class="controls">
+      <div class="control-group">
+        <div class="control-label">Income Level</div>
+        <div class="radio-group" id="incomeLevelGroup">
+          <label class="checked"><input type="radio" name="income_level" value="Bottom 50%" checked /><span>Bottom 50%</span></label>
+          <label><input type="radio" name="income_level" value="Upper 51-99%" /><span>Upper 51-99%</span></label>
+          <label><input type="radio" name="income_level" value="Top 1%" /><span>Top 1%</span></label>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Country</div>
+        <select class="country-select" id="countrySelect">
+          <option value="usa">usa</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card full-width" id="card-income-taxes"><div class="chart-loading">Loading…</div></div>
+    </div>
+
+    <h2>How has the cost of living changed?</h2>
+    <div class="chart-grid">
+      <div class="chart-card" id="card-house-purchase"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-f150"><div class="chart-loading">Loading…</div></div>
+    </div>
+
+    <h2>How healthy is the American Dream?</h2>
+    <div class="chart-grid">
+      <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-mobility-international"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Healthcare Tab -->
+  <div class="tab-panel" id="tab-healthcare">
+    <h1>What is the cost and performance of the American healthcare system?</h1>
+    <div class="chart-grid">
+      <div class="chart-card" id="card-hc-cost"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-hc-life"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-hc-infant"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-hc-maternal"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-hc-suicide"><div class="chart-loading">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Justice Tab -->
+  <div class="tab-panel" id="tab-justice">
+    <h1>Is there racial bias in the American justice system?</h1>
+    <div class="chart-grid">
+      <div class="chart-card" id="card-jail-white"><div class="chart-loading">Loading…</div></div>
+      <div class="chart-card" id="card-jail-black"><div class="chart-loading">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Environment Tab -->
+  <div class="tab-panel" id="tab-environment">
+    <h1>Fossil fuels are not the cheapest sources for energy.</h1>
+    <div class="chart-grid">
+      <div class="chart-card full-width" id="card-electricity"><div class="chart-loading">Loading…</div></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>Breathe © 2025</footer>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const state = {
+  darkMode: false,
+  incomeLevel: "Bottom 50%",
+  country: "usa",
+  activeTab: "economy",
+  loaded: {},   // tracks which charts have been loaded
+};
+
+const PLOTLY_CONFIG = {
+  responsive: true,
+  displayModeBar: false,
+  displaylogo: false,
+  scrollZoom: false,
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function dm() { return state.darkMode ? "dark" : "light"; }
+function enc(v) { return encodeURIComponent(v); }
+
+async function loadChart(cardId, url) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  // Show loading indicator
+  const loader = card.querySelector(".chart-loading");
+  if (loader) loader.style.display = "flex";
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const fig = await res.json();
+
+    // Make the div for Plotly inside the card
+    let plotDiv = card.querySelector(".plot-div");
+    if (!plotDiv) {
+      plotDiv = document.createElement("div");
+      plotDiv.className = "plot-div";
+      plotDiv.style.height = "360px";
+      card.appendChild(plotDiv);
+    }
+    if (loader) loader.style.display = "none";
+
+    Plotly.react(plotDiv, fig.data, fig.layout, PLOTLY_CONFIG);
+  } catch (err) {
+    if (loader) loader.textContent = "Failed to load chart.";
+    console.error(cardId, err);
+  }
+}
+
+// ── Chart URL builders ────────────────────────────────────────────────────
+function economyParams() {
+  return `dark_mode=${dm()}&income_level=${enc(state.incomeLevel)}&country=${enc(state.country)}`;
+}
+function incomeParams() {
+  return `dark_mode=${dm()}&income_level=${enc(state.incomeLevel)}`;
+}
+
+const CHARTS = {
+  // Economy – income-sensitive
+  "card-income":        () => `/api/economy/income?${economyParams()}`,
+  "card-barchart":      () => `/api/economy/barchart?${incomeParams()}`,
+  "card-income-taxes":  () => `/api/economy/income-taxes?${incomeParams()}`,
+  "card-house-purchase":() => `/api/economy/house-purchase-cost?${incomeParams()}`,
+  "card-f150":          () => `/api/economy/f150?${incomeParams()}`,
+  // Economy – dark-mode only
+  "card-american-dream-kids":    () => `/api/economy/american-dream-kids?dark_mode=${dm()}`,
+  "card-mobility-international": () => `/api/economy/mobility-international?dark_mode=${dm()}`,
+  "card-upward-mobility-white":  () => `/api/economy/upward-mobility?dark_mode=${dm()}&race=white`,
+  "card-upward-mobility-black":  () => `/api/economy/upward-mobility?dark_mode=${dm()}&race=black`,
+  // Healthcare
+  "card-hc-cost":    () => `/api/healthcare/cost-per-capita?dark_mode=${dm()}`,
+  "card-hc-life":    () => `/api/healthcare/life-expectancy?dark_mode=${dm()}`,
+  "card-hc-infant":  () => `/api/healthcare/infant-mortality?dark_mode=${dm()}`,
+  "card-hc-maternal":() => `/api/healthcare/maternal-mortality?dark_mode=${dm()}`,
+  "card-hc-suicide": () => `/api/healthcare/suicide-rates?dark_mode=${dm()}`,
+  // Justice
+  "card-jail-white": () => `/api/justice/jail?dark_mode=${dm()}&race=white`,
+  "card-jail-black": () => `/api/justice/jail?dark_mode=${dm()}&race=black`,
+  // Environment
+  "card-electricity":() => `/api/environment/electricity-cost?dark_mode=${dm()}`,
+};
+
+const TAB_CHARTS = {
+  economy:     ["card-income","card-barchart","card-income-taxes","card-house-purchase","card-f150",
+                 "card-american-dream-kids","card-mobility-international",
+                 "card-upward-mobility-white","card-upward-mobility-black"],
+  healthcare:  ["card-hc-cost","card-hc-life","card-hc-infant","card-hc-maternal","card-hc-suicide"],
+  justice:     ["card-jail-white","card-jail-black"],
+  environment: ["card-electricity"],
+};
+
+// Income-sensitive charts (re-fetch when income level or country changes)
+const INCOME_CHARTS = [
+  "card-income","card-barchart","card-income-taxes","card-house-purchase","card-f150",
+];
+
+// ── Load helpers ──────────────────────────────────────────────────────────
+function loadTabCharts(tab) {
+  for (const id of TAB_CHARTS[tab]) {
+    loadChart(id, CHARTS[id]());
+  }
+}
+
+function reloadIncomeCharts() {
+  for (const id of INCOME_CHARTS) {
+    loadChart(id, CHARTS[id]());
+  }
+}
+
+function reloadAllLoaded() {
+  // Re-fetch every chart that has already been rendered (e.g. dark-mode change)
+  for (const tab of Object.keys(TAB_CHARTS)) {
+    for (const id of TAB_CHARTS[tab]) {
+      const card = document.getElementById(id);
+      if (card && card.querySelector(".plot-div")) {
+        loadChart(id, CHARTS[id]());
+      }
+    }
+  }
+}
+
+// ── Countries dropdown ────────────────────────────────────────────────────
+async function loadCountries() {
+  try {
+    const res = await fetch("/api/countries");
+    const json = await res.json();
+    const sel = document.getElementById("countrySelect");
+    sel.innerHTML = "";
+    for (const c of json.countries) {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      if (c === "usa") opt.selected = true;
+      sel.appendChild(opt);
+    }
+  } catch (e) {
+    console.error("Could not load countries", e);
+  }
+}
+
+// ── Event wiring ──────────────────────────────────────────────────────────
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const tab = btn.dataset.tab;
+    if (tab === state.activeTab) return;
+
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.getElementById(`tab-${tab}`).classList.add("active");
+
+    state.activeTab = tab;
+
+    // Only load charts that haven't been rendered yet
+    const needsLoad = TAB_CHARTS[tab].some(id => {
+      const card = document.getElementById(id);
+      return card && !card.querySelector(".plot-div");
+    });
+    if (needsLoad) loadTabCharts(tab);
+  });
+});
+
+// Income level radio buttons
+document.getElementById("incomeLevelGroup").addEventListener("change", e => {
+  if (e.target.type === "radio") {
+    state.incomeLevel = e.target.value;
+    // Update visual state
+    document.querySelectorAll("#incomeLevelGroup label").forEach(l => {
+      l.classList.toggle("checked", l.querySelector("input").value === state.incomeLevel);
+    });
+    reloadIncomeCharts();
+  }
+});
+
+// Country select
+document.getElementById("countrySelect").addEventListener("change", e => {
+  state.country = e.target.value;
+  loadChart("card-income", CHARTS["card-income"]());
+});
+
+// Dark mode toggle
+document.getElementById("darkModeToggle").addEventListener("change", e => {
+  state.darkMode = e.target.checked;
+  reloadAllLoaded();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(async () => {
+  await loadCountries();
+  loadTabCharts("economy");
+})();
+</script>
+</body>
+</html>
