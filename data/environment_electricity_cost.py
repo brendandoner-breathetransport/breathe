@@ -1,0 +1,60 @@
+"""
+Auto-generated data file from : environment.electricity_cost
+Generated at: 2026-03-08T14:59:20.542752
+Rows: 14
+Columns: ['Technology', 'Category', 'LCOE_Low_USD_MWh', 'LCOE_High_USD_MWh', 'Marginal_Cost_USD_MWh', 'Notes']
+"""
+
+import polars as pl
+
+METADATA = {
+    "source": "environment.electricity_cost",
+    "generated_at": "2026-03-08T14:59:20.542752",
+    "row_count": 14,
+    "filter_options": {
+        "Technology": ['Coal', 'Geothermal', 'Natural Gas', 'Natural Gas (for peak demand)', 'Natural Gas + 20% Green Hydrogen', 'Nuclear (just built)', 'Nuclear (new plants)', 'Solar & Batteries by Utilities', 'Solar by Community', 'Solar by Utilities', 'Solar on Homes', 'Wind & Batteries (Land)', 'Wind (Land)', 'Wind (Ocean)'],
+        "Category": ['Conventional Energy', 'Renewable Energy'],
+        "Notes": ['20% blend of green hydrogen by volume', 'Illustrative midpoint LCOE for Vogtle units 3&4', 'Marginal cost of existing fully depreciated facilities'],
+    },
+    "kpis": {
+        "LCOE_Low_USD_MWh_sum": 1181,
+        "LCOE_Low_USD_MWh_mean": 84.36,
+        "LCOE_Low_USD_MWh_min": 27,
+        "LCOE_Low_USD_MWh_max": 190,
+        "LCOE_High_USD_MWh_sum": 2294,
+        "LCOE_High_USD_MWh_mean": 163.86,
+        "LCOE_High_USD_MWh_min": 73,
+        "LCOE_High_USD_MWh_max": 284,
+        "Marginal_Cost_USD_MWh_sum": 218.0,
+        "Marginal_Cost_USD_MWh_mean": 54.5,
+        "Marginal_Cost_USD_MWh_min": 30.0,
+        "Marginal_Cost_USD_MWh_max": 85.0,
+    },
+}
+
+electricity_cost = pl.DataFrame({
+    "Technology": [
+        "Wind (Land)", "Solar by Utilities", "Natural Gas", "Wind & Batteries (Land)", "Solar by Community", "Solar & Batteries by Utilities", "Geothermal", "Coal", "Wind (Ocean)", "Natural Gas (for peak demand)",
+        "Solar on Homes", "Nuclear (new plants)", "Natural Gas + 20% Green Hydrogen", "Nuclear (just built)",
+    ],
+    "Category": [
+        "Renewable Energy", "Renewable Energy", "Conventional Energy", "Renewable Energy", "Renewable Energy", "Renewable Energy", "Renewable Energy", "Conventional Energy", "Renewable Energy", "Conventional Energy",
+        "Renewable Energy", "Conventional Energy", "Conventional Energy", "Conventional Energy",
+    ],
+    "LCOE_Low_USD_MWh": [
+        27, 29, 45, 45, 54, 60, 64, 69, 74, 110,
+        122, 142, 150, 190,
+    ],
+    "LCOE_High_USD_MWh": [
+        73, 92, 108, 133, 191, 210, 106, 168, 139, 228,
+        284, 222, 150, 190,
+    ],
+    "Marginal_Cost_USD_MWh": [
+        None, None, 71.0, None, None, None, None, 85.0, None, 30.0,
+        None, 32.0, None, None,
+    ],
+    "Notes": [
+        None, None, "Marginal cost of existing fully depreciated facilities", None, None, None, None, "Marginal cost of existing fully depreciated facilities", None, "Marginal cost of existing fully depreciated facilities",
+        None, "Marginal cost of existing fully depreciated facilities", "20% blend of green hydrogen by volume", "Illustrative midpoint LCOE for Vogtle units 3&4",
+    ],
+})
