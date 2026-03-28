@@ -144,29 +144,12 @@ def write_data_to_python_data_file(
 if __name__ == "__main__":
     # CSV Data
     datasets = [
-        dict(schema='economy', table_name='house_purchase_cost_as_percent_of_income'),
-
+        dict(schema='economy', table_name='house_purchase_cost_as_percent_of_income_state_level'),
         # Processed already
         # dict(schema='economy', table_name='n_workers_full_time'),
         # dict(schema='economy', table_name='shares_wid'),
         # dict(schema='economy', table_name='shares_wid_full_distribution'),
         # dict(schema='economy', table_name='tax'),
-        # dict(schema='economy', table_name='income_total'),
-        # dict(schema='economy', table_name='population'),
-        # dict(schema='economy', table_name='workers_ratio'),
-        # dict(schema='economy', table_name='f150'),
-        # dict(schema='american_dream', table_name='american_dream_kids'),
-        # dict(schema='american_dream', table_name='mobility_international'),
-        # # Healthcare
-        # dict(schema='healthcare', table_name='healthcare_cost_per_capita'),
-        # dict(schema='healthcare', table_name='healthcare_life_expectancy'),
-        # dict(schema='healthcare', table_name='healthcare_infant_mortality'),
-        # dict(schema='healthcare', table_name='healthcare_maternal_mortality'),
-        # dict(schema='healthcare', table_name='healthcare_suicide_rates'),
-        # # Environment
-        # dict(schema='environment', table_name='electricity_cost'),
-        # # Race
-        # dict(schema='justice', table_name='outcomes_upward_mobility_jail'),
     ]
 
     for dataset in datasets:

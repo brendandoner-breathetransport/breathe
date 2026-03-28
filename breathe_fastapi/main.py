@@ -33,6 +33,7 @@ from data.healthcare_healthcare_maternal_mortality import healthcare_maternal_mo
 from data.healthcare_healthcare_suicide_rates import healthcare_suicide_rates
 from data.environment_electricity_cost import electricity_cost
 from data.justice_outcomes_upward_mobility_jail import outcomes_upward_mobility_jail
+from data.economy_house_purchase_cost_as_percent_of_income_state_level import house_purchase_cost_as_percent_of_income_state_level
 
 # ---------------------------------------------------------------------------
 # One-time data prep
@@ -40,6 +41,60 @@ from data.justice_outcomes_upward_mobility_jail import outcomes_upward_mobility_
 counties_json = json.loads(counties_json)
 electricity_cost = electricity_cost.sort(["LCOE_Low_USD_MWh"], descending=True)
 year_max = shares_wid.select(pl.max("year")).to_numpy().flatten()[0]
+
+_STATE_ABBREVIATIONS = {
+    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+    "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+    "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+    "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+    "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+    "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+    "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+    "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+    "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+    "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+    "Wisconsin": "WI", "Wyoming": "WY",
+}
+_ABBREV_TO_STATE = {v: k for k, v in _STATE_ABBREVIATIONS.items()}
+
+# _income_index_cols = ["Series ID", "Series Name", "Units", "Region Name", "Region Code"]
+# _cost_index_cols   = ["RegionID", "SizeRank", "RegionName", "RegionType",
+#                       "StateName", "State", "Metro", "StateCodeFIPS", "MunicipalCodeFIPS"]
+#
+# _income_long = (
+#     income_fred_states
+#     .unpivot(index=_income_index_cols, variable_name="date_str", value_name="income")
+#     .with_columns(
+#         date=pl.col("date_str").str.to_datetime("%Y-%m-%d")
+#                                .dt.offset_by("1y").dt.offset_by("-1d"),
+#         state=pl.col("Region Name").replace(_STATE_ABBREVIATIONS),
+#     )
+#     .filter(pl.col("state").str.len_chars() == 2)
+#     .select(["date", "state", "income"])
+# )
+#
+# _cost_long = (
+#     housing_buy_cost_zillow
+#     .unpivot(index=_cost_index_cols, variable_name="date_str", value_name="cost")
+#     .with_columns(date=pl.col("date_str").str.to_datetime("%Y-%m-%d"))
+#     .group_by(["date", "State"])
+#     .agg(pl.mean("cost").alias("cost"))
+#     .rename({"State": "state"})
+# )
+#
+# state_affordability = (
+#     _income_long
+#     .join(_cost_long, on=["state", "date"], how="inner")
+#     .with_columns(
+#         percent_of_income=(pl.col("cost") / pl.col("income")),
+#     )
+#     .with_columns(
+#         us_average=pl.mean("percent_of_income").over("date"),
+#     )
+#     .sort(["state", "date"])
+# )
 
 # ---------------------------------------------------------------------------
 # Config / constants
@@ -583,6 +638,43 @@ def make_electricity_cost(dark_mode: str) -> go.Figure:
     )
     return fig
 
+# --- State home affordability ---
+
+def make_state_home_affordability(state: str, dark_mode: str) -> go.Figure:
+    data = house_purchase_cost_as_percent_of_income_state_level.filter(pl.col("state") == state).sort("date")
+    state_name = _ABBREV_TO_STATE.get(state, state)
+    accent = COLOR_LIGHT_DARK[dark_mode]
+
+    fig = go.Figure(data=[
+        go.Scatter(
+            name=state_name,
+            x=data["date"],
+            y=data["percent_of_income"],
+            mode="markers+lines",
+            line=dict(color=accent, width=2),
+        ),
+        go.Scatter(
+            name="U.S. Average",
+            x=data["date"],
+            y=data["percent_of_income_mean"],
+            mode="markers+lines",
+            line=dict(color="rgba(128,128,128,0.5)", width=2, dash="dash"),
+        ),
+    ])
+    ymin, ymax = get_yaxis_range(data["percent_of_income"])
+    fig.update_layout(
+        title=dict(text=f"<b>Percent of Income to Purchase a Home</b><br><sup>{state_name}</sup>"),
+        title_x=0.5,
+        yaxis_title="<b>% of Annual Income</b>",
+        yaxis=dict(range=[ymin, ymax], tickformat=".0%", fixedrange=True),
+        xaxis_title=SOURCES["economy_house"],
+        xaxis=dict(type="date", fixedrange=True),
+        showlegend=True,
+        template=get_color_template(dark_mode),
+        paper_bgcolor=get_background_color(dark_mode),
+        legend=dict(x=0.01, y=0.99, xanchor="left", yanchor="top"),
+    )
+    return fig
 
 # ---------------------------------------------------------------------------
 # FastAPI app
@@ -711,6 +803,17 @@ async def api_justice_jail(
 ):
     return fig_to_json(make_county_heatmap(dark_mode, race, "jail",
                                            f"{race.title()} Male Jail Rate<br>(parents in bottom 25th of income)"))
+
+
+
+# --- State home affordability ---
+
+@app.get("/api/economy/state-home-affordability")
+async def api_state_home_affordability(
+    state: str = Query("CO"),
+    dark_mode: str = Query("light"),
+):
+    return fig_to_json(make_state_home_affordability(state, dark_mode))
 
 
 # --- Environment ---

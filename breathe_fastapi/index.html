@@ -6,6 +6,7 @@
   <title>Breathe</title>
   <link rel="icon" href="/static/images/browser.png" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -39,13 +40,12 @@
       top: 0;
       z-index: 100;
       border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
       min-height: var(--nav-h);
     }
 
     nav img { height: 40px; margin-right: 0.75rem; }
 
-    .tab-btn {
+    .page-btn {
       background: none;
       border: none;
       color: var(--muted);
@@ -55,24 +55,132 @@
       border-radius: 6px;
       transition: color 0.15s, background 0.15s;
     }
-    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
-    .tab-btn.active { color: var(--tab-active); font-weight: 600; }
+    .page-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+    .page-btn.active { color: var(--tab-active); font-weight: 600; }
 
     .nav-spacer { flex: 1; }
 
-    .dark-toggle {
+    /* ── Settings hamburger ──────────────────────────────────────────── */
+    #settings-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.25rem;
+      line-height: 1;
+      padding: 0.35rem 0.5rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    #settings-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+    #settings-btn.open { color: var(--accent); background: rgba(74,144,226,0.1); }
+
+    /* ── Settings dropdown panel ─────────────────────────────────────── */
+    #settings-panel {
+      display: none;
+      position: absolute;
+      top: calc(var(--nav-h) + 4px);
+      right: 1rem;
+      z-index: 200;
+      background: #161c20;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      min-width: 220px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    #settings-panel.open { display: flex; }
+    .settings-row {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      font-size: 0.85rem;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+    .settings-row input { cursor: pointer; }
+
+    /* ── Splash overlay ──────────────────────────────────────────────── */
+    #splash-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0,0,0,0.75);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #splash-overlay.open { display: flex; }
+    #splash-modal {
+      background: #1d2d3a;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    }
+    #splash-body {
+      padding: 2rem 2.25rem 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    #splash-body h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1.25rem;
+      color: var(--accent);
+    }
+    #splash-body h2 {
+      font-size: 1.15rem;
+      margin: 1.25rem 0 0.5rem;
+      color: var(--text);
+    }
+    #splash-body p {
+      font-size: 0.95rem;
+      line-height: 1.65;
+      color: rgba(255,255,255,0.82);
+      margin-bottom: 0.75rem;
+    }
+    #splash-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2.25rem 1.5rem;
+      border-top: 1px solid var(--border);
+      gap: 1rem;
+    }
+    #splash-startup-label {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.875rem;
       color: var(--muted);
       cursor: pointer;
       user-select: none;
     }
-    .dark-toggle input { cursor: pointer; }
+    #splash-startup-label input { cursor: pointer; }
+    #splash-close {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    #splash-close:hover { opacity: 0.85; }
 
-    /* ── Pick Area bar ───────────────────────────────────────────────── */
-    #pick-area-bar {
+    /* ── Combined content bar (tabs + area picker) ───────────────────── */
+    #content-bar {
       background: #161c20;
       border-bottom: 1px solid var(--border);
       position: sticky;
@@ -80,55 +188,90 @@
       z-index: 90;
     }
 
-    #pick-area-header {
+    #content-bar-top {
+      display: flex;
+      align-items: stretch;
+      padding: 0 1.25rem;
+      gap: 0;
+      justify-content: flex-end;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 0.65rem 0.9rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--tab-active);
+      border-bottom-color: var(--tab-active);
+      font-weight: 600;
+    }
+
+    /* ── Area picker ─────────────────────────────────────────────────── */
+    #area-picker-trigger {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.55rem 1.25rem;
+      gap: 0.5rem;
+      padding: 0.5rem 0.6rem;
       cursor: pointer;
       user-select: none;
+      border-radius: 6px;
       transition: background 0.15s;
+      white-space: nowrap;
     }
-    #pick-area-header:hover { background: rgba(255,255,255,0.04); }
+    #area-picker-trigger:hover { background: rgba(255,255,255,0.06); }
+    #content-bar.open #area-picker-trigger { background: rgba(74,144,226,0.1); }
 
-    #pick-area-label {
-      font-size: 0.8rem;
+    #area-picker-label {
+      font-size: 0.72rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.07em;
       color: var(--muted);
       font-weight: 600;
     }
 
     #pick-area-selection {
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       color: var(--accent);
       font-weight: 600;
     }
 
     #pick-area-arrow {
-      margin-left: auto;
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       color: var(--muted);
       transition: transform 0.25s;
+      margin-left: 0.1rem;
     }
-    #pick-area-bar.open #pick-area-arrow { transform: rotate(180deg); }
+    #content-bar.open #pick-area-arrow { transform: rotate(180deg); }
 
+    /* ── Expandable map panel ────────────────────────────────────────── */
     #pick-area-content {
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.35s ease;
+      border-top: 0px solid var(--border);
     }
-    #pick-area-bar.open #pick-area-content { max-height: 380px; }
+    #content-bar.open #pick-area-content {
+      max-height: 400px;
+      border-top-width: 1px;
+    }
 
     #pick-area-inner {
-      padding: 0.5rem 1.25rem 1rem;
+      padding: 0.75rem 1.25rem 1rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 0.5rem;
     }
 
-    #area-map { width: 100%; height: 300px; }
+    #area-map { width: 100%; height: 280px; }
 
     .area-legend {
       display: flex;
@@ -171,11 +314,15 @@
       font-weight: 600;
     }
 
-    .area-divider {
+    .area-divider-text {
       font-size: 0.78rem;
       color: var(--muted);
       padding: 0 0.25rem;
     }
+
+    /* ── State economy section ───────────────────────────────────────── */
+    #state-economy { display: none; }
+    #national-economy { display: block; }
 
     /* ── State placeholder card ──────────────────────────────────────── */
     .state-placeholder {
@@ -193,10 +340,7 @@
       font-weight: 700;
       color: var(--accent);
     }
-    .placeholder-msg {
-      font-size: 0.875rem;
-      color: var(--muted);
-    }
+    .placeholder-msg { font-size: 0.875rem; color: var(--muted); }
     .placeholder-hint {
       font-size: 0.78rem;
       color: rgba(255,255,255,0.3);
@@ -208,6 +352,15 @@
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
+
+    /* ── About page ──────────────────────────────────────────────────── */
+    #page-about {
+      display: none;
+      padding: 4rem 1.25rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
 
     h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
     h2 { font-size: 1.15rem; font-weight: 600; margin: 1.25rem 0 0.75rem; color: var(--text); }
@@ -287,11 +440,79 @@
       margin-top: 2rem;
     }
 
+    /* ── Page sections ──────────────────────────────────────────────── */
+    .page-section { margin-bottom: 3rem; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0;
+    }
+    .section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      white-space: nowrap;
+      padding: 0.65rem 0;
+      margin: 0;
+    }
+    .section-title-sep {
+      width: 1px;
+      background: var(--border);
+      align-self: stretch;
+      margin: 0.25rem 0;
+    }
+    /* sub-tabs inside section header */
+    .section-header #sub-tabs {
+      display: flex;
+      align-items: center;
+      gap: 0.1rem;
+    }
+
+    /* ── Ballot items ────────────────────────────────────────────────── */
+    .ballot-grid { display: flex; flex-direction: column; gap: 1rem; }
+    .ballot-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+    .ballot-item-id {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.4rem;
+    }
+    .ballot-item-body {
+      font-size: 0.9rem;
+      line-height: 1.65;
+      color: rgba(255,255,255,0.82);
+      margin-bottom: 0.65rem;
+    }
+    .ballot-item-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .ballot-placeholder-msg {
+      color: var(--muted);
+      font-size: 0.95rem;
+      padding: 2.5rem 0;
+      text-align: center;
+    }
+
     @media (max-width: 600px) {
       .chart-grid { grid-template-columns: 1fr; }
       nav img { height: 30px; }
       #area-map { height: 220px; }
-      #pick-area-bar.open #pick-area-content { max-height: 300px; }
+      #content-bar.open #pick-area-content { max-height: 320px; }
+      #area-picker-label { display: none; }
     }
   </style>
 </head>
@@ -300,119 +521,194 @@
 <!-- ── Navbar ────────────────────────────────────────────────────────── -->
 <nav>
   <img src="/static/images/logo_street.png" alt="Breathe" onerror="this.style.display='none'" />
-  <button class="tab-btn active" data-tab="economy">Economy</button>
-  <button class="tab-btn" data-tab="healthcare">Healthcare</button>
-  <button class="tab-btn" data-tab="justice">Justice</button>
-  <button class="tab-btn" data-tab="environment">Environment</button>
+  <button class="page-btn active" data-page="home">Home</button>
+  <button class="page-btn" data-page="about">About</button>
   <div class="nav-spacer"></div>
-  <label class="dark-toggle">
+  <button id="settings-btn" title="Settings" onclick="toggleSettings()">☰</button>
+</nav>
+
+<!-- Settings dropdown -->
+<div id="settings-panel">
+  <label class="settings-row">
     <input type="checkbox" id="darkModeToggle" />
     <span>Dark charts</span>
   </label>
-</nav>
+  <label class="settings-row" id="settings-startup-label">
+    <input type="checkbox" id="settingsShowSplash" checked />
+    <span>Show welcome screen at startup</span>
+  </label>
+</div>
 
-<!-- ── Pick Area bar ─────────────────────────────────────────────────── -->
-<div id="pick-area-bar">
-  <div id="pick-area-header" onclick="togglePickArea()">
-    <span id="pick-area-label">Pick Area</span>
-    <span id="pick-area-selection">United States</span>
-    <span id="pick-area-arrow">▼</span>
-  </div>
-  <div id="pick-area-content">
-    <div id="pick-area-inner">
-      <div class="area-selector-row">
-        <button id="btn-us" class="area-chip selected" onclick="selectArea('United States')">
-          🇺🇸 United States
-        </button>
-        <span class="area-divider">— or click a state on the map</span>
-      </div>
-      <div id="area-map"></div>
-      <div class="area-legend">
-        <span><span class="legend-dot" style="background:#4a90e2"></span>Available</span>
-        <span><span class="legend-dot" style="background:#63e6be"></span>Selected</span>
-        <span><span class="legend-dot" style="background:#2d3f50"></span>Coming soon</span>
-      </div>
+<!-- ── Splash screen ──────────────────────────────────────────────────── -->
+<div id="splash-overlay">
+  <div id="splash-modal">
+    <div id="splash-body"></div>
+    <div id="splash-footer">
+      <label id="splash-startup-label">
+        <input type="checkbox" id="splashShowStartup" checked />
+        Show at startup
+      </label>
+      <button id="splash-close" onclick="closeSplash()">Get Started →</button>
     </div>
   </div>
 </div>
 
-<!-- ── Main ──────────────────────────────────────────────────────────── -->
-<main>
+<!-- ── Home page ─────────────────────────────────────────────────────── -->
+<div id="page-home">
 
-  <!-- Economy Tab -->
-  <div class="tab-panel active" id="tab-economy">
-    <h1>How healthy is the economy for Americans?</h1>
+  <!-- Combined content bar: sub-tabs + area picker -->
+  <div id="content-bar">
+    <div id="content-bar-top">
 
-    <div class="controls">
-      <div class="control-group">
-        <div class="control-label">Income Level</div>
-        <div class="radio-group" id="incomeLevelGroup">
-          <label class="checked"><input type="radio" name="income_level" value="Bottom 50%" checked /><span>Bottom 50%</span></label>
-          <label><input type="radio" name="income_level" value="Upper 51-99%" /><span>Upper 51-99%</span></label>
-          <label><input type="radio" name="income_level" value="Top 1%" /><span>Top 1%</span></label>
+      <!-- Area picker -->
+      <div id="area-picker-trigger" onclick="togglePickArea()">
+        <span id="area-picker-label">Area</span>
+        <span id="pick-area-selection">United States</span>
+        <span id="pick-area-arrow">▼</span>
+      </div>
+
+    </div>
+
+    <!-- Expandable map panel -->
+    <div id="pick-area-content">
+      <div id="pick-area-inner">
+        <div class="area-selector-row">
+          <button id="btn-us" class="area-chip selected" onclick="selectArea('United States')">
+            🇺🇸 United States
+          </button>
+          <span class="area-divider-text">— or click a state on the map</span>
+        </div>
+        <div id="area-map"></div>
+        <div class="area-legend">
+          <span><span class="legend-dot" style="background:#4a90e2"></span>Selected</span>
+          <span><span class="legend-dot" style="background:#1d2021;border:1px solid rgba(255,255,255,0.2)"></span>Not selected</span>
         </div>
       </div>
-      <div class="control-group">
-        <div class="control-label">Country</div>
-        <select class="country-select" id="countrySelect">
-          <option value="usa">usa</option>
-        </select>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <main>
+
+    <!-- ── Scorecard Section ──────────────────────────────────────────── -->
+    <section class="page-section" id="section-scorecard">
+      <div class="section-header">
+        <h2 class="section-title">Scorecard</h2>
+        <div class="section-title-sep"></div>
+        <div id="sub-tabs">
+          <button class="tab-btn active" data-tab="economy">Economy</button>
+          <button class="tab-btn" data-tab="healthcare">Healthcare</button>
+          <button class="tab-btn" data-tab="justice">Justice</button>
+          <button class="tab-btn" data-tab="environment">Environment</button>
+        </div>
       </div>
-    </div>
 
-    <div class="chart-grid">
-      <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card full-width" id="card-income-taxes"><div class="chart-loading">Loading…</div></div>
-    </div>
+      <!-- Economy Tab -->
+      <div class="tab-panel active" id="tab-economy">
 
-    <h2>How has the cost of living changed?</h2>
-    <div class="chart-grid">
-      <div class="chart-card" id="card-house-purchase"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-f150"><div class="chart-loading">Loading…</div></div>
-    </div>
+        <!-- State-specific view (shown when a state is selected) -->
+        <div id="state-economy" style="display: none">
+          <h1 id="state-economy-title">Home Affordability</h1>
+          <div class="chart-grid">
+            <div class="chart-card" id="card-state-affordability"><div class="chart-loading">Loading…</div></div>
+          </div>
+        </div>
 
-    <h2>How healthy is the American Dream?</h2>
-    <div class="chart-grid">
-      <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-mobility-international"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div></div>
-    </div>
-  </div>
+        <!-- National view (shown when United States is selected) -->
+        <div id="national-economy">
+          <h1>How healthy is the economy for Americans?</h1>
 
-  <!-- Healthcare Tab -->
-  <div class="tab-panel" id="tab-healthcare">
-    <h1>What is the cost and performance of the American healthcare system?</h1>
-    <div class="chart-grid">
-      <div class="chart-card" id="card-hc-cost"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-hc-life"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-hc-infant"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-hc-maternal"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-hc-suicide"><div class="chart-loading">Loading…</div></div>
-    </div>
-  </div>
+          <div class="controls">
+            <div class="control-group">
+              <div class="control-label">Income Level</div>
+              <div class="radio-group" id="incomeLevelGroup">
+                <label class="checked"><input type="radio" name="income_level" value="Bottom 50%" checked /><span>Bottom 50%</span></label>
+                <label><input type="radio" name="income_level" value="Upper 51-99%" /><span>Upper 51-99%</span></label>
+                <label><input type="radio" name="income_level" value="Top 1%" /><span>Top 1%</span></label>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="control-label">Country</div>
+              <select class="country-select" id="countrySelect">
+                <option value="usa">usa</option>
+              </select>
+            </div>
+          </div>
 
-  <!-- Justice Tab -->
-  <div class="tab-panel" id="tab-justice">
-    <h1>Is there racial bias in the American justice system?</h1>
-    <div class="chart-grid">
-      <div class="chart-card" id="card-jail-white"><div class="chart-loading">Loading…</div></div>
-      <div class="chart-card" id="card-jail-black"><div class="chart-loading">Loading…</div></div>
-    </div>
-  </div>
+          <div class="chart-grid">
+            <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card full-width" id="card-income-taxes"><div class="chart-loading">Loading…</div></div>
+          </div>
 
-  <!-- Environment Tab -->
-  <div class="tab-panel" id="tab-environment">
-    <h1>Fossil fuels are not the cheapest sources for energy.</h1>
-    <div class="chart-grid">
-      <div class="chart-card full-width" id="card-electricity"><div class="chart-loading">Loading…</div></div>
-    </div>
-  </div>
+          <h2>How has the cost of living changed?</h2>
+          <div class="chart-grid">
+            <div class="chart-card" id="card-house-purchase"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-f150"><div class="chart-loading">Loading…</div></div>
+          </div>
 
-</main>
+          <h2>How healthy is the American Dream?</h2>
+          <div class="chart-grid">
+            <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-mobility-international"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div></div>
+          </div>
+        </div>
 
-<footer>Breathe © 2025</footer>
+      </div>
+
+      <!-- Healthcare Tab -->
+      <div class="tab-panel" id="tab-healthcare">
+        <h1>What is the cost and performance of the American healthcare system?</h1>
+        <div class="chart-grid">
+          <div class="chart-card" id="card-hc-cost"><div class="chart-loading">Loading…</div></div>
+          <div class="chart-card" id="card-hc-life"><div class="chart-loading">Loading…</div></div>
+          <div class="chart-card" id="card-hc-infant"><div class="chart-loading">Loading…</div></div>
+          <div class="chart-card" id="card-hc-maternal"><div class="chart-loading">Loading…</div></div>
+          <div class="chart-card" id="card-hc-suicide"><div class="chart-loading">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- Justice Tab -->
+      <div class="tab-panel" id="tab-justice">
+        <h1>Is there racial bias in the American justice system?</h1>
+        <div class="chart-grid">
+          <div class="chart-card" id="card-jail-white"><div class="chart-loading">Loading…</div></div>
+          <div class="chart-card" id="card-jail-black"><div class="chart-loading">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- Environment Tab -->
+      <div class="tab-panel" id="tab-environment">
+        <h1>Fossil fuels are not the cheapest sources for energy.</h1>
+        <div class="chart-grid">
+          <div class="chart-card full-width" id="card-electricity"><div class="chart-loading">Loading…</div></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── Ballot Section ─────────────────────────────────────────────── -->
+    <section class="page-section" id="section-ballot">
+      <div class="section-header">
+        <h2 class="section-title">Ballot</h2>
+      </div>
+      <div id="ballot-content">
+        <p class="ballot-placeholder-msg">Select a state on the map above to view local ballot issues.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>Breathe © 2025</footer>
+
+</div><!-- end #page-home -->
+
+<!-- ── About page ────────────────────────────────────────────────────── -->
+<div id="page-about">
+  <p>Coming soon...</p>
+</div>
 
 <script>
 // ── App state ──────────────────────────────────────────────────────────────
@@ -421,7 +717,8 @@ const state = {
   incomeLevel: "Bottom 50%",
   country: "usa",
   activeTab: "economy",
-  selectedArea: "United States",   // current area selection
+  activePage: "home",
+  selectedArea: "United States",
 };
 
 const PLOTLY_CONFIG = {
@@ -440,8 +737,13 @@ const ALL_STATES = [
   'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
 ];
 
-// States that have data and can be selected
-const SELECTABLE_STATES = new Set(['CO', 'MT', 'TN']);
+const SELECTABLE_STATES = new Set([
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
+  'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+]);
 
 const STATE_NAMES = {
   AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
@@ -456,23 +758,18 @@ const STATE_NAMES = {
   VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',
 };
 
-// z values: 0 = unavailable, 1 = available, 2 = selected
 function getStateZ(abbrev) {
-  if (abbrev === state.selectedArea) return 2;   // selected (won't match until a state is picked)
+  if (abbrev === state.selectedArea) return 2;
   return SELECTABLE_STATES.has(abbrev) ? 1 : 0;
 }
 
-// Colorscale: z is normalized to [0,1] over zmin=0, zmax=2
-// z=0 → 0/2=0.00 → unavailable (dark muted)
-// z=1 → 1/2=0.50 → available  (accent blue)
-// z=2 → 2/2=1.00 → selected   (teal highlight)
 const MAP_COLORSCALE = [
-  [0.00, '#2d3f50'],
-  [0.49, '#2d3f50'],
-  [0.50, '#4a90e2'],
-  [0.74, '#4a90e2'],
-  [0.75, '#63e6be'],
-  [1.00, '#63e6be'],
+  [0.00, '#1d2021'],
+  [0.49, '#1d2021'],
+  [0.50, '#1d2021'],
+  [0.74, '#1d2021'],
+  [0.75, '#4a90e2'],
+  [1.00, '#4a90e2'],
 ];
 
 let areaMapInitialized = false;
@@ -483,7 +780,6 @@ function buildMapTrace() {
     if (!SELECTABLE_STATES.has(s)) return `${STATE_NAMES[s]}<br><i>Coming soon</i>`;
     return `${STATE_NAMES[s]}<br><i>Click to select</i>`;
   });
-
   return {
     type: 'choropleth',
     locationmode: 'USA-states',
@@ -524,51 +820,71 @@ function initAreaMap() {
     scrollZoom: false,
     displayModeBar: false,
   });
-
-  // Click handler
   mapDiv.on('plotly_click', (eventData) => {
     if (!eventData || !eventData.points || !eventData.points.length) return;
     const abbrev = eventData.points[0].location;
-    if (!SELECTABLE_STATES.has(abbrev)) return;   // not yet available — ignore
+    if (!SELECTABLE_STATES.has(abbrev)) return;
     selectArea(abbrev);
   });
 }
 
 // ── Area selection ─────────────────────────────────────────────────────────
 function selectArea(area) {
-  // Toggle: clicking the already-selected state reverts to United States
   if (area !== 'United States' && state.selectedArea === area) {
     area = 'United States';
   }
   state.selectedArea = area;
 
-  // Update header label
   const label = area === 'United States'
     ? 'United States'
     : `${STATE_NAMES[area] || area} (${area})`;
   document.getElementById('pick-area-selection').textContent = label;
-
-  // Update US chip highlight
   document.getElementById('btn-us').classList.toggle('selected', area === 'United States');
 
-  // Re-draw map colors
   const mapDiv = document.getElementById('area-map');
   if (mapDiv && mapDiv.data) {
     Plotly.restyle(mapDiv, { z: [ALL_STATES.map(s => getStateZ(s))] }, [0]);
   }
 
-  // Update tab content
+  // Auto-close the pick area panel
+  document.getElementById('content-bar').classList.remove('open');
+
   if (area === 'United States') {
-    restoreCharts();
+    showNationalEconomy();
   } else {
-    showAllPlaceholders(STATE_NAMES[area] || area);
+    showStateEconomy(area);
   }
+  updateBallot(area);
+}
+
+function showStateEconomy(abbrev) {
+  document.getElementById('state-economy').style.display = 'block';
+  document.getElementById('national-economy').style.display = 'none';
+
+  // Show placeholder for non-economy tabs
+  const stateName = STATE_NAMES[abbrev] || abbrev;
+  for (const [tab, ids] of Object.entries(TAB_CHARTS)) {
+    if (tab === 'economy') continue;
+    for (const id of ids) showPlaceholder(id, stateName);
+  }
+
+  // Load the state affordability chart
+  const card = document.getElementById('card-state-affordability');
+  card.querySelector('.state-placeholder')?.remove();
+  const loader = card.querySelector('.chart-loading');
+  if (loader) loader.style.display = 'flex';
+  loadChart('card-state-affordability', `/api/economy/state-home-affordability?state=${abbrev}&dark_mode=${dm()}`);
+}
+
+function showNationalEconomy() {
+  document.getElementById('state-economy').style.display = 'none';
+  document.getElementById('national-economy').style.display = 'block';
+  restoreCharts();
 }
 
 function showPlaceholder(cardId, stateName) {
   const card = document.getElementById(cardId);
   if (!card) return;
-  // Remove existing plot and placeholder
   card.querySelector('.plot-div')?.remove();
   card.querySelector('.state-placeholder')?.remove();
   const loader = card.querySelector('.chart-loading');
@@ -591,7 +907,6 @@ function showAllPlaceholders(stateName) {
 }
 
 function restoreCharts() {
-  // Remove placeholders and loading indicators, then reload charts
   for (const [tab, ids] of Object.entries(TAB_CHARTS)) {
     for (const id of ids) {
       const card = document.getElementById(id);
@@ -599,29 +914,41 @@ function restoreCharts() {
       card.querySelector('.state-placeholder')?.remove();
       const loader = card.querySelector('.chart-loading');
       if (loader) loader.style.display = 'flex';
-      // Remove stale plot divs from non-active tabs so they re-fetch on next visit
-      if (tab !== state.activeTab) {
-        card.querySelector('.plot-div')?.remove();
-      }
+      if (tab !== state.activeTab) card.querySelector('.plot-div')?.remove();
     }
   }
-  // Immediately reload the active tab
   loadTabCharts(state.activeTab);
 }
 
-// ── Pick Area toggle ───────────────────────────────────────────────────────
+function reloadStateChart() {
+  if (state.selectedArea !== 'United States') {
+    loadChart('card-state-affordability',
+      `/api/economy/state-home-affordability?state=${state.selectedArea}&dark_mode=${dm()}`);
+  }
+}
+
+// ── Area picker toggle ─────────────────────────────────────────────────────
 function togglePickArea() {
-  const bar = document.getElementById('pick-area-bar');
+  const bar = document.getElementById('content-bar');
   const isNowOpen = bar.classList.toggle('open');
 
   if (isNowOpen && !areaMapInitialized) {
     areaMapInitialized = true;
-    // Small delay so the CSS transition has started and the div has height
     setTimeout(initAreaMap, 50);
   } else if (isNowOpen) {
-    // Already initialized — trigger a resize in case the window changed
     setTimeout(() => Plotly.Plots.resize(document.getElementById('area-map')), 50);
   }
+}
+
+// ── Page switching ─────────────────────────────────────────────────────────
+function switchPage(page) {
+  if (page === state.activePage) return;
+  state.activePage = page;
+  document.querySelectorAll(".page-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.page === page);
+  });
+  document.getElementById("page-home").style.display = page === "home" ? "" : "none";
+  document.getElementById("page-about").style.display = page === "about" ? "" : "none";
 }
 
 // ── Chart helpers ──────────────────────────────────────────────────────────
@@ -729,11 +1056,15 @@ async function loadCountries() {
 }
 
 // ── Event wiring ───────────────────────────────────────────────────────────
-document.querySelectorAll(".tab-btn").forEach(btn => {
+document.querySelectorAll(".page-btn").forEach(btn => {
+  btn.addEventListener("click", () => switchPage(btn.dataset.page));
+});
+
+document.querySelectorAll("#sub-tabs .tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const tab = btn.dataset.tab;
     if (tab === state.activeTab) return;
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("#sub-tabs .tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");
@@ -764,12 +1095,157 @@ document.getElementById("countrySelect").addEventListener("change", e => {
 document.getElementById("darkModeToggle").addEventListener("change", e => {
   state.darkMode = e.target.checked;
   reloadAllLoaded();
+  reloadStateChart();
 });
+
+// ── Settings panel ─────────────────────────────────────────────────────────
+function toggleSettings() {
+  const panel = document.getElementById('settings-panel');
+  const btn = document.getElementById('settings-btn');
+  const isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+}
+
+document.addEventListener('click', e => {
+  const panel = document.getElementById('settings-panel');
+  const btn = document.getElementById('settings-btn');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('open');
+    btn.classList.remove('open');
+  }
+});
+
+document.getElementById('settingsShowSplash').addEventListener('change', e => {
+  localStorage.setItem('breathe_showSplash', e.target.checked ? 'true' : 'false');
+  document.getElementById('splashShowStartup').checked = e.target.checked;
+});
+
+// ── Splash screen ───────────────────────────────────────────────────────────
+const WELCOME_MD = `# Welcome friends
+
+The system is broken.
+
+We believe democratic governments should represent the people and serve their interests.
+That capitalism should be based on competition, choice and fair rules not rigged by a few.
+
+This Report Card will show you in simple terms how the system affects the daily lives of
+farmers, construction workers, parents, fire fighters, cooks, truck drivers, of
+everyday essential Americans.
+
+When you are voting, we will show you where else the things and plans of politicians have
+been tried and what happened.
+
+Lets make the system work for Americans, not for the **Billionaire Overlords** who built
+and control the system we live in.
+`;
+
+function openSplash() {
+  document.getElementById('splash-body').innerHTML = marked.parse(WELCOME_MD);
+  document.getElementById('splash-overlay').classList.add('open');
+}
+
+function closeSplash() {
+  document.getElementById('splash-overlay').classList.remove('open');
+}
+
+document.getElementById('splashShowStartup').addEventListener('change', e => {
+  const val = e.target.checked ? 'true' : 'false';
+  localStorage.setItem('breathe_showSplash', val);
+  document.getElementById('settingsShowSplash').checked = e.target.checked;
+});
+
+// ── Ballot ─────────────────────────────────────────────────────────────────
+const BALLOT_DATA = {
+  MT: {
+    state: "Montana",
+    label: "Issues Qualified to Gather Signatures for the 2026 General Election Ballot",
+    items: [
+      {
+        id: "CI-129 (Ballot Issue #1)",
+        subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of a primary residence to 2% when assessing property taxes unless there are changes to the residence or a change of ownership. Upon a change of ownership or a change to the residence, a primary residence is assessed at fair market value starting January 1 of the following year. New primary residences are assessed at fair market value as of January 1 of the year following their construction. Purchases or transfers of primary residences between spouses or between parents and children are not considered changes in ownership. A person may have only one primary residence and must own and occupy that residence for at least 7 months of the year.",
+        submitted: "11/12/2024",
+        status: "Petition approved for signature gathering as of 01/17/2025",
+        submitter: "Matthew Monforton",
+      },
+      {
+        id: "CI-130 (Ballot Issue #2)",
+        subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of real property to 2% when assessing property taxes unless there are changes to the real property or a change of ownership, in which case, the real property is assessed at fair market value starting January 1 of the following year. Purchases or transfers of real property between spouses or between parents and children are not considered changes in ownership. Changes to real property shall be assessed as provided by law; however, after the adjustment for any change to the real property, the property shall be assessed according to this act. Finally, no assessment of real property shall exceed fair market value.",
+        submitted: "4/7/2025",
+        status: "Petition approved for signature gathering as of 06/17/2025",
+        submitter: "Matthew Monforton",
+      },
+      {
+        id: "CI-131 (Ballot Issue #3)",
+        subject: "A constitutional initiative that, if passed, mandates Montana supreme court and district court elections be non-partisan. A non-partisan election prohibits labeling candidates on the ballot according to the political party the candidate aligns with including labels like independent.",
+        submitted: "7/29/2025",
+        status: "Approved to gather signatures on 09/26/2025",
+        submitter: "Ted Dick",
+      },
+      {
+        id: "CI-132 (Ballot Issue #5)",
+        subject: "A constitutional initiative that amends the Montana Constitution to require that judicial elections remain nonpartisan.",
+        submitted: "8/15/2025",
+        status: "Approved to gather signatures on 10/09/2025",
+        submitter: "Monica Paoli & Megan Simpson",
+      },
+      {
+        id: "CI-133 (Ballot Issue #8)",
+        subject: "The Montana constitution reserves to the people the powers of initiative and referendum. This act amends the constitution to protect this fundamental right from unjustified interference by the government. Specifically, this act requires impartial, predictable, open, and timely processes for ballot issues, including approving petitions and ballot statements, resolving legal challenges, and verifying signatures. It requires the state to allow ample time for signature gathering, prohibits disqualification of petitions because of minor or technical issues, and allows voters to withdraw their signatures if they so choose.",
+        submitted: "10/3/2025",
+        status: "Approved to gather signatures on 3/5/2026",
+        submitter: "Claudia Clifford & Theresa Kendrick",
+      },
+      {
+        id: "I-194 (Ballot Issue #10)",
+        subject: "An act, if passed, limits the powers of artificial persons to those powers necessary or convenient as provided by law. These powers must exclude contributing anything of value to candidate elections, supporting or opposing political parties, or supporting or opposing state or local ballot issues. Artificial persons include non-profits, trusts, partnerships, corporations, trade associations, or unincorporated associations and includes all such entities doing business in Montana. Any violation of this act is punished by forfeiting all privileges to do business in Montana. Those privileges may be, but are not automatically, restored upon disgorgement and certification of compliance with this act. This act does not apply to the distribution of news, commentary, or editorial content. This act also does not apply to the state of Montana, political subdivisions, individuals, political committees, or public corporations.",
+        submitted: "1/8/2026",
+        status: "Approved to gather signatures on 3/10/2026",
+        submitter: "Jeff Mangan",
+      },
+    ],
+  },
+};
+
+function updateBallot(area) {
+  const container = document.getElementById('ballot-content');
+  if (area === 'United States') {
+    container.innerHTML = '<p class="ballot-placeholder-msg">Select a state on the map above to view local ballot issues.</p>';
+    return;
+  }
+  const data = BALLOT_DATA[area];
+  if (!data) {
+    const stateName = STATE_NAMES[area] || area;
+    container.innerHTML = `<p class="ballot-placeholder-msg">Ballot issues coming soon for ${stateName}.</p>`;
+    return;
+  }
+  const itemsHtml = data.items.map(item => `
+    <div class="ballot-item">
+      <div class="ballot-item-id">${item.id}</div>
+      <div class="ballot-item-body">${item.subject}</div>
+      <div class="ballot-item-meta">
+        <span>Submitter: ${item.submitter}</span>
+        <span>Submitted: ${item.submitted}</span>
+        <span>Status: ${item.status}</span>
+      </div>
+    </div>
+  `).join('');
+  container.innerHTML = `
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
+    <div class="ballot-grid">${itemsHtml}</div>
+  `;
+}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 (async () => {
   await loadCountries();
   loadTabCharts("economy");
+  updateBallot(state.selectedArea);
+
+  const stored = localStorage.getItem('breathe_showSplash');
+  const showSplash = stored !== 'false';
+  document.getElementById('splashShowStartup').checked = showSplash;
+  document.getElementById('settingsShowSplash').checked = showSplash;
+  if (showSplash) openSplash();
 })();
 </script>
 </body>
