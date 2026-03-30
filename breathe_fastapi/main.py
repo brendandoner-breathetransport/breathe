@@ -113,7 +113,7 @@ INCOME_LEVELS = {
 
 COLOR_LIGHT_DARK = {
     "light": "rgba(68, 122, 219, 0.5)",
-    "dark": "rgba(255,255,255,0.5)",
+    "dark": "rgba(74, 144, 226, 0.9)",
 }
 
 COLORS_BY_COUNTRY = {
@@ -191,11 +191,11 @@ def get_yaxis_range(y_data):
     return mn - rng * YAXIS_RANGE_PCT, mx + rng * YAXIS_RANGE_PCT
 
 
-def _fmt_text(value, prefix, suffix, fmt, context):
-    return f"<span style='color:rgb(0,0,0)'><b>{prefix}{value:{fmt}}{suffix}</b><br>{context}</span>"
+def _fmt_text(value, prefix, suffix, fmt, context, color="rgb(0,0,0)"):
+    return f"<span style='color:{color}'><b>{prefix}{value:{fmt}}{suffix}</b><br>{context}</span>"
 
 
-def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_min):
+def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_min, dark_mode="light"):
     fmt   = {"thousands": ".0f",  "percentage": ".0%"}[number_type]
     pfx   = {"thousands": "$",    "percentage": ""}[number_type]
     sfx   = {"thousands": "k",    "percentage": ""}[number_type]
@@ -209,13 +209,16 @@ def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_
     min_val    = d_min[col_metric].to_numpy().flatten()[0]
     max_val    = d_max[col_metric].to_numpy().flatten()[0]
 
+    text_color = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"
+
     def scatter(d, label):
         return go.Scatter(
             name="NONE", mode="markers+text",
             x=d[col_date], y=d[col_metric],
             marker=dict(color="orange", size=8),
-            text=_fmt_text(d[col_metric].to_numpy().flatten()[0] / div, pfx, sfx, fmt, label),
+            text=_fmt_text(d[col_metric].to_numpy().flatten()[0] / div, pfx, sfx, fmt, label, text_color),
             textposition="middle center",
+            textfont=dict(color=text_color),
         )
 
     highlights = [scatter(d_latest, "")]
@@ -226,26 +229,29 @@ def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_
     return highlights
 
 
-def add_period_lines(fig, year=None, text=None):
+def add_period_lines(fig, year=None, text=None, dark_mode="light"):
+    line_color = "rgba(255,255,255,0.6)" if dark_mode == "dark" else "rgba(0,0,0,0.9)"
+    font_color = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "black"
     fig.add_vline(
         x=1980,
-        line=dict(color="rgba(0,0,0,0.9)", width=2, dash="dash"),
+        line=dict(color=line_color, width=2, dash="dash"),
         annotation_text="1980",
         annotation_position="top right",
-        annotation_font_color="black",
+        annotation_font_color=font_color,
     )
     if year is not None:
         fig.add_vline(
             x=year,
-            line=dict(color="rgba(0,0,0,0.9)", width=2, dash="dash"),
+            line=dict(color=line_color, width=2, dash="dash"),
             annotation_text=text,
             annotation_position="top right",
-            annotation_font_color="black",
+            annotation_font_color=font_color,
         )
 
 
-def add_period_shading(fig):
-    for x0, x1, color in [(1938, 1979, "green"), (1980, 2020, "black")]:
+def add_period_shading(fig, dark_mode="light"):
+    dark_fill = "white" if dark_mode == "dark" else "black"
+    for x0, x1, color in [(1938, 1979, "green"), (1980, 2020, dark_fill)]:
         fig.add_vrect(
             x0=x0, x1=x1, line_width=0, fillcolor=color, opacity=0.05,
             annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#policies'>Policies</a></b>",
@@ -296,30 +302,34 @@ def make_economy_income(dark_mode: str, income_level: str, country: str) -> go.F
     data = shares_wid.filter(pl.col("country") == country).filter(pl.col("year") >= 1880)
     usa = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880)
 
+    country_traces = [] if country == "usa" else (
+        [go.Scatter(name=country.upper(), x=data["year"], y=data[income_col],
+                    line=dict(color="rgba(0,0,0,0.2)", width=3))]
+        + get_highlights_line_min_max(data, "year", income_col, "thousands", "max", dark_mode)
+    )
     traces = (
-        [go.Scatter(name=country, x=data["year"], y=data[income_col],
-                    line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3))]
-        + get_highlights_line_min_max(data, "year", income_col, "thousands", "max")
-        + [go.Scatter(name="usa", x=usa["year"], y=usa[income_col],
-                      line=dict(color="rgba(0,0,0,0.2)", width=3))]
-        + get_highlights_line_min_max(usa, "year", income_col, "thousands", "max")
+        country_traces
+        + [go.Scatter(name="USA", x=usa["year"], y=usa[income_col],
+                      line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3))]
+        + get_highlights_line_min_max(usa, "year", income_col, "thousands", "max", dark_mode)
     )
     fig = go.Figure(data=traces)
 
     vline_year = {"canada": 2004, "france": 1995}.get(country)
     vline_text = {
-        "canada": "2004<br>canadian<br>corporate<br>money<br>ban",
-        "france": "1995<br>french<br>corporate<br>money<br>ban",
+        "canada": "2004<br>Canadian<br>corporate<br>money<br>ban",
+        "france": "1995<br>French<br>corporate<br>money<br>ban",
     }.get(country)
-    add_period_lines(fig, year=vline_year, text=vline_text)
-    add_period_shading(fig)
+    add_period_lines(fig, year=vline_year, text=vline_text, dark_mode=dark_mode)
+    add_period_shading(fig, dark_mode=dark_mode)
 
+    all_y = np.concatenate([data[income_col].to_numpy(), usa[income_col].to_numpy()])
     _economy_base_layout(
         fig,
         title=f"<b>{income_level} Paycheck</b><br><sup>{year_max} dollars</sup>",
         income_level=income_level,
         dark_mode=dark_mode,
-        y_data=data[income_col],
+        y_data=all_y,
         ytickpfx="$",
         ytickfmt=AXIS_TITLE_INCOME_FORMAT,
         xaxis_title=SOURCES["economy"],
@@ -331,14 +341,19 @@ def make_economy_income(dark_mode: str, income_level: str, country: str) -> go.F
     return fig
 
 
-def make_economy_barchart(dark_mode: str, income_level: str) -> go.Figure:
+def make_economy_barchart(dark_mode: str, income_level: str, highlight_canada: bool = False, selected_country: str = "usa") -> go.Figure:
     income_col = INCOME_LEVELS[income_level]
     latest = (
         shares_wid.filter(pl.col("year") == shares_wid["year"].max())
         .sort([income_col], descending=[False])
     )
     countries = latest.select("country").to_numpy().flatten()
-    bar_colors = [COLORS_BY_COUNTRY.get(c, "rgba(100,100,100,0.3)") for c in countries]
+    highlight_country = selected_country if selected_country != "usa" else None
+    bar_colors = [
+        "rgba(0,0,0,0.2)" if (c == "canada" and highlight_canada) or c == highlight_country
+        else COLORS_BY_COUNTRY.get(c, "rgba(100,100,100,0.3)")
+        for c in countries
+    ]
 
     texttemplate = {
         "income_mean_bottom": "<b>%{text:.2s}</b>",
@@ -346,19 +361,37 @@ def make_economy_barchart(dark_mode: str, income_level: str) -> go.Figure:
         "income_mean_top": "<b>%{text:.3s}</b>",
     }[income_col]
 
+    legend_traces = [
+        go.Scatter(x=[None], y=[None], mode="markers", name="Democracies",
+                   marker=dict(color="rgba(90,185,111,0.3)", size=12, symbol="square")),
+        go.Scatter(x=[None], y=[None], mode="markers", name="Authoritarian",
+                   marker=dict(color="rgba(230,78,67,0.7)", size=12, symbol="square")),
+        go.Scatter(x=[None], y=[None], mode="markers", name="USA",
+                   marker=dict(color=COLOR_LIGHT_DARK[dark_mode], size=12, symbol="square")),
+    ] + ([go.Scatter(x=[None], y=[None], mode="markers", name="Canada",
+                     marker=dict(color="rgba(0,0,0,0.2)", size=12, symbol="square"))]
+         if highlight_canada else []
+    ) + ([go.Scatter(x=[None], y=[None], mode="markers", name=highlight_country.replace("_", " ").title(),
+                     marker=dict(color="rgba(0,0,0,0.2)", size=12, symbol="square"))]
+         if highlight_country and not highlight_canada else [])
+    x_labels = [c.replace("_", " ").upper() for c in countries]
     fig = go.Figure(data=[go.Bar(
-        x=latest["country"], y=latest[income_col],
+        x=x_labels, y=latest[income_col],
         text=latest[income_col], texttemplate=texttemplate,
-        textfont=dict(size=12), textangle=0,
+        textfont=dict(size=12, color="rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"), textangle=0,
         marker_color=bar_colors,
-    )])
+        showlegend=False,
+    )] + legend_traces)
     fig.update_layout(
-        title=dict(text=f"<b>{income_level} Comparison</b><br><sup>Each country's share & U.S. {year_max} income</sup>"),
+        title=dict(
+            text=f"<b>{income_level} Comparison</b>",
+            subtitle=dict(text=f"What would the paycheck of the {income_level} be with the economic system of other countries?"),
+        ),
         title_x=0.5,
         yaxis_title=AXIS_TITLE_INCOME,
         yaxis=dict(tickprefix="$", tickformat=AXIS_TITLE_INCOME_FORMAT, fixedrange=True),
         xaxis_title=SOURCES["economy"], xaxis_tickangle=-45, xaxis=dict(fixedrange=True),
-        showlegend=False,
+        showlegend=True,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
     )
@@ -373,7 +406,7 @@ def make_economy_income_taxes(dark_mode: str, income_level: str) -> go.Figure:
     fig.add_traces(
         [go.Scatter(name="NONE", x=usa["year"], y=usa[income_col],
                     line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3))]
-        + get_highlights_line_min_max(usa, "year", income_col, "thousands", "max")
+        + get_highlights_line_min_max(usa, "year", income_col, "thousands", "max", dark_mode)
     )
 
     tax_data = tax.filter(pl.col("change_top_bracket") != 0).sort(["year"])
@@ -391,8 +424,8 @@ def make_economy_income_taxes(dark_mode: str, income_level: str) -> go.Figure:
         ))
 
     fig.add_hline(y=0, line=dict(color="rgba(0,0,0,0.2)", width=1, dash="solid"), secondary_y=True)
-    add_period_lines(fig)
-    add_period_shading(fig)
+    add_period_lines(fig, dark_mode=dark_mode)
+    add_period_shading(fig, dark_mode=dark_mode)
 
     ymin, ymax = get_yaxis_range(usa[income_col])
     fig.update_layout(
@@ -425,7 +458,7 @@ def make_economy_house_purchase(dark_mode: str, income_level: str) -> go.Figure:
     fig = go.Figure(data=(
         [go.Scatter(name="NONE", x=data["year"], y=data[col],
                     line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3))]
-        + get_highlights_line_min_max(data, "year", col, "percentage", "min")
+        + get_highlights_line_min_max(data, "year", col, "percentage", "min", dark_mode)
     ))
     ymin, ymax = get_yaxis_range(data[col])
     fig.update_layout(
@@ -455,10 +488,10 @@ def make_economy_f150(dark_mode: str, income_level: str) -> go.Figure:
     fig = go.Figure(data=(
         [go.Scatter(name="NONE", x=data["year"], y=data["price_ratio"],
                     line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3))]
-        + get_highlights_line_min_max(data, "year", "price_ratio", "percentage", "min")
+        + get_highlights_line_min_max(data, "year", "price_ratio", "percentage", "min", dark_mode)
     ))
-    add_period_lines(fig)
-    add_period_shading(fig)
+    add_period_lines(fig, dark_mode=dark_mode)
+    add_period_shading(fig, dark_mode=dark_mode)
     ymin, ymax = get_yaxis_range(data["price_ratio"])
     fig.update_layout(
         title=dict(text=f"<b>Percent of {income_level} Income to Purchase a Ford F-150</b>"),
@@ -499,7 +532,7 @@ def _multi_country_mobility(dark_mode: str, col: str, title: str) -> go.Figure:
         ) for c in countries]
         + get_highlights_line_min_max(
             data.filter(pl.col("country") == "United States"),
-            "year", col, "percentage", "max",
+            "year", col, "percentage", "max", dark_mode,
         )
         + [go.Scatter(
             name="NONE", mode="text",
@@ -510,8 +543,8 @@ def _multi_country_mobility(dark_mode: str, col: str, title: str) -> go.Figure:
         ) for c in COUNTRIES_MULTI]
     ))
 
-    add_period_lines(fig)
-    add_period_shading(fig)
+    add_period_lines(fig, dark_mode=dark_mode)
+    add_period_shading(fig, dark_mode=dark_mode)
     ymin, ymax = get_yaxis_range(data[col])
     fig.update_layout(
         title=dict(text=f"<b>{title}</b>"), title_x=0.5,
@@ -573,27 +606,36 @@ def make_timeseries_countries(data, title, yaxis_title, xaxis_title, dark_mode: 
     last = data.join(data.group_by("country").agg(pl.max("year")), on=["country", "year"], how="inner")
     countries = ["united states", "europe", "costa rica", "japan", "china", "canada"]
 
+    other_color = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
+    text_color  = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"
+
+    def country_label(c):
+        if c == "united states":
+            return "<b>USA</b>"
+        return f"<br>{c.title()}" if c == "canada" else c.title()
+
     fig = go.Figure(data=(
         [go.Scatter(
             name=c, mode="lines",
             x=data.filter(pl.col("country") == c)["year"],
             y=data.filter(pl.col("country") == c)["value"],
             line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3)
-            if c == "united states" else dict(color="rgba(0,0,0,0.2)", width=2),
+            if c == "united states" else dict(color=other_color, width=2),
         ) for c in countries]
         + [go.Scatter(
             name="NONE", mode="text",
             x=last.filter(pl.col("country") == c)["year"],
             y=last.filter(pl.col("country") == c)["value"],
-            text=f"<b>{c.title()}</b>" if c == "united states"
-                 else f"<br>{c.title()}" if c == "canada" else c.title(),
+            text=f"<span style='color:{text_color}'>{country_label(c)}</span>",
             textposition="middle right",
         ) for c in countries]
     ))
+    max_year = int(data["year"].max())
     fig.update_layout(
         title=dict(text=f"<b>{title}</b>"), title_x=0.5,
         yaxis_title=f"<b>{yaxis_title}</b>",
         xaxis_title=xaxis_title,
+        xaxis=dict(range=[data["year"].min(), max_year + 8], fixedrange=True),
         showlegend=False,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
@@ -625,14 +667,21 @@ def make_electricity_cost(dark_mode: str) -> go.Figure:
             hovertemplate=f"<b>{tech}</b><br>LCOE Range: ${row['LCOE_Low_USD_MWh'].to_numpy()[0]}"
                           f"–${row['LCOE_High_USD_MWh'].to_numpy()[0]}/MWh<br><extra></extra>",
         ))
+    grid_color   = "rgba(255,255,255,0.15)" if dark_mode == "dark" else "lightgray"
+    plot_bg      = "rgb(29,32,33)"          if dark_mode == "dark" else "white"
+    legend_bg    = "rgba(40,45,48,0.9)"     if dark_mode == "dark" else "rgba(255,255,255,0.8)"
+    legend_border= "rgba(255,255,255,0.2)"  if dark_mode == "dark" else "gray"
     fig.update_layout(
         title={"text": "Cost of Electricity<br><sub>Ranges by Source</sub>", "x": 0.5, "xanchor": "center"},
-        xaxis=dict(title="$ / megawatt hour", showgrid=True, gridcolor="lightgray", range=[0, 300]),
-        yaxis=dict(title="Technology", showgrid=True, gridcolor="lightgray",
+        xaxis=dict(title="$ / megawatt hour", showgrid=True, gridcolor=grid_color, range=[0, 300]),
+        yaxis=dict(title="Technology", showgrid=True, gridcolor=grid_color,
                    categoryorder="array",
-                   categoryarray=list(electricity_cost["Technology"].to_numpy().flatten())),
-        plot_bgcolor="white",
-        legend=dict(x=0.7, y=0.98, bgcolor="rgba(255,255,255,0.8)", bordercolor="gray", borderwidth=1),
+                   categoryarray=list(electricity_cost["Technology"].to_numpy().flatten()),
+                   tickmode="array",
+                   tickvals=list(electricity_cost["Technology"].to_numpy().flatten()),
+                   ticktext=list(electricity_cost["Technology"].to_numpy().flatten())),
+        plot_bgcolor=plot_bg,
+        legend=dict(x=0.7, y=0.98, bgcolor=legend_bg, bordercolor=legend_border, borderwidth=1),
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
     )
@@ -715,8 +764,10 @@ async def api_economy_income(
 async def api_economy_barchart(
     dark_mode: str = Query("light"),
     income_level: str = Query("Bottom 50%"),
+    highlight_canada: bool = Query(False),
+    selected_country: str = Query("usa"),
 ):
-    return fig_to_json(make_economy_barchart(dark_mode, income_level))
+    return fig_to_json(make_economy_barchart(dark_mode, income_level, highlight_canada, selected_country))
 
 
 @app.get("/api/economy/income-taxes")

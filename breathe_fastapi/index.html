@@ -20,6 +20,7 @@
       --border: rgba(255,255,255,0.12);
       --tab-active: #4a90e2;
       --nav-h: 52px;
+      --content-bar-h: 42px;
     }
 
     body {
@@ -36,8 +37,11 @@
       align-items: center;
       gap: 0.5rem;
       padding: 0.5rem 1.25rem;
-      position: sticky;
+      position: fixed;
       top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
       z-index: 100;
       border-bottom: 1px solid var(--border);
       min-height: var(--nav-h);
@@ -78,7 +82,7 @@
     /* ── Settings dropdown panel ─────────────────────────────────────── */
     #settings-panel {
       display: none;
-      position: absolute;
+      position: fixed;
       top: calc(var(--nav-h) + 4px);
       right: 1rem;
       z-index: 200;
@@ -178,6 +182,9 @@
       transition: opacity 0.15s;
     }
     #splash-close:hover { opacity: 0.85; }
+
+    /* ── Page home top offset for fixed nav ─────────────────────────── */
+    #page-home { padding-top: var(--nav-h); }
 
     /* ── Combined content bar (tabs + area picker) ───────────────────── */
     #content-bar {
@@ -357,9 +364,29 @@
     #page-about {
       display: none;
       padding: 4rem 1.25rem;
+      padding-top: calc(var(--nav-h) + 2rem);
+    }
+    .about-inner {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .about-inner h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 2rem;
       text-align: center;
-      color: var(--muted);
-      font-size: 1.1rem;
+    }
+    .about-inner p {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: rgba(255,255,255,0.82);
+      margin-bottom: 1.25rem;
+    }
+    .about-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2rem 0;
     }
 
     h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
@@ -399,12 +426,19 @@
     }
 
     .country-select {
-      background: rgba(255,255,255,0.06);
+      background: #2a3340;
       border: 1px solid var(--border);
       border-radius: 6px;
       color: var(--text);
       padding: 0.3rem 0.6rem;
       font-size: 0.875rem;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    .country-select option {
+      background: #2a3340;
+      color: rgba(255,255,255,0.88);
     }
 
     /* ── Chart grid ──────────────────────────────────────────────────── */
@@ -449,9 +483,13 @@
       border-bottom: 1px solid var(--border);
       margin-bottom: 0.75rem;
       padding-bottom: 0;
+      position: sticky;
+      top: calc(var(--nav-h) + var(--content-bar-h));
+      background: var(--bg);
+      z-index: 80;
     }
     .section-title {
-      font-size: 0.72rem;
+      font-size: 1.5rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -572,11 +610,10 @@
     <!-- Expandable map panel -->
     <div id="pick-area-content">
       <div id="pick-area-inner">
-        <div class="area-selector-row">
+        <div class="area-selector-row" style="justify-content:center;">
           <button id="btn-us" class="area-chip selected" onclick="selectArea('United States')">
-            🇺🇸 United States
+            Select the entire United States
           </button>
-          <span class="area-divider-text">— or click a state on the map</span>
         </div>
         <div id="area-map"></div>
         <div class="area-legend">
@@ -593,7 +630,7 @@
     <!-- ── Scorecard Section ──────────────────────────────────────────── -->
     <section class="page-section" id="section-scorecard">
       <div class="section-header">
-        <h2 class="section-title">Scorecard</h2>
+        <h2 class="section-title">Report Card</h2>
         <div class="section-title-sep"></div>
         <div id="sub-tabs">
           <button class="tab-btn active" data-tab="economy">Economy</button>
@@ -628,7 +665,7 @@
               </div>
             </div>
             <div class="control-group">
-              <div class="control-label">Country</div>
+              <div class="control-label">Country Comparison</div>
               <select class="country-select" id="countrySelect">
                 <option value="usa">usa</option>
               </select>
@@ -681,7 +718,7 @@
 
       <!-- Environment Tab -->
       <div class="tab-panel" id="tab-environment">
-        <h1>Fossil fuels are not the cheapest sources for energy.</h1>
+        <h1>What are the cheapest sources for electricity?</h1>
         <div class="chart-grid">
           <div class="chart-card full-width" id="card-electricity"><div class="chart-loading">Loading…</div></div>
         </div>
@@ -707,7 +744,13 @@
 
 <!-- ── About page ────────────────────────────────────────────────────── -->
 <div id="page-about">
-  <p>Coming soon...</p>
+  <div class="about-inner">
+    <h1>About Breathe</h1>
+    <p>Breathe is an employee owned cooperative working to improve the lives of everyday Americans.</p>
+    <hr class="about-divider" />
+    <p>We believe democratic governments should represent the people and serve their interests. That capitalism should be based on competition, choice and fair rules.</p>
+    <p>We want to take America back from the Billionaire Overlords who have rigged the system so that they can create monopolies, crush small businesses, get richer, and rule the rest of us.</p>
+  </div>
 </div>
 
 <script>
@@ -796,6 +839,7 @@ function buildMapTrace() {
 }
 
 function buildMapLayout() {
+  const isUSA = state.selectedArea === 'United States';
   return {
     geo: {
       scope: 'usa',
@@ -803,7 +847,12 @@ function buildMapLayout() {
       bgcolor: 'rgba(0,0,0,0)',
       showlakes: false,
       showframe: false,
-      showcoastlines: false,
+      showcoastlines: isUSA,
+      coastlinecolor: '#4a90e2',
+      coastlinewidth: 2,
+      showcountries: isUSA,
+      countrycolor: '#4a90e2',
+      countrywidth: 2,
       landcolor: '#1a2430',
     },
     paper_bgcolor: 'rgba(0,0,0,0)',
@@ -844,6 +893,7 @@ function selectArea(area) {
   const mapDiv = document.getElementById('area-map');
   if (mapDiv && mapDiv.data) {
     Plotly.restyle(mapDiv, { z: [ALL_STATES.map(s => getStateZ(s))] }, [0]);
+    Plotly.relayout(mapDiv, buildMapLayout());
   }
 
   // Auto-close the pick area panel
@@ -947,8 +997,8 @@ function switchPage(page) {
   document.querySelectorAll(".page-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.page === page);
   });
-  document.getElementById("page-home").style.display = page === "home" ? "" : "none";
-  document.getElementById("page-about").style.display = page === "about" ? "" : "none";
+  document.getElementById("page-home").style.display = page === "home" ? "block" : "none";
+  document.getElementById("page-about").style.display = page === "about" ? "block" : "none";
 }
 
 // ── Chart helpers ──────────────────────────────────────────────────────────
@@ -991,7 +1041,7 @@ function incomeParams() {
 
 const CHARTS = {
   "card-income":        () => `/api/economy/income?${economyParams()}`,
-  "card-barchart":      () => `/api/economy/barchart?${incomeParams()}`,
+  "card-barchart":      () => `/api/economy/barchart?${incomeParams()}&selected_country=${enc(state.country)}`,
   "card-income-taxes":  () => `/api/economy/income-taxes?${incomeParams()}`,
   "card-house-purchase":() => `/api/economy/house-purchase-cost?${incomeParams()}`,
   "card-f150":          () => `/api/economy/f150?${incomeParams()}`,
@@ -1048,7 +1098,7 @@ async function loadCountries() {
     sel.innerHTML = "";
     for (const c of json.countries) {
       const opt = document.createElement("option");
-      opt.value = c; opt.textContent = c;
+      opt.value = c; opt.textContent = c.replace(/_/g, ' ').toUpperCase();
       if (c === "usa") opt.selected = true;
       sel.appendChild(opt);
     }
@@ -1089,13 +1139,15 @@ document.getElementById("incomeLevelGroup").addEventListener("change", e => {
 
 document.getElementById("countrySelect").addEventListener("change", e => {
   state.country = e.target.value;
-  loadChart("card-income", CHARTS["card-income"]());
+  loadChart("card-income",   CHARTS["card-income"]());
+  loadChart("card-barchart", CHARTS["card-barchart"]());
 });
 
 document.getElementById("darkModeToggle").addEventListener("change", e => {
   state.darkMode = e.target.checked;
   reloadAllLoaded();
   reloadStateChart();
+  reloadMtBallotCharts();
 });
 
 // ── Settings panel ─────────────────────────────────────────────────────────
@@ -1123,20 +1175,15 @@ document.getElementById('settingsShowSplash').addEventListener('change', e => {
 // ── Splash screen ───────────────────────────────────────────────────────────
 const WELCOME_MD = `# Welcome friends
 
-The system is broken.
+**The system is broken**.
 
-We believe democratic governments should represent the people and serve their interests.
-That capitalism should be based on competition, choice and fair rules not rigged by a few.
+It was built over the last 50 years by **Billionaire Overlords**
+to make themselves richer and more powerful.
 
-This Report Card will show you in simple terms how the system affects the daily lives of
-farmers, construction workers, parents, fire fighters, cooks, truck drivers, of
-everyday essential Americans.
+This site will show you **how the system affects the daily lives of working Americans** and
+we will show you **where else things you vote on have been tried and what happened**.
 
-When you are voting, we will show you where else the things and plans of politicians have
-been tried and what happened.
-
-Lets make the system work for Americans, not for the **Billionaire Overlords** who built
-and control the system we live in.
+Lets **pick policies and politicians that work for us**, not for Overlords and their big money.
 `;
 
 function openSplash() {
@@ -1160,6 +1207,13 @@ const BALLOT_DATA = {
     state: "Montana",
     label: "Issues Qualified to Gather Signatures for the 2026 General Election Ballot",
     items: [
+      {
+        id: "I-194 (Ballot Issue #10)",
+        subject: "An act, if passed, limits the powers of artificial persons to those powers necessary or convenient as provided by law. These powers must exclude contributing anything of value to candidate elections, supporting or opposing political parties, or supporting or opposing state or local ballot issues. Artificial persons include non-profits, trusts, partnerships, corporations, trade associations, or unincorporated associations and includes all such entities doing business in Montana. Any violation of this act is punished by forfeiting all privileges to do business in Montana. Those privileges may be, but are not automatically, restored upon disgorgement and certification of compliance with this act. This act does not apply to the distribution of news, commentary, or editorial content. This act also does not apply to the state of Montana, political subdivisions, individuals, political committees, or public corporations.",
+        submitted: "1/8/2026",
+        status: "Approved to gather signatures on 3/10/2026",
+        submitter: "Jeff Mangan",
+      },
       {
         id: "CI-129 (Ballot Issue #1)",
         subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of a primary residence to 2% when assessing property taxes unless there are changes to the residence or a change of ownership. Upon a change of ownership or a change to the residence, a primary residence is assessed at fair market value starting January 1 of the following year. New primary residences are assessed at fair market value as of January 1 of the year following their construction. Purchases or transfers of primary residences between spouses or between parents and children are not considered changes in ownership. A person may have only one primary residence and must own and occupy that residence for at least 7 months of the year.",
@@ -1195,13 +1249,6 @@ const BALLOT_DATA = {
         status: "Approved to gather signatures on 3/5/2026",
         submitter: "Claudia Clifford & Theresa Kendrick",
       },
-      {
-        id: "I-194 (Ballot Issue #10)",
-        subject: "An act, if passed, limits the powers of artificial persons to those powers necessary or convenient as provided by law. These powers must exclude contributing anything of value to candidate elections, supporting or opposing political parties, or supporting or opposing state or local ballot issues. Artificial persons include non-profits, trusts, partnerships, corporations, trade associations, or unincorporated associations and includes all such entities doing business in Montana. Any violation of this act is punished by forfeiting all privileges to do business in Montana. Those privileges may be, but are not automatically, restored upon disgorgement and certification of compliance with this act. This act does not apply to the distribution of news, commentary, or editorial content. This act also does not apply to the state of Montana, political subdivisions, individuals, political committees, or public corporations.",
-        submitted: "1/8/2026",
-        status: "Approved to gather signatures on 3/10/2026",
-        submitter: "Jeff Mangan",
-      },
     ],
   },
 };
@@ -1218,21 +1265,57 @@ function updateBallot(area) {
     container.innerHTML = `<p class="ballot-placeholder-msg">Ballot issues coming soon for ${stateName}.</p>`;
     return;
   }
-  const itemsHtml = data.items.map(item => `
-    <div class="ballot-item">
-      <div class="ballot-item-id">${item.id}</div>
-      <div class="ballot-item-body">${item.subject}</div>
-      <div class="ballot-item-meta">
-        <span>Submitter: ${item.submitter}</span>
-        <span>Submitted: ${item.submitted}</span>
-        <span>Status: ${item.status}</span>
+  function ballotItemHtml(item) {
+    return `
+      <div class="ballot-item">
+        <div class="ballot-item-id">${item.id}</div>
+        <div class="ballot-item-body">${item.subject}</div>
+        <div class="ballot-item-meta">
+          <span>Submitter: ${item.submitter}</span>
+          <span>Submitted: ${item.submitted}</span>
+          <span>Status: ${item.status}</span>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }
+
+  if (area === 'MT') {
+    const [first, ...rest] = data.items;
+    container.innerHTML = `
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
+      <div class="ballot-grid">${ballotItemHtml(first)}</div>
+      <p style="font-size:0.95rem;line-height:1.65;color:rgba(255,255,255,0.82);margin:1rem 0;">Canada outlawed corporate money in elections in 2004. Below we show how the paychecks of the Bottom 50% have changed and compare the paychecks of the U.S. and Canada in 2023. Both the U.S. and Canada started trending down around 1980, after Canada outlawed corporate money it began to trend up, while the U.S. has continued trending down.</p>
+      <div class="chart-grid" style="margin:1rem 0;">
+        <div class="chart-card" id="card-mt-income"><div class="chart-loading">Loading…</div></div>
+        <div class="chart-card" id="card-mt-barchart"><div class="chart-loading">Loading…</div></div>
+      </div>
+      <div class="ballot-grid">${rest.map(ballotItemHtml).join('')}</div>
+    `;
+    loadMtBallotCharts();
+    return;
+  }
+
+  const itemsHtml = data.items.map(ballotItemHtml).join('');
   container.innerHTML = `
     <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
     <div class="ballot-grid">${itemsHtml}</div>
   `;
+}
+
+// ── Montana ballot charts ──────────────────────────────────────────────────
+function loadMtBallotCharts() {
+  const il = enc('Bottom 50%');
+  const ct = enc('canada');
+  loadChart('card-mt-income',   `/api/economy/income?dark_mode=${dm()}&income_level=${il}&country=${ct}`);
+  loadChart('card-mt-barchart', `/api/economy/barchart?dark_mode=${dm()}&income_level=${il}&highlight_canada=true`);
+}
+
+function reloadMtBallotCharts() {
+  if (state.selectedArea !== 'MT') return;
+  const incomeCard   = document.getElementById('card-mt-income');
+  const barchartCard = document.getElementById('card-mt-barchart');
+  if (incomeCard   && incomeCard.querySelector('.plot-div'))   loadMtBallotCharts();
+  else if (barchartCard && barchartCard.querySelector('.plot-div')) loadMtBallotCharts();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
