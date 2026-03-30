@@ -569,7 +569,7 @@
 <div id="settings-panel">
   <label class="settings-row">
     <input type="checkbox" id="darkModeToggle" />
-    <span>Dark charts</span>
+    <span>Dark theme</span>
   </label>
   <label class="settings-row" id="settings-startup-label">
     <input type="checkbox" id="settingsShowSplash" checked />
@@ -645,7 +645,7 @@
 
         <!-- State-specific view (shown when a state is selected) -->
         <div id="state-economy" style="display: none">
-          <h1 id="state-economy-title">Home Affordability</h1>
+          <h1 id="state-economy-title">Affordability</h1>
           <div class="chart-grid">
             <div class="chart-card" id="card-state-affordability"><div class="chart-loading">Loading…</div></div>
           </div>
@@ -749,7 +749,12 @@
     <p>Breathe is an employee owned cooperative working to improve the lives of everyday Americans.</p>
     <hr class="about-divider" />
     <p>We believe democratic governments should represent the people and serve their interests. That capitalism should be based on competition, choice and fair rules.</p>
-    <p>We want to take America back from the Billionaire Overlords who have rigged the system so that they can create monopolies, crush small businesses, get richer, and rule the rest of us.</p>
+    <p>We want to take America back from the Billionaire Overlords who have hijacked the system.</p>
+    <p>They have implemented a fantastically successful plan over the last 50 years to legalize the purchasing of politicians. To own the media narrative through the founding of organizations like Fox News. To appoint judges who will always favor big business over American citizens. To own our understanding of markets through text books and university programs.</p>
+    <p>Their goals have always been about accumulating money and power. They do it by legalizing and creating monopolies so they can exploit workers, consumers, suppliers, and our land. They are the original people who want something for nothing and they are the most skilled con artists, lawyers, marketers, and scammers in the business.</p>
+    <hr class="about-divider" />
+    <p>The question is not Democrat or Republican, liberal or conservative, progressive or center, it is democracy by the people or rule by Billionaire Overlords.</p>
+    <p>The only way to do this is to change the system, to get money out of politics for good, to get lobbiests out of politics, to create term limits, to create true representation of the people instead of big money.</p>
   </div>
 </div>
 
@@ -1323,6 +1328,11 @@ function reloadMtBallotCharts() {
   await loadCountries();
   loadTabCharts("economy");
   updateBallot(state.selectedArea);
+
+  // Default area picker to open on first load
+  document.getElementById('content-bar').classList.add('open');
+  areaMapInitialized = true;
+  setTimeout(initAreaMap, 50);
 
   const stored = localStorage.getItem('breathe_showSplash');
   const showSplash = stored !== 'false';

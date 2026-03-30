@@ -100,6 +100,7 @@ _ABBREV_TO_STATE = {v: k for k, v in _STATE_ABBREVIATIONS.items()}
 # Config / constants
 # ---------------------------------------------------------------------------
 YAXIS_RANGE_PCT = 0.25
+PLOT_MARGIN = dict(t=40, b=50, l=60, r=20)
 AXIS_TITLE_INCOME = "<b>income/yr average</b>"
 AXIS_TITLE_INCOME_FORMAT = ",.2s"
 LAYOUT_ECONOMY_XRANGE = [1905, 2030]
@@ -294,6 +295,7 @@ def _economy_base_layout(fig, title, income_level, dark_mode, xrange=None, y_dat
         showlegend=True,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
     )
 
 
@@ -302,9 +304,10 @@ def make_economy_income(dark_mode: str, income_level: str, country: str) -> go.F
     data = shares_wid.filter(pl.col("country") == country).filter(pl.col("year") >= 1880)
     usa = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880)
 
+    other_color = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
     country_traces = [] if country == "usa" else (
         [go.Scatter(name=country.upper(), x=data["year"], y=data[income_col],
-                    line=dict(color="rgba(0,0,0,0.2)", width=3))]
+                    line=dict(color=other_color, width=3))]
         + get_highlights_line_min_max(data, "year", income_col, "thousands", "max", dark_mode)
     )
     traces = (
@@ -349,8 +352,9 @@ def make_economy_barchart(dark_mode: str, income_level: str, highlight_canada: b
     )
     countries = latest.select("country").to_numpy().flatten()
     highlight_country = selected_country if selected_country != "usa" else None
+    gray = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
     bar_colors = [
-        "rgba(0,0,0,0.2)" if (c == "canada" and highlight_canada) or c == highlight_country
+        gray if (c == "canada" and highlight_canada) or c == highlight_country
         else COLORS_BY_COUNTRY.get(c, "rgba(100,100,100,0.3)")
         for c in countries
     ]
@@ -369,10 +373,10 @@ def make_economy_barchart(dark_mode: str, income_level: str, highlight_canada: b
         go.Scatter(x=[None], y=[None], mode="markers", name="USA",
                    marker=dict(color=COLOR_LIGHT_DARK[dark_mode], size=12, symbol="square")),
     ] + ([go.Scatter(x=[None], y=[None], mode="markers", name="Canada",
-                     marker=dict(color="rgba(0,0,0,0.2)", size=12, symbol="square"))]
+                     marker=dict(color=gray, size=12, symbol="square"))]
          if highlight_canada else []
     ) + ([go.Scatter(x=[None], y=[None], mode="markers", name=highlight_country.replace("_", " ").title(),
-                     marker=dict(color="rgba(0,0,0,0.2)", size=12, symbol="square"))]
+                     marker=dict(color=gray, size=12, symbol="square"))]
          if highlight_country and not highlight_canada else [])
     x_labels = [c.replace("_", " ").upper() for c in countries]
     fig = go.Figure(data=[go.Bar(
@@ -394,6 +398,7 @@ def make_economy_barchart(dark_mode: str, income_level: str, highlight_canada: b
         showlegend=True,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
     )
     return fig
 
@@ -440,6 +445,7 @@ def make_economy_income_taxes(dark_mode: str, income_level: str) -> go.Figure:
         showlegend=True,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
         legend=dict(x=0.01, y=0.99, xanchor="left", yanchor="top"),
     )
     hide_none_traces(fig)
@@ -471,6 +477,7 @@ def make_economy_house_purchase(dark_mode: str, income_level: str) -> go.Figure:
         showlegend=True,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
     )
     for trace in fig["data"]:
         if "min" in trace["name"] or "NONE" in trace["name"]:
@@ -503,6 +510,7 @@ def make_economy_f150(dark_mode: str, income_level: str) -> go.Figure:
         showlegend=True,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
     )
     for trace in fig["data"]:
         if "min" in trace["name"] or "NONE" in trace["name"]:
@@ -522,13 +530,16 @@ def _multi_country_mobility(dark_mode: str, col: str, title: str) -> go.Figure:
     )
     countries = np.sort(np.unique(data["country"].to_numpy()))
 
+    other_color = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
+    text_color  = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"
+
     fig = go.Figure(data=(
         [go.Scatter(
             name=c, mode="lines",
             x=data.filter(pl.col("country") == c)["year"],
             y=data.filter(pl.col("country") == c)[col],
             line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3)
-            if c.lower() == "united states" else dict(color="rgba(0,0,0,0.2)", width=2),
+            if c.lower() == "united states" else dict(color=other_color, width=2),
         ) for c in countries]
         + get_highlights_line_min_max(
             data.filter(pl.col("country") == "United States"),
@@ -538,7 +549,8 @@ def _multi_country_mobility(dark_mode: str, col: str, title: str) -> go.Figure:
             name="NONE", mode="text",
             x=last.filter(pl.col("country") == c)["year"],
             y=last.filter(pl.col("country") == c)[col],
-            text=f"<b>{c}</b>" if c == "United States" else c,
+            text=f"<span style='color:{text_color}'><b>{c}</b></span>" if c == "United States"
+                 else f"<span style='color:{text_color}'>{c}</span>",
             textposition="middle right",
         ) for c in COUNTRIES_MULTI]
     ))
@@ -555,6 +567,7 @@ def _multi_country_mobility(dark_mode: str, col: str, title: str) -> go.Figure:
         showlegend=False,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
     )
     hide_none_traces(fig)
     return fig
@@ -595,6 +608,7 @@ def make_county_heatmap(dark_mode: str, race: str, metric: str, title: str) -> g
         showlegend=False,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
         geo=dict(scope="usa", projection=go.layout.geo.Projection(type="albers usa"),
                  showlakes=True, lakecolor="rgb(255, 255, 255)"),
     )
@@ -639,6 +653,7 @@ def make_timeseries_countries(data, title, yaxis_title, xaxis_title, dark_mode: 
         showlegend=False,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
     )
     hide_none_traces(fig)
     return fig
@@ -684,6 +699,7 @@ def make_electricity_cost(dark_mode: str) -> go.Figure:
         legend=dict(x=0.7, y=0.98, bgcolor=legend_bg, bordercolor=legend_border, borderwidth=1),
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
     )
     return fig
 
@@ -721,6 +737,7 @@ def make_state_home_affordability(state: str, dark_mode: str) -> go.Figure:
         showlegend=True,
         template=get_color_template(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
         legend=dict(x=0.01, y=0.99, xanchor="left", yanchor="top"),
     )
     return fig
