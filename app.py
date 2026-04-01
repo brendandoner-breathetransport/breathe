@@ -573,9 +573,9 @@ def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_
 
 def plot_period_dashed_line(fig, year=None, text=None):
     fig.add_vline(
-        x=1980,
+        x=1969,
         line=dict(color='rgba(0,0,0,0.9)', width=2, dash='dash', ),
-        annotation_text="1980",
+        annotation_text="1969",
         annotation_position="top right",
         annotation_font_color="black",
     )
