@@ -220,6 +220,93 @@
     }
     #splash-close:hover { opacity: 0.85; }
 
+    /* ── Explain button & modal ──────────────────────────────────────── */
+    .explain-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      z-index: 10;
+      background: #d4f5a0;
+      border: 1px solid #b8e870;
+      border-radius: 6px;
+      color: #3a6b00;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 0.25rem 0.6rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .explain-btn:hover { color: var(--accent); border-color: var(--accent); }
+    #explain-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0,0,0,0.55);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #explain-overlay.open { display: flex; }
+    #explain-modal {
+      background: var(--modal-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      padding: 2rem 2.25rem 1.5rem;
+    }
+    #explain-modal p {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--text-body);
+      margin: 0 0 0.75rem;
+    }
+    .pie-scenario-label {
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--muted);
+      margin: 0.75rem 0 0.35rem;
+    }
+    .pie-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .pie-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .pie-cell svg {
+      width: 100%;
+      max-width: 90px;
+      height: auto;
+    }
+    .pie-cell-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    #explain-close {
+      display: block;
+      margin-left: auto;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    #explain-close:hover { opacity: 0.85; }
+
     /* ── Page home top offset for fixed nav ─────────────────────────── */
     #page-home { padding-top: var(--nav-h); }
 
@@ -322,6 +409,14 @@
       gap: 1.25rem;
       font-size: 0.78rem;
       color: var(--muted);
+    }
+    .legend-dot-unselected {
+      background: #cccccc;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+    .dark-mode .legend-dot-unselected {
+      background: #1d2021;
+      border: 1px solid rgba(255,255,255,0.2);
     }
     .legend-dot {
       display: inline-block;
@@ -481,7 +576,7 @@
       margin: 2.5rem auto 0;
     }
     .about-section-label {
-      font-size: 0.75rem;
+      font-size: 1rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -724,6 +819,43 @@
   </div>
 </div>
 
+<!-- ── Explain modal ─────────────────────────────────────────────────── -->
+<div id="explain-overlay" onclick="if(event.target===this)closeExplainModal()">
+  <div id="explain-modal">
+    <p>Your piece of the pie can be bigger than your parents if the pie is growing and/or your slice is bigger.</p>
+    <p>This graph separates out and shows just the impact on the rich taking more on the American Dream.</p>
+    <p class="pie-scenario-label">Below we see what has been happening in the U.S., the pie is growing but our paychecks are shrinking, because the rich are taking more of the pie.</p></p>
+    <div class="pie-grid">
+      <!-- 1969: r=35, share=21.2% -->
+      <div class="pie-cell">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="35" fill="var(--input-bg)"/>
+          <path d="M 50 50 L 50 15 A 35 35 0 0 1 84.03 41.81 Z" fill="var(--accent)"/>
+        </svg>
+        <span class="pie-cell-label">1969 — 21% share</span>
+      </div>
+      <!-- 1995: r=39, share=15.7% -->
+      <div class="pie-cell">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="39" fill="var(--input-bg)"/>
+          <path d="M 50 50 L 50 11 A 39 39 0 0 1 82.58 28.57 Z" fill="var(--accent)"/>
+        </svg>
+        <span class="pie-cell-label">1995 — 16% share</span>
+      </div>
+      <!-- 2022: r=42, share=13.4% -->
+      <div class="pie-cell">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="var(--input-bg)"/>
+          <path d="M 50 50 L 50 8 A 42 42 0 0 1 81.40 22.11 Z" fill="var(--accent)"/>
+        </svg>
+        <span class="pie-cell-label">2022 — 13% share</span>
+      </div>
+    </div>
+
+    <button id="explain-close" onclick="closeExplainModal()">Got it</button>
+  </div>
+</div>
+
 <!-- ── Home page ─────────────────────────────────────────────────────── -->
 <div id="page-home">
 
@@ -752,7 +884,7 @@
         <div id="area-map"></div>
         <div class="area-legend">
           <span><span class="legend-dot" style="background:#4a90e2"></span>Selected</span>
-          <span><span class="legend-dot" style="background:#1d2021;border:1px solid rgba(255,255,255,0.2)"></span>Not selected</span>
+          <span><span class="legend-dot legend-dot-unselected"></span>Not selected</span>
         </div>
       </div>
     </div>
@@ -821,7 +953,10 @@
           <h2>How healthy is the American Dream?</h2>
           <div class="chart-grid">
             <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div></div>
-            <div class="chart-card" id="card-mobility-international"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-mobility-international">
+              <div class="chart-loading">Loading…</div>
+              <button class="explain-btn" onclick="openExplainModal()">Explain this</button>
+            </div>
             <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div></div>
             <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div></div>
           </div>
@@ -881,7 +1016,7 @@
 
   <!-- Hero -->
   <div class="about-hero">
-    <div class="about-eyebrow">Employee-Owned Cooperative</div>
+    <div class="about-eyebrow">Worker-Owned Cooperative</div>
     <h1>Working to Improve the Lives of Everyday Americans</h1>
     <p class="about-tagline">Breathe is a worker-owned cooperative dedicated to giving everyday Americans the data and tools to understand how the system really works — and how to change it.</p>
   </div>
@@ -980,14 +1115,17 @@ function getStateZ(abbrev) {
   return SELECTABLE_STATES.has(abbrev) ? 1 : 0;
 }
 
-const MAP_COLORSCALE = [
-  [0.00, '#1d2021'],
-  [0.49, '#1d2021'],
-  [0.50, '#1d2021'],
-  [0.74, '#1d2021'],
-  [0.75, '#4a90e2'],
-  [1.00, '#4a90e2'],
-];
+function getMapColorscale() {
+  const unselected = state.darkMode ? '#1d2021' : '#cccccc';
+  return [
+    [0.00, unselected],
+    [0.49, unselected],
+    [0.50, unselected],
+    [0.74, unselected],
+    [0.75, '#4a90e2'],
+    [1.00, '#4a90e2'],
+  ];
+}
 
 let areaMapInitialized = false;
 
@@ -1004,11 +1142,11 @@ function buildMapTrace() {
     z: zValues,
     zmin: 0,
     zmax: 2,
-    colorscale: MAP_COLORSCALE,
+    colorscale: getMapColorscale(),
     showscale: false,
     hovertemplate: '%{text}<extra></extra>',
     text: hovertexts,
-    marker: { line: { color: 'rgba(255,255,255,0.15)', width: 1 } },
+    marker: { line: { color: state.darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)', width: 1 } },
   };
 }
 
@@ -1021,13 +1159,11 @@ function buildMapLayout() {
       bgcolor: 'rgba(0,0,0,0)',
       showlakes: false,
       showframe: false,
-      showcoastlines: isUSA,
-      coastlinecolor: '#4a90e2',
-      coastlinewidth: 2,
+      showcoastlines: false,
       showcountries: isUSA,
       countrycolor: '#4a90e2',
       countrywidth: 2,
-      landcolor: '#1a2430',
+      landcolor: state.darkMode ? '#1a2430' : '#e8e8e8',
     },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1326,6 +1462,8 @@ document.getElementById("darkModeToggle").addEventListener("change", e => {
   reloadAllLoaded();
   reloadStateChart();
   reloadMtBallotCharts();
+  reloadUsBallotCharts();
+  reloadAreaMap();
 });
 
 // ── Settings panel ─────────────────────────────────────────────────────────
@@ -1371,6 +1509,14 @@ function openSplash() {
 
 function closeSplash() {
   document.getElementById('splash-overlay').classList.remove('open');
+}
+
+function openExplainModal() {
+  document.getElementById('explain-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('explain-close').focus(), 50);
+}
+function closeExplainModal() {
+  document.getElementById('explain-overlay').classList.remove('open');
 }
 
 document.getElementById('splash-close').addEventListener('keydown', e => {
@@ -1442,7 +1588,20 @@ const BALLOT_DATA = {
 function updateBallot(area) {
   const container = document.getElementById('ballot-content');
   if (area === 'United States') {
-    container.innerHTML = '<p class="ballot-placeholder-msg">Select a state on the map above to view local ballot issues.</p>';
+    container.innerHTML = `
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">2024 Candidate Policy Positions</p>
+      <div class="ballot-grid">
+        <div class="ballot-item">
+          <div class="ballot-item-id">Candidate Policy</div>
+          <div class="ballot-item-body">Lower taxes on the top 1%</div>
+        </div>
+      </div>
+      <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:1rem 0;">Since the 1970s, the top marginal tax rate on the wealthiest Americans has dropped from over 90% to under 40%. Below we show how changes to the top tax bracket have coincided with income growth — or the lack of it — for the Bottom 50%.</p>
+      <div class="chart-grid" style="margin:1rem 0;">
+        <div class="chart-card full-width" id="card-us-income-taxes"><div class="chart-loading">Loading…</div></div>
+      </div>
+    `;
+    loadUsBallotCharts();
     return;
   }
   const data = BALLOT_DATA[area];
@@ -1488,6 +1647,14 @@ function updateBallot(area) {
   `;
 }
 
+function reloadAreaMap() {
+  const mapDiv = document.getElementById('area-map');
+  if (!mapDiv || !mapDiv.data) return;
+  const lineColor = state.darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)';
+  Plotly.restyle(mapDiv, { colorscale: [getMapColorscale()], 'marker.line.color': [lineColor] }, [0]);
+  Plotly.relayout(mapDiv, buildMapLayout());
+}
+
 // ── Montana ballot charts ──────────────────────────────────────────────────
 function loadMtBallotCharts() {
   const il = enc('Bottom 50%');
@@ -1502,6 +1669,17 @@ function reloadMtBallotCharts() {
   const barchartCard = document.getElementById('card-mt-barchart');
   if (incomeCard   && incomeCard.querySelector('.plot-div'))   loadMtBallotCharts();
   else if (barchartCard && barchartCard.querySelector('.plot-div')) loadMtBallotCharts();
+}
+
+// ── U.S. ballot charts ─────────────────────────────────────────────────────
+function loadUsBallotCharts() {
+  loadChart('card-us-income-taxes', `/api/economy/income-taxes?${incomeParams()}`);
+}
+
+function reloadUsBallotCharts() {
+  if (state.selectedArea !== 'United States') return;
+  const card = document.getElementById('card-us-income-taxes');
+  if (card && card.querySelector('.plot-div')) loadUsBallotCharts();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
