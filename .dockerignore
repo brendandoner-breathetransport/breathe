@@ -1,0 +1,11 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+.env
+data_raw/
+notebooks/
+app.py
+civic_affordability_pg/
+rsconnect-python/
+*.md
