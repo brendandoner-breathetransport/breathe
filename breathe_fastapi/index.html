@@ -11,16 +11,45 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #1d2021;
-      --nav-bg: #111;
-      --card-bg: rgba(255,255,255,0.05);
-      --text: rgba(255,255,255,0.88);
-      --muted: rgba(255,255,255,0.5);
+      --bg: #f5f5f2;
+      --nav-bg: #ffffff;
+      --card-bg: rgba(0,0,0,0.04);
+      --text: rgba(0,0,0,0.85);
+      --muted: rgba(0,0,0,0.45);
       --accent: #4a90e2;
-      --border: rgba(255,255,255,0.12);
+      --border: rgba(0,0,0,0.10);
       --tab-active: #4a90e2;
       --nav-h: 52px;
       --content-bar-h: 42px;
+      --panel-bg: #eeedea;
+      --modal-bg: #f8f6f2;
+      --input-bg: #e4e2de;
+      --hover-bg: rgba(0,0,0,0.05);
+      --chip-bg: rgba(0,0,0,0.05);
+      --chip-hover: rgba(0,0,0,0.09);
+      --text-body: rgba(0,0,0,0.72);
+      --text-faint: rgba(0,0,0,0.28);
+      --overlay-bg: rgba(0,0,0,0.45);
+      --content-bar-bg: #eeedea;
+    }
+
+    body.dark-mode {
+      --bg: #2a3240;
+      --nav-bg: #1e2738;
+      --card-bg: rgba(255,255,255,0.05);
+      --text: rgba(255,255,255,0.88);
+      --muted: rgba(255,255,255,0.5);
+      --border: rgba(255,255,255,0.12);
+      --panel-bg: #1e2738;
+      --modal-bg: #253040;
+      --input-bg: #2e3d52;
+      --hover-bg: rgba(255,255,255,0.07);
+      --chip-bg: rgba(255,255,255,0.06);
+      --chip-hover: rgba(255,255,255,0.10);
+      --text-body: rgba(255,255,255,0.82);
+      --text-faint: rgba(255,255,255,0.30);
+      --overlay-bg: rgba(0,0,0,0.65);
+      --content-bar-bg: #161c20;
     }
 
     body {
@@ -59,7 +88,7 @@
       border-radius: 6px;
       transition: color 0.15s, background 0.15s;
     }
-    .page-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+    .page-btn:hover { color: var(--text); background: var(--hover-bg); }
     .page-btn.active { color: var(--tab-active); font-weight: 600; }
 
     .nav-spacer { flex: 1; }
@@ -76,7 +105,7 @@
       border-radius: 6px;
       transition: color 0.15s, background 0.15s;
     }
-    #settings-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+    #settings-btn:hover { color: var(--text); background: var(--hover-bg); }
     #settings-btn.open { color: var(--accent); background: rgba(74,144,226,0.1); }
 
     /* ── Settings dropdown panel ─────────────────────────────────────── */
@@ -86,12 +115,12 @@
       top: calc(var(--nav-h) + 4px);
       right: 1rem;
       z-index: 200;
-      background: #161c20;
+      background: var(--panel-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 0.75rem 1rem;
       min-width: 220px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
       flex-direction: column;
       gap: 0.65rem;
     }
@@ -113,14 +142,14 @@
       position: fixed;
       inset: 0;
       z-index: 500;
-      background: rgba(0,0,0,0.75);
+      background: var(--overlay-bg);
       align-items: center;
       justify-content: center;
       padding: 1rem;
     }
     #splash-overlay.open { display: flex; }
     #splash-modal {
-      background: #1d2d3a;
+      background: var(--modal-bg);
       border: 1px solid var(--border);
       border-radius: 14px;
       max-width: 680px;
@@ -149,9 +178,17 @@
     #splash-body p {
       font-size: 0.95rem;
       line-height: 1.65;
-      color: rgba(255,255,255,0.82);
+      color: var(--text-body);
       margin-bottom: 0.75rem;
     }
+    #splash-body ol {
+      font-size: 0.95rem;
+      line-height: 1.65;
+      color: var(--text-body);
+      margin: 0 0 1.25rem 0;
+      padding-left: 1.5rem;
+    }
+    #splash-body ol li { margin-bottom: 0.4rem; }
     #splash-footer {
       display: flex;
       align-items: center;
@@ -183,12 +220,99 @@
     }
     #splash-close:hover { opacity: 0.85; }
 
+    /* ── Explain button & modal ──────────────────────────────────────── */
+    .explain-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      z-index: 10;
+      background: #d4f5a0;
+      border: 1px solid #b8e870;
+      border-radius: 6px;
+      color: #3a6b00;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 0.25rem 0.6rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .explain-btn:hover { color: var(--accent); border-color: var(--accent); }
+    #explain-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0,0,0,0.55);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #explain-overlay.open { display: flex; }
+    #explain-modal {
+      background: var(--modal-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      padding: 2rem 2.25rem 1.5rem;
+    }
+    #explain-modal p {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--text-body);
+      margin: 0 0 0.75rem;
+    }
+    .pie-scenario-label {
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--muted);
+      margin: 0.75rem 0 0.35rem;
+    }
+    .pie-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .pie-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .pie-cell svg {
+      width: 100%;
+      max-width: 90px;
+      height: auto;
+    }
+    .pie-cell-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    #explain-close {
+      display: block;
+      margin-left: auto;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    #explain-close:hover { opacity: 0.85; }
+
     /* ── Page home top offset for fixed nav ─────────────────────────── */
     #page-home { padding-top: var(--nav-h); }
 
     /* ── Combined content bar (tabs + area picker) ───────────────────── */
     #content-bar {
-      background: #161c20;
+      background: var(--content-bar-bg);
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: var(--nav-h);
@@ -233,7 +357,7 @@
       transition: background 0.15s;
       white-space: nowrap;
     }
-    #area-picker-trigger:hover { background: rgba(255,255,255,0.06); }
+    #area-picker-trigger:hover { background: var(--hover-bg); }
     #content-bar.open #area-picker-trigger { background: rgba(74,144,226,0.1); }
 
     #area-picker-label {
@@ -286,6 +410,14 @@
       font-size: 0.78rem;
       color: var(--muted);
     }
+    .legend-dot-unselected {
+      background: #cccccc;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+    .dark-mode .legend-dot-unselected {
+      background: #1d2021;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
     .legend-dot {
       display: inline-block;
       width: 10px; height: 10px;
@@ -304,7 +436,7 @@
     }
 
     .area-chip {
-      background: rgba(255,255,255,0.06);
+      background: var(--chip-bg);
       border: 1px solid var(--border);
       border-radius: 20px;
       color: var(--muted);
@@ -313,7 +445,7 @@
       padding: 0.35rem 1rem;
       transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
-    .area-chip:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+    .area-chip:hover { background: var(--chip-hover); color: var(--text); }
     .area-chip.selected {
       background: rgba(74,144,226,0.2);
       border-color: var(--accent);
@@ -350,7 +482,7 @@
     .placeholder-msg { font-size: 0.875rem; color: var(--muted); }
     .placeholder-hint {
       font-size: 0.78rem;
-      color: rgba(255,255,255,0.3);
+      color: var(--text-faint);
       margin-top: 0.25rem;
     }
 
@@ -434,7 +566,7 @@
     .about-card p {
       font-size: 0.97rem;
       line-height: 1.75;
-      color: rgba(255,255,255,0.75);
+      color: var(--text-body);
       margin: 0;
     }
 
@@ -444,7 +576,7 @@
       margin: 2.5rem auto 0;
     }
     .about-section-label {
-      font-size: 0.75rem;
+      font-size: 1rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -460,7 +592,7 @@
     .about-section p {
       font-size: 1.02rem;
       line-height: 1.85;
-      color: rgba(255,255,255,0.78);
+      color: var(--text-body);
       margin-bottom: 1.1rem;
     }
     .about-section p:last-child { margin-bottom: 0; }
@@ -476,7 +608,7 @@
     .about-pullquote p {
       font-size: 1.08rem !important;
       font-style: italic;
-      color: rgba(255,255,255,0.88) !important;
+      color: var(--text) !important;
       margin: 0 !important;
     }
 
@@ -508,12 +640,12 @@
     .radio-group label {
       display: flex; align-items: center; gap: 0.3rem;
       font-size: 0.875rem; color: var(--text); cursor: pointer;
-      background: rgba(255,255,255,0.06);
+      background: var(--chip-bg);
       border: 1px solid var(--border);
       border-radius: 6px; padding: 0.3rem 0.65rem;
       transition: background 0.15s, border-color 0.15s;
     }
-    .radio-group label:hover { background: rgba(255,255,255,0.1); }
+    .radio-group label:hover { background: var(--chip-hover); }
     .radio-group input[type=radio] { display: none; }
     .radio-group label.checked {
       background: rgba(74,144,226,0.18);
@@ -522,7 +654,7 @@
     }
 
     .country-select {
-      background: #2a3340;
+      background: var(--input-bg);
       border: 1px solid var(--border);
       border-radius: 6px;
       color: var(--text);
@@ -533,8 +665,8 @@
       cursor: pointer;
     }
     .country-select option {
-      background: #2a3340;
-      color: rgba(255,255,255,0.88);
+      background: var(--input-bg);
+      color: var(--text);
     }
 
     /* ── Chart grid ──────────────────────────────────────────────────── */
@@ -624,7 +756,7 @@
     .ballot-item-body {
       font-size: 0.9rem;
       line-height: 1.65;
-      color: rgba(255,255,255,0.82);
+      color: var(--text-body);
       margin-bottom: 0.65rem;
     }
     .ballot-item-meta {
@@ -687,6 +819,43 @@
   </div>
 </div>
 
+<!-- ── Explain modal ─────────────────────────────────────────────────── -->
+<div id="explain-overlay" onclick="if(event.target===this)closeExplainModal()">
+  <div id="explain-modal">
+    <p>Your piece of the pie can be bigger than your parents if the pie is growing and/or your slice is bigger.</p>
+    <p>This graph separates out and shows just the impact on the rich taking more on the American Dream.</p>
+    <p class="pie-scenario-label">Below we see what has been happening in the U.S., the pie is growing but our paychecks are shrinking, because the rich are taking more of the pie.</p></p>
+    <div class="pie-grid">
+      <!-- 1969: r=35, share=21.2% -->
+      <div class="pie-cell">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="35" fill="var(--input-bg)"/>
+          <path d="M 50 50 L 50 15 A 35 35 0 0 1 84.03 41.81 Z" fill="var(--accent)"/>
+        </svg>
+        <span class="pie-cell-label">1969 — 21% share</span>
+      </div>
+      <!-- 1995: r=39, share=15.7% -->
+      <div class="pie-cell">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="39" fill="var(--input-bg)"/>
+          <path d="M 50 50 L 50 11 A 39 39 0 0 1 82.58 28.57 Z" fill="var(--accent)"/>
+        </svg>
+        <span class="pie-cell-label">1995 — 16% share</span>
+      </div>
+      <!-- 2022: r=42, share=13.4% -->
+      <div class="pie-cell">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="var(--input-bg)"/>
+          <path d="M 50 50 L 50 8 A 42 42 0 0 1 81.40 22.11 Z" fill="var(--accent)"/>
+        </svg>
+        <span class="pie-cell-label">2022 — 13% share</span>
+      </div>
+    </div>
+
+    <button id="explain-close" onclick="closeExplainModal()">Got it</button>
+  </div>
+</div>
+
 <!-- ── Home page ─────────────────────────────────────────────────────── -->
 <div id="page-home">
 
@@ -695,7 +864,7 @@
     <div id="content-bar-top">
 
       <!-- Area picker -->
-      <div id="area-picker-trigger" onclick="togglePickArea()">
+      <div id="area-picker-trigger" onclick="togglePickArea()" tabindex="0" onkeydown="if(event.key==='Enter')togglePickArea()">
         <span id="area-picker-label">Area</span>
         <span id="pick-area-selection">United States</span>
         <span id="pick-area-arrow">▼</span>
@@ -706,6 +875,7 @@
     <!-- Expandable map panel -->
     <div id="pick-area-content">
       <div id="pick-area-inner">
+        <p style="text-align:center;margin:0 0 0.75rem;font-weight:600;">Please pick an area</p>
         <div class="area-selector-row" style="justify-content:center;">
           <button id="btn-us" class="area-chip selected" onclick="selectArea('United States')">
             Select the entire United States
@@ -714,7 +884,7 @@
         <div id="area-map"></div>
         <div class="area-legend">
           <span><span class="legend-dot" style="background:#4a90e2"></span>Selected</span>
-          <span><span class="legend-dot" style="background:#1d2021;border:1px solid rgba(255,255,255,0.2)"></span>Not selected</span>
+          <span><span class="legend-dot legend-dot-unselected"></span>Not selected</span>
         </div>
       </div>
     </div>
@@ -771,7 +941,6 @@
           <div class="chart-grid">
             <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div></div>
             <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div></div>
-            <div class="chart-card full-width" id="card-income-taxes"><div class="chart-loading">Loading…</div></div>
           </div>
 
           <h2>How has the cost of living changed?</h2>
@@ -783,7 +952,10 @@
           <h2>How healthy is the American Dream?</h2>
           <div class="chart-grid">
             <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div></div>
-            <div class="chart-card" id="card-mobility-international"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-mobility-international">
+              <div class="chart-loading">Loading…</div>
+              <button class="explain-btn" onclick="openExplainModal()">Explain this</button>
+            </div>
             <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div></div>
             <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div></div>
           </div>
@@ -843,7 +1015,7 @@
 
   <!-- Hero -->
   <div class="about-hero">
-    <div class="about-eyebrow">Employee-Owned Cooperative</div>
+    <div class="about-eyebrow">Worker-Owned Cooperative</div>
     <h1>Working to Improve the Lives of Everyday Americans</h1>
     <p class="about-tagline">Breathe is a worker-owned cooperative dedicated to giving everyday Americans the data and tools to understand how the system really works — and how to change it.</p>
   </div>
@@ -854,13 +1026,13 @@
   <div class="about-cards">
     <div class="about-card">
       <div class="about-card-icon">🏛️</div>
-      <h2>Who We Are</h2>
+      <h2>What we Believe</h2>
       <p>We believe democratic governments should represent the people and serve their interests. That capitalism should be based on competition, choice, and fair rules — not rigged by those at the top.</p>
     </div>
     <div class="about-card">
       <div class="about-card-icon">🎯</div>
-      <h2>What We Believe</h2>
-      <p>The question is not Democrat or Republican, liberal or conservative. It is democracy by the people, or rule by those who have purchased the system for their own gain.</p>
+      <h2>The Question</h2>
+      <p>The question is not Democrat or Republican, liberal or conservative, progressive or moderate. The question is, rule by the people or rule by corporations &EM billionaires.</p>
     </div>
   </div>
 
@@ -938,18 +1110,22 @@ const STATE_NAMES = {
 };
 
 function getStateZ(abbrev) {
+  if (state.selectedArea === 'United States') return 2;
   if (abbrev === state.selectedArea) return 2;
   return SELECTABLE_STATES.has(abbrev) ? 1 : 0;
 }
 
-const MAP_COLORSCALE = [
-  [0.00, '#1d2021'],
-  [0.49, '#1d2021'],
-  [0.50, '#1d2021'],
-  [0.74, '#1d2021'],
-  [0.75, '#4a90e2'],
-  [1.00, '#4a90e2'],
-];
+function getMapColorscale() {
+  const unselected = state.darkMode ? '#1d2021' : '#cccccc';
+  return [
+    [0.00, unselected],
+    [0.49, unselected],
+    [0.50, unselected],
+    [0.74, unselected],
+    [0.75, '#4a90e2'],
+    [1.00, '#4a90e2'],
+  ];
+}
 
 let areaMapInitialized = false;
 
@@ -966,16 +1142,15 @@ function buildMapTrace() {
     z: zValues,
     zmin: 0,
     zmax: 2,
-    colorscale: MAP_COLORSCALE,
+    colorscale: getMapColorscale(),
     showscale: false,
     hovertemplate: '%{text}<extra></extra>',
     text: hovertexts,
-    marker: { line: { color: 'rgba(255,255,255,0.15)', width: 1 } },
+    marker: { line: { color: state.darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)', width: 1 } },
   };
 }
 
 function buildMapLayout() {
-  const isUSA = state.selectedArea === 'United States';
   return {
     geo: {
       scope: 'usa',
@@ -983,13 +1158,9 @@ function buildMapLayout() {
       bgcolor: 'rgba(0,0,0,0)',
       showlakes: false,
       showframe: false,
-      showcoastlines: isUSA,
-      coastlinecolor: '#4a90e2',
-      coastlinewidth: 2,
-      showcountries: isUSA,
-      countrycolor: '#4a90e2',
-      countrywidth: 2,
-      landcolor: '#1a2430',
+      showcoastlines: false,
+      showcountries: false,
+      landcolor: state.darkMode ? '#1a2430' : '#e8e8e8',
     },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1124,6 +1295,9 @@ function togglePickArea() {
   } else if (isNowOpen) {
     setTimeout(() => Plotly.Plots.resize(document.getElementById('area-map')), 50);
   }
+  if (isNowOpen) {
+    setTimeout(() => document.getElementById('btn-us').focus(), 50);
+  }
 }
 
 // ── Page switching ─────────────────────────────────────────────────────────
@@ -1178,7 +1352,6 @@ function incomeParams() {
 const CHARTS = {
   "card-income":        () => `/api/economy/income?${economyParams()}`,
   "card-barchart":      () => `/api/economy/barchart?${incomeParams()}&selected_country=${enc(state.country)}`,
-  "card-income-taxes":  () => `/api/economy/income-taxes?${incomeParams()}`,
   "card-house-purchase":() => `/api/economy/house-purchase-cost?${incomeParams()}`,
   "card-f150":          () => `/api/economy/f150?${incomeParams()}`,
   "card-american-dream-kids":    () => `/api/economy/american-dream-kids?dark_mode=${dm()}`,
@@ -1196,7 +1369,7 @@ const CHARTS = {
 };
 
 const TAB_CHARTS = {
-  economy:     ["card-income","card-barchart","card-income-taxes","card-house-purchase","card-f150",
+  economy:     ["card-income","card-barchart","card-house-purchase","card-f150",
                  "card-american-dream-kids","card-mobility-international",
                  "card-upward-mobility-white","card-upward-mobility-black"],
   healthcare:  ["card-hc-cost","card-hc-life","card-hc-infant","card-hc-maternal","card-hc-suicide"],
@@ -1205,7 +1378,7 @@ const TAB_CHARTS = {
 };
 
 const INCOME_CHARTS = [
-  "card-income","card-barchart","card-income-taxes","card-house-purchase","card-f150",
+  "card-income","card-barchart","card-house-purchase","card-f150",
 ];
 
 function loadTabCharts(tab) {
@@ -1281,9 +1454,12 @@ document.getElementById("countrySelect").addEventListener("change", e => {
 
 document.getElementById("darkModeToggle").addEventListener("change", e => {
   state.darkMode = e.target.checked;
+  document.body.classList.toggle('dark-mode', e.target.checked);
   reloadAllLoaded();
   reloadStateChart();
   reloadMtBallotCharts();
+  reloadUsBallotCharts();
+  reloadAreaMap();
 });
 
 // ── Settings panel ─────────────────────────────────────────────────────────
@@ -1309,27 +1485,43 @@ document.getElementById('settingsShowSplash').addEventListener('change', e => {
 });
 
 // ── Splash screen ───────────────────────────────────────────────────────────
-const WELCOME_MD = `# Welcome friends
-
-**The system is broken** for working Americans. Its working fantastically for billionaires.
-
-It was built over the last 50 years by **Billionaire Overlords**
-to make themselves richer and more powerful.
-
-This site will show you **how the system affects the daily lives** of working Americans and
-we will show you where else things you vote on have been tried and what happened.
-
-Lets **pick policies and politicians that work for us**, not for Overlords and their monopolies.
+const WELCOME_HTML = `
+<h1>Welcome friends</h1>
+<p><strong>The system is broken</strong> for working Americans.</p>
+<p>It's working fantastically for <strong>billionaires</strong> (the ones who designed and built it).</p>
+<p>This site will show you two things:</p>
+<ol>
+  <li><strong>How the system affects the daily lives of working Americans</strong></li>
+  <li><strong>How policies and candidate promises have played out in other places</strong></li>
+</ol>
+<p>Let's <strong>take back representaton of our government</strong> and make the system work for us.</p>
 `;
 
 function openSplash() {
-  document.getElementById('splash-body').innerHTML = marked.parse(WELCOME_MD);
+  document.getElementById('splash-body').innerHTML = WELCOME_HTML;
   document.getElementById('splash-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('splash-close').focus(), 50);
 }
 
 function closeSplash() {
   document.getElementById('splash-overlay').classList.remove('open');
 }
+
+function openExplainModal() {
+  document.getElementById('explain-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('explain-close').focus(), 50);
+}
+function closeExplainModal() {
+  document.getElementById('explain-overlay').classList.remove('open');
+}
+
+document.getElementById('splash-close').addEventListener('keydown', e => {
+  if (e.key === 'Enter') closeSplash();
+});
+
+document.getElementById('btn-us').addEventListener('keydown', e => {
+  if (e.key === 'Enter') selectArea('United States');
+});
 
 document.getElementById('splashShowStartup').addEventListener('change', e => {
   const val = e.target.checked ? 'true' : 'false';
@@ -1392,7 +1584,20 @@ const BALLOT_DATA = {
 function updateBallot(area) {
   const container = document.getElementById('ballot-content');
   if (area === 'United States') {
-    container.innerHTML = '<p class="ballot-placeholder-msg">Select a state on the map above to view local ballot issues.</p>';
+    container.innerHTML = `
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">2024 Candidate Policy Positions</p>
+      <div class="ballot-grid">
+        <div class="ballot-item">
+          <div class="ballot-item-id">Candidate Policy</div>
+          <div class="ballot-item-body">Lower taxes on the top 1%</div>
+        </div>
+      </div>
+      <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:1rem 0;">Since the 1970s, the top marginal tax rate on the wealthiest Americans has dropped from over 90% to under 40%. Below we show how changes to the top tax bracket have coincided with income growth — or the lack of it — for the Bottom 50%.</p>
+      <div class="chart-grid" style="margin:1rem 0;">
+        <div class="chart-card full-width" id="card-us-income-taxes"><div class="chart-loading">Loading…</div></div>
+      </div>
+    `;
+    loadUsBallotCharts();
     return;
   }
   const data = BALLOT_DATA[area];
@@ -1420,10 +1625,10 @@ function updateBallot(area) {
     container.innerHTML = `
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
       <div class="ballot-grid">${ballotItemHtml(first)}</div>
-      <p style="font-size:0.95rem;line-height:1.65;color:rgba(255,255,255,0.82);margin:1rem 0;">Canada outlawed corporate money in elections in 2004. Below we show how the paychecks of the Bottom 50% have changed and compare the paychecks of the U.S. and Canada in 2023. Both the U.S. and Canada started trending down around 1980, after Canada outlawed corporate money it began to trend up, while the U.S. has continued trending down.</p>
+      <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:1rem 0;">Canada outlawed corporate money in elections in 2004. Below we show how the paychecks of the Bottom 50% have changed and compare the paychecks of the U.S. and Canada in 2023. Both the U.S. and Canada started trending down around 1980, after Canada outlawed corporate money it began to trend up, while the U.S. has continued trending down.</p>
       <div class="chart-grid" style="margin:1rem 0;">
         <div class="chart-card" id="card-mt-income"><div class="chart-loading">Loading…</div></div>
-        <div class="chart-card" id="card-mt-barchart"><div class="chart-loading">Loading…</div></div>
+        <div class="chart-card" id="card-mt-income-france"><div class="chart-loading">Loading…</div></div>
       </div>
       <div class="ballot-grid">${rest.map(ballotItemHtml).join('')}</div>
     `;
@@ -1438,20 +1643,40 @@ function updateBallot(area) {
   `;
 }
 
+function reloadAreaMap() {
+  const mapDiv = document.getElementById('area-map');
+  if (!mapDiv || !mapDiv.data) return;
+  const lineColor = state.darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)';
+  Plotly.restyle(mapDiv, { colorscale: [getMapColorscale()], 'marker.line.color': [lineColor] }, [0]);
+  Plotly.relayout(mapDiv, buildMapLayout());
+}
+
 // ── Montana ballot charts ──────────────────────────────────────────────────
 function loadMtBallotCharts() {
   const il = enc('Bottom 50%');
-  const ct = enc('canada');
-  loadChart('card-mt-income',   `/api/economy/income?dark_mode=${dm()}&income_level=${il}&country=${ct}`);
-  loadChart('card-mt-barchart', `/api/economy/barchart?dark_mode=${dm()}&income_level=${il}&highlight_canada=true`);
+  const canadaTitle = enc("Canada's paychecks after banning corporate money");
+  const franceTitle = enc("France's paychecks after banning corporate money");
+  loadChart('card-mt-income',        `/api/economy/income?dark_mode=${dm()}&income_level=${il}&country=${enc('canada')}&title=${canadaTitle}`);
+  loadChart('card-mt-income-france', `/api/economy/income?dark_mode=${dm()}&income_level=${il}&country=${enc('france')}&title=${franceTitle}`);
 }
 
 function reloadMtBallotCharts() {
   if (state.selectedArea !== 'MT') return;
-  const incomeCard   = document.getElementById('card-mt-income');
-  const barchartCard = document.getElementById('card-mt-barchart');
-  if (incomeCard   && incomeCard.querySelector('.plot-div'))   loadMtBallotCharts();
-  else if (barchartCard && barchartCard.querySelector('.plot-div')) loadMtBallotCharts();
+  const incomeCard = document.getElementById('card-mt-income');
+  const franceCard = document.getElementById('card-mt-income-france');
+  if (incomeCard && incomeCard.querySelector('.plot-div')) loadMtBallotCharts();
+  else if (franceCard && franceCard.querySelector('.plot-div')) loadMtBallotCharts();
+}
+
+// ── U.S. ballot charts ─────────────────────────────────────────────────────
+function loadUsBallotCharts() {
+  loadChart('card-us-income-taxes', `/api/economy/income-taxes?${incomeParams()}`);
+}
+
+function reloadUsBallotCharts() {
+  if (state.selectedArea !== 'United States') return;
+  const card = document.getElementById('card-us-income-taxes');
+  if (card && card.querySelector('.plot-div')) loadUsBallotCharts();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
