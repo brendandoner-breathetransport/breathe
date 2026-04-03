@@ -220,24 +220,35 @@
     }
     #splash-close:hover { opacity: 0.85; }
 
-    /* ── Explain button & modal ──────────────────────────────────────── */
-    .explain-btn {
+    /* ── Chart button group (Explain + Download) ────────────────────── */
+    .chart-btn-group {
       position: absolute;
-      top: 0.5rem;
+      bottom: 0.5rem;
       right: 0.5rem;
       z-index: 10;
-      background: #d4f5a0;
-      border: 1px solid #b8e870;
+      display: flex;
+      gap: 0.35rem;
+    }
+    .explain-btn, .download-btn {
       border-radius: 6px;
-      color: #3a6b00;
       font-size: 0.72rem;
       font-weight: 600;
       letter-spacing: 0.04em;
       padding: 0.25rem 0.6rem;
       cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
+      transition: opacity 0.15s;
     }
-    .explain-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .explain-btn {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+    }
+    .download-btn {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+    }
+    .explain-btn:hover, .download-btn:hover { opacity: 0.75; }
     #explain-overlay {
       display: none;
       position: fixed;
@@ -822,6 +833,8 @@
 <!-- ── Explain modal ─────────────────────────────────────────────────── -->
 <div id="explain-overlay" onclick="if(event.target===this)closeExplainModal()">
   <div id="explain-modal">
+    <div id="explain-content-soon" style="display:none"><p>Coming soon</p></div>
+    <div id="explain-content-main">
     <p>Your piece of the pie can be bigger than your parents if the pie is growing and/or your slice is bigger.</p>
     <p>This graph separates out and shows just the impact on the rich taking more on the American Dream.</p>
     <p class="pie-scenario-label">Below we see what has been happening in the U.S., the pie is growing but our paychecks are shrinking, because the rich are taking more of the pie.</p></p>
@@ -852,6 +865,7 @@
       </div>
     </div>
 
+    </div><!-- end explain-content-main -->
     <button id="explain-close" onclick="closeExplainModal()">Got it</button>
   </div>
 </div>
@@ -913,7 +927,7 @@
         <div id="state-economy" style="display: none">
           <h1 id="state-economy-title">Affordability</h1>
           <div class="chart-grid">
-            <div class="chart-card" id="card-state-affordability"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-state-affordability"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
           </div>
         </div>
 
@@ -939,25 +953,25 @@
           </div>
 
           <div class="chart-grid">
-            <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div></div>
-            <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+            <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
           </div>
 
           <h2>How has the cost of living changed?</h2>
           <div class="chart-grid">
-            <div class="chart-card" id="card-house-purchase"><div class="chart-loading">Loading…</div></div>
-            <div class="chart-card" id="card-f150"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-house-purchase"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+            <div class="chart-card" id="card-f150"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
           </div>
 
           <h2>How healthy is the American Dream?</h2>
           <div class="chart-grid">
-            <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
             <div class="chart-card" id="card-mobility-international">
               <div class="chart-loading">Loading…</div>
-              <button class="explain-btn" onclick="openExplainModal()">Explain this</button>
+              <div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('main')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div>
             </div>
-            <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div></div>
-            <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div></div>
+            <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+            <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
           </div>
         </div>
 
@@ -967,11 +981,11 @@
       <div class="tab-panel" id="tab-healthcare">
         <h1>What is the cost and performance of the American healthcare system?</h1>
         <div class="chart-grid">
-          <div class="chart-card" id="card-hc-cost"><div class="chart-loading">Loading…</div></div>
-          <div class="chart-card" id="card-hc-life"><div class="chart-loading">Loading…</div></div>
-          <div class="chart-card" id="card-hc-infant"><div class="chart-loading">Loading…</div></div>
-          <div class="chart-card" id="card-hc-maternal"><div class="chart-loading">Loading…</div></div>
-          <div class="chart-card" id="card-hc-suicide"><div class="chart-loading">Loading…</div></div>
+          <div class="chart-card" id="card-hc-cost"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+          <div class="chart-card" id="card-hc-life"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+          <div class="chart-card" id="card-hc-infant"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+          <div class="chart-card" id="card-hc-maternal"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+          <div class="chart-card" id="card-hc-suicide"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
         </div>
       </div>
 
@@ -979,8 +993,8 @@
       <div class="tab-panel" id="tab-justice">
         <h1>Is there racial bias in the American justice system?</h1>
         <div class="chart-grid">
-          <div class="chart-card" id="card-jail-white"><div class="chart-loading">Loading…</div></div>
-          <div class="chart-card" id="card-jail-black"><div class="chart-loading">Loading…</div></div>
+          <div class="chart-card" id="card-jail-white"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+          <div class="chart-card" id="card-jail-black"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
         </div>
       </div>
 
@@ -988,7 +1002,7 @@
       <div class="tab-panel" id="tab-environment">
         <h1>What are the cheapest sources for electricity?</h1>
         <div class="chart-grid">
-          <div class="chart-card full-width" id="card-electricity"><div class="chart-loading">Loading…</div></div>
+          <div class="chart-card full-width" id="card-electricity"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
         </div>
       </div>
 
@@ -1129,6 +1143,19 @@ function getMapColorscale() {
 
 let areaMapInitialized = false;
 
+function buildMapLabelTrace() {
+  return {
+    type: 'scattergeo',
+    locationmode: 'USA-states',
+    locations: ALL_STATES,
+    mode: 'text',
+    text: ALL_STATES,
+    textfont: { size: 8, color: state.darkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)' },
+    hoverinfo: 'skip',
+    showlegend: false,
+  };
+}
+
 function buildMapTrace() {
   const zValues = ALL_STATES.map(s => getStateZ(s));
   const hovertexts = ALL_STATES.map(s => {
@@ -1171,7 +1198,7 @@ function buildMapLayout() {
 
 function initAreaMap() {
   const mapDiv = document.getElementById('area-map');
-  Plotly.newPlot(mapDiv, [buildMapTrace()], buildMapLayout(), {
+  Plotly.newPlot(mapDiv, [buildMapTrace(), buildMapLabelTrace()], buildMapLayout(), {
     ...PLOTLY_CONFIG,
     scrollZoom: false,
     displayModeBar: false,
@@ -1507,12 +1534,47 @@ function closeSplash() {
   document.getElementById('splash-overlay').classList.remove('open');
 }
 
-function openExplainModal() {
+function openExplainModal(type = 'main') {
+  document.getElementById('explain-content-main').style.display = type === 'main' ? '' : 'none';
+  document.getElementById('explain-content-soon').style.display = type === 'soon' ? '' : 'none';
   document.getElementById('explain-overlay').classList.add('open');
   setTimeout(() => document.getElementById('explain-close').focus(), 50);
 }
 function closeExplainModal() {
   document.getElementById('explain-overlay').classList.remove('open');
+}
+
+function downloadChartCSV(cardId) {
+  const div = document.getElementById(cardId);
+  if (!div || !div.data || !div.data.length) return;
+
+  const traces = div.data.filter(t => t.x && t.y && t.x.length > 1);
+  if (!traces.length) return;
+
+  // Collect all unique x values in sorted order
+  const allX = [...new Set(traces.flatMap(t => Array.from(t.x)))].sort((a, b) => a - b);
+
+  // Build header row: first column is the x-axis label, then one column per trace
+  const headers = ['year', ...traces.map(t => (t.name || 'value').replace(/\s+/g, '_'))];
+
+  // Build data rows
+  const rows = allX.map(x => {
+    const row = [x];
+    traces.forEach(t => {
+      const idx = Array.from(t.x).indexOf(x);
+      row.push(idx >= 0 ? t.y[idx] : '');
+    });
+    return row;
+  });
+
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = cardId + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 document.getElementById('splash-close').addEventListener('keydown', e => {
@@ -1594,7 +1656,7 @@ function updateBallot(area) {
       </div>
       <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:1rem 0;">Since the 1970s, the top marginal tax rate on the wealthiest Americans has dropped from over 90% to under 40%. Below we show how changes to the top tax bracket have coincided with income growth — or the lack of it — for the Bottom 50%.</p>
       <div class="chart-grid" style="margin:1rem 0;">
-        <div class="chart-card full-width" id="card-us-income-taxes"><div class="chart-loading">Loading…</div></div>
+        <div class="chart-card full-width" id="card-us-income-taxes"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
       </div>
     `;
     loadUsBallotCharts();
@@ -1627,8 +1689,8 @@ function updateBallot(area) {
       <div class="ballot-grid">${ballotItemHtml(first)}</div>
       <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:1rem 0;">Canada outlawed corporate money in elections in 2004. Below we show how the paychecks of the Bottom 50% have changed and compare the paychecks of the U.S. and Canada in 2023. Both the U.S. and Canada started trending down around 1980, after Canada outlawed corporate money it began to trend up, while the U.S. has continued trending down.</p>
       <div class="chart-grid" style="margin:1rem 0;">
-        <div class="chart-card" id="card-mt-income"><div class="chart-loading">Loading…</div></div>
-        <div class="chart-card" id="card-mt-income-france"><div class="chart-loading">Loading…</div></div>
+        <div class="chart-card" id="card-mt-income"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+        <div class="chart-card" id="card-mt-income-france"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
       </div>
       <div class="ballot-grid">${rest.map(ballotItemHtml).join('')}</div>
     `;
@@ -1647,7 +1709,9 @@ function reloadAreaMap() {
   const mapDiv = document.getElementById('area-map');
   if (!mapDiv || !mapDiv.data) return;
   const lineColor = state.darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)';
+  const labelColor = state.darkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)';
   Plotly.restyle(mapDiv, { colorscale: [getMapColorscale()], 'marker.line.color': [lineColor] }, [0]);
+  Plotly.restyle(mapDiv, { 'textfont.color': [labelColor] }, [1]);
   Plotly.relayout(mapDiv, buildMapLayout());
 }
 
