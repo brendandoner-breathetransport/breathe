@@ -13,7 +13,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 
 # ---------------------------------------------------------------------------
 # Data imports
@@ -255,13 +255,13 @@ def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_
 def add_period_lines(fig, year=None, text=None, dark_mode="light"):
     line_color = "rgba(255,255,255,0.3)" if dark_mode == "dark" else "rgba(0,0,0,0.3)"
     font_color = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "black"
-    fig.add_vline(
-        x=1969,
-        line=dict(color=line_color, width=2, dash="dash"),
-        annotation_text="1969",
-        annotation_position="bottom right",
-        annotation_font_color=font_color,
-    )
+    # fig.add_vline(
+    #     x=1969,
+    #     line=dict(color=line_color, width=2, dash="dash"),
+    #     annotation_text="1969",
+    #     annotation_position="bottom right",
+    #     annotation_font_color=font_color,
+    # )
     if year is not None:
         fig.add_vline(
             x=year,
@@ -363,7 +363,7 @@ def _economy_base_layout(fig, title, income_level, dark_mode, xrange=None, y_dat
     )
 
 
-def make_economy_income(dark_mode: str, income_level: str, country: str) -> go.Figure:
+def make_economy_income(dark_mode: str, income_level: str, country: str, title: str = "") -> go.Figure:
     income_col = INCOME_LEVELS[income_level]
     data = shares_wid.filter(pl.col("country") == country).filter(pl.col("year") >= 1880)
     usa = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880)
@@ -384,18 +384,20 @@ def make_economy_income(dark_mode: str, income_level: str, country: str) -> go.F
         + get_highlights_line_min_max(data=usa, col_date="year", col_metric=income_col, number_type="thousands", max_or_min="max", dark_mode=dark_mode, xrange=LAYOUT_ECONOMY_INCOME_XRANGE)
     )
     fig = go.Figure(data=traces)
-    get_highlights_line_min_max(data=usa, col_date="year", col_metric=income_col, number_type="thousands", max_or_min="max", dark_mode=dark_mode, fig=fig, xrange=LAYOUT_ECONOMY_INCOME_XRANGE)
+    if country not in ("canada", "france"):
+        get_highlights_line_min_max(data=usa, col_date="year", col_metric=income_col, number_type="thousands", max_or_min="max", dark_mode=dark_mode, fig=fig, xrange=LAYOUT_ECONOMY_INCOME_XRANGE)
 
     vline_year = {"canada": 2004, "france": 1995}.get(country)
     vline_text = {
         "canada": "2004<br>Canadian<br>corporate<br>money<br>ban",
         "france": "1995<br>French<br>corporate<br>money<br>ban",
     }.get(country)
+    add_period_lines(fig=fig, year=vline_year, text=vline_text, dark_mode=dark_mode)
 
     all_y = np.concatenate([data[income_col].to_numpy(), usa[income_col].to_numpy()])
     _economy_base_layout(
         fig,
-        title=_title_dict(main="American workers keep getting less of the pie & the rich are taking more", subtitle=None),
+        title=_title_dict(main=title or "American workers keep getting less of the pie & the rich are taking more", subtitle=None),
         income_level=income_level,
         dark_mode=dark_mode,
         xrange=LAYOUT_ECONOMY_INCOME_XRANGE,
@@ -861,6 +863,11 @@ app.mount("/static", StaticFiles(directory=str(_parent / "static")), name="stati
 _here = Path(__file__).parent
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(str(_parent / "static" / "images" / "favicon.ico"))
+
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return HTMLResponse((_here / "index.html").read_text(encoding="utf-8"))
@@ -881,8 +888,9 @@ async def api_economy_income(
     dark_mode: str = Query("light"),
     income_level: str = Query("Bottom 50%"),
     country: str = Query("usa"),
+    title: str = Query(""),
 ):
-    return fig_to_json(fig=make_economy_income(dark_mode=dark_mode, income_level=income_level, country=country))
+    return fig_to_json(fig=make_economy_income(dark_mode=dark_mode, income_level=income_level, country=country, title=title))
 
 
 @app.get("/api/economy/barchart")

@@ -941,7 +941,6 @@
           <div class="chart-grid">
             <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div></div>
             <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div></div>
-            <div class="chart-card full-width" id="card-income-taxes"><div class="chart-loading">Loading…</div></div>
           </div>
 
           <h2>How has the cost of living changed?</h2>
@@ -1111,6 +1110,7 @@ const STATE_NAMES = {
 };
 
 function getStateZ(abbrev) {
+  if (state.selectedArea === 'United States') return 2;
   if (abbrev === state.selectedArea) return 2;
   return SELECTABLE_STATES.has(abbrev) ? 1 : 0;
 }
@@ -1151,7 +1151,6 @@ function buildMapTrace() {
 }
 
 function buildMapLayout() {
-  const isUSA = state.selectedArea === 'United States';
   return {
     geo: {
       scope: 'usa',
@@ -1160,9 +1159,7 @@ function buildMapLayout() {
       showlakes: false,
       showframe: false,
       showcoastlines: false,
-      showcountries: isUSA,
-      countrycolor: '#4a90e2',
-      countrywidth: 2,
+      showcountries: false,
       landcolor: state.darkMode ? '#1a2430' : '#e8e8e8',
     },
     paper_bgcolor: 'rgba(0,0,0,0)',
@@ -1355,7 +1352,6 @@ function incomeParams() {
 const CHARTS = {
   "card-income":        () => `/api/economy/income?${economyParams()}`,
   "card-barchart":      () => `/api/economy/barchart?${incomeParams()}&selected_country=${enc(state.country)}`,
-  "card-income-taxes":  () => `/api/economy/income-taxes?${incomeParams()}`,
   "card-house-purchase":() => `/api/economy/house-purchase-cost?${incomeParams()}`,
   "card-f150":          () => `/api/economy/f150?${incomeParams()}`,
   "card-american-dream-kids":    () => `/api/economy/american-dream-kids?dark_mode=${dm()}`,
@@ -1373,7 +1369,7 @@ const CHARTS = {
 };
 
 const TAB_CHARTS = {
-  economy:     ["card-income","card-barchart","card-income-taxes","card-house-purchase","card-f150",
+  economy:     ["card-income","card-barchart","card-house-purchase","card-f150",
                  "card-american-dream-kids","card-mobility-international",
                  "card-upward-mobility-white","card-upward-mobility-black"],
   healthcare:  ["card-hc-cost","card-hc-life","card-hc-infant","card-hc-maternal","card-hc-suicide"],
@@ -1382,7 +1378,7 @@ const TAB_CHARTS = {
 };
 
 const INCOME_CHARTS = [
-  "card-income","card-barchart","card-income-taxes","card-house-purchase","card-f150",
+  "card-income","card-barchart","card-house-purchase","card-f150",
 ];
 
 function loadTabCharts(tab) {
@@ -1492,13 +1488,13 @@ document.getElementById('settingsShowSplash').addEventListener('change', e => {
 const WELCOME_HTML = `
 <h1>Welcome friends</h1>
 <p><strong>The system is broken</strong> for working Americans.</p>
-<p>It's working fantastically for <strong>billionaires</strong>, because they control it through <strong>money in politics</strong>.</p>
+<p>It's working fantastically for <strong>billionaires</strong> (the ones who designed and built it).</p>
 <p>This site will show you two things:</p>
 <ol>
   <li><strong>How the system affects the daily lives of working Americans</strong></li>
-  <li><strong>How policies and candidate promises have played out in other countries and states</strong></li>
+  <li><strong>How policies and candidate promises have played out in other places</strong></li>
 </ol>
-<p>Let's <strong>take back control</strong> of the system and make it work for us.</p>
+<p>Let's <strong>take back representaton of our government</strong> and make the system work for us.</p>
 `;
 
 function openSplash() {
@@ -1632,7 +1628,7 @@ function updateBallot(area) {
       <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:1rem 0;">Canada outlawed corporate money in elections in 2004. Below we show how the paychecks of the Bottom 50% have changed and compare the paychecks of the U.S. and Canada in 2023. Both the U.S. and Canada started trending down around 1980, after Canada outlawed corporate money it began to trend up, while the U.S. has continued trending down.</p>
       <div class="chart-grid" style="margin:1rem 0;">
         <div class="chart-card" id="card-mt-income"><div class="chart-loading">Loading…</div></div>
-        <div class="chart-card" id="card-mt-barchart"><div class="chart-loading">Loading…</div></div>
+        <div class="chart-card" id="card-mt-income-france"><div class="chart-loading">Loading…</div></div>
       </div>
       <div class="ballot-grid">${rest.map(ballotItemHtml).join('')}</div>
     `;
@@ -1658,17 +1654,18 @@ function reloadAreaMap() {
 // ── Montana ballot charts ──────────────────────────────────────────────────
 function loadMtBallotCharts() {
   const il = enc('Bottom 50%');
-  const ct = enc('canada');
-  loadChart('card-mt-income',   `/api/economy/income?dark_mode=${dm()}&income_level=${il}&country=${ct}`);
-  loadChart('card-mt-barchart', `/api/economy/barchart?dark_mode=${dm()}&income_level=${il}&highlight_canada=true`);
+  const canadaTitle = enc("Canada's paychecks after banning corporate money");
+  const franceTitle = enc("France's paychecks after banning corporate money");
+  loadChart('card-mt-income',        `/api/economy/income?dark_mode=${dm()}&income_level=${il}&country=${enc('canada')}&title=${canadaTitle}`);
+  loadChart('card-mt-income-france', `/api/economy/income?dark_mode=${dm()}&income_level=${il}&country=${enc('france')}&title=${franceTitle}`);
 }
 
 function reloadMtBallotCharts() {
   if (state.selectedArea !== 'MT') return;
-  const incomeCard   = document.getElementById('card-mt-income');
-  const barchartCard = document.getElementById('card-mt-barchart');
-  if (incomeCard   && incomeCard.querySelector('.plot-div'))   loadMtBallotCharts();
-  else if (barchartCard && barchartCard.querySelector('.plot-div')) loadMtBallotCharts();
+  const incomeCard = document.getElementById('card-mt-income');
+  const franceCard = document.getElementById('card-mt-income-france');
+  if (incomeCard && incomeCard.querySelector('.plot-div')) loadMtBallotCharts();
+  else if (franceCard && franceCard.querySelector('.plot-div')) loadMtBallotCharts();
 }
 
 // ── U.S. ballot charts ─────────────────────────────────────────────────────
