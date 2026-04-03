@@ -13,7 +13,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, Response
 
 # ---------------------------------------------------------------------------
 # Data imports
@@ -163,11 +163,11 @@ COLORSCALE = {
 }
 
 SOURCES = {
-    "economy": "<a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy'>Sources</a>",
-    "economy_f150": "<a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#ford-f-seriesf-150-historical-msrp-1950-2025'>Sources</a>",
-    "economy_house": "<a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#housing'>Sources</a>",
-    "american_dream": "<a href='https://github.com/brendandoner-breathetransport/breathe/wiki/American-Dream'>Sources</a>",
-    "healthcare": "<a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Healthcare'>Sources</a>",
+    "economy": "World Inequality Database (wid.world)",
+    "economy_f150": "BLS CPI, Ford Motor Co. press releases",
+    "economy_house": "Zillow Research, U.S. Census Bureau",
+    "american_dream": "Opportunity Insights (Raj Chetty et al.)",
+    "healthcare": "OECD Health Statistics, World Bank",
 }
 
 # ---------------------------------------------------------------------------
@@ -722,7 +722,7 @@ def make_county_heatmap(dark_mode: str, race: str, metric: str, title: str, subt
     return fig
 
 
-def make_timeseries_countries(data, title, yaxis_title, xaxis_title, dark_mode: str) -> go.Figure:
+def make_healthcare(data, title, yaxis_title, xaxis_title, dark_mode: str) -> go.Figure:
     data = data.filter(pl.col("year") >= 2000)
     last = data.join(data.group_by("country").agg(pl.max("year")), on=["country", "year"], how="inner")
     countries = ["united states", "europe", "costa rica", "japan", "china", "canada"]
@@ -951,31 +951,31 @@ async def api_upward_mobility(
 
 @app.get("/api/healthcare/cost-per-capita")
 async def api_healthcare_cost(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_timeseries_countries(
+    return fig_to_json(fig=make_healthcare(
         data=healthcare_cost_per_capita, title="Healthcare Cost per Person", yaxis_title="U.S. $", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
 
 
 @app.get("/api/healthcare/life-expectancy")
 async def api_healthcare_life(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_timeseries_countries(
+    return fig_to_json(fig=make_healthcare(
         data=healthcare_life_expectancy, title="Life Expectancy", yaxis_title="years", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
 
 
 @app.get("/api/healthcare/infant-mortality")
 async def api_healthcare_infant(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_timeseries_countries(
+    return fig_to_json(fig=make_healthcare(
         data=healthcare_infant_mortality, title="Infant Mortality", yaxis_title="deaths per 1,000 babies", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
 
 
 @app.get("/api/healthcare/maternal-mortality")
 async def api_healthcare_maternal(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_timeseries_countries(
+    return fig_to_json(fig=make_healthcare(
         data=healthcare_maternal_mortality, title="Mother Mortality", yaxis_title="deaths per 100,000 births", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
 
 
 @app.get("/api/healthcare/suicide-rates")
 async def api_healthcare_suicide(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_timeseries_countries(
+    return fig_to_json(fig=make_healthcare(
         data=healthcare_suicide_rates, title="Suicide Rates", yaxis_title="deaths per 100,000", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
 
 
@@ -1007,3 +1007,107 @@ async def api_state_home_affordability(
 @app.get("/api/environment/electricity-cost")
 async def api_electricity_cost(dark_mode: str = Query("light")):
     return fig_to_json(fig=make_electricity_cost(dark_mode=dark_mode))
+
+
+# ---------------------------------------------------------------------------
+# CSV download endpoints
+# ---------------------------------------------------------------------------
+
+def _csv(df: pl.DataFrame, filename: str) -> Response:
+    return Response(
+        content=df.write_csv(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}.csv"'},
+    )
+
+@app.get("/api/csv/income")
+async def csv_income(income_level: str = Query("Bottom 50%"), country: str = Query("usa")):
+    income_col = INCOME_LEVELS[income_level]
+    usa = (shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880)
+           .select(["year", income_col]).rename({income_col: "usa"}))
+    if country == "usa":
+        return _csv(usa, "income_usa")
+    other = (shares_wid.filter(pl.col("country") == country).filter(pl.col("year") >= 1880)
+             .select(["year", income_col]).rename({income_col: country}))
+    return _csv(usa.join(other, on="year", how="full").sort("year"), f"income_usa_vs_{country}")
+
+@app.get("/api/csv/barchart")
+async def csv_barchart(income_level: str = Query("Bottom 50%")):
+    income_col = INCOME_LEVELS[income_level]
+    df = (shares_wid.filter(pl.col("year") == shares_wid["year"].max())
+          .select(["country", income_col]).sort("country"))
+    return _csv(df, "income_by_country")
+
+@app.get("/api/csv/income-taxes")
+async def csv_income_taxes(income_level: str = Query("Bottom 50%")):
+    income_col = INCOME_LEVELS[income_level]
+    usa = (shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") > 1880)
+           .select(["year", income_col]))
+    df = usa.join(tax.select(["year", "rate_top_bracket", "change_top_bracket"]), on="year", how="left").sort("year")
+    return _csv(df, "income_and_taxes")
+
+@app.get("/api/csv/house-purchase-cost")
+async def csv_house_purchase(income_level: str = Query("Bottom 50%")):
+    income_col = INCOME_LEVELS[income_level]
+    income = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880).select(["year", income_col])
+    df = (house_purchase_cost_as_percent_of_income.join(income, on="year", how="inner")
+          .with_columns((pl.col("cost") / pl.col(income_col)).alias("house_pct_of_income"))
+          .sort("year"))
+    return _csv(df, "house_purchase_cost")
+
+@app.get("/api/csv/f150")
+async def csv_f150(income_level: str = Query("Bottom 50%")):
+    income_col = INCOME_LEVELS[income_level]
+    income = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880).select(["year", income_col])
+    df = (f150.join(income, on="year", how="inner")
+          .with_columns((pl.col("price") / pl.col(income_col)).alias("price_ratio"))
+          .sort("year"))
+    return _csv(df, "f150_cost")
+
+@app.get("/api/csv/american-dream-kids")
+async def csv_american_dream_kids():
+    df = (mobility_international.select(["country", "year", "mobility"])
+          .filter(pl.col("mobility").is_not_nan()).sort(["country", "year"]))
+    return _csv(df, "american_dream_kids")
+
+@app.get("/api/csv/mobility-international")
+async def csv_mobility_international():
+    df = (mobility_international.select(["country", "year", "growth_controlled"])
+          .filter(pl.col("growth_controlled").is_not_nan()).sort(["country", "year"]))
+    return _csv(df, "mobility_international")
+
+@app.get("/api/csv/upward-mobility")
+async def csv_upward_mobility(race: str = Query("white")):
+    df = (outcomes_upward_mobility_jail.filter(pl.col("metric") == "upward_mobility")
+          .filter(pl.col("race") == race)
+          .select(["fips_county", "county", "state", "race", "value"]).sort(["state", "county"]))
+    return _csv(df, f"upward_mobility_{race}")
+
+@app.get("/api/csv/healthcare")
+async def csv_healthcare(metric: str = Query("cost-per-capita")):
+    data_map = {
+        "cost-per-capita": healthcare_cost_per_capita,
+        "life-expectancy": healthcare_life_expectancy,
+        "infant-mortality": healthcare_infant_mortality,
+        "maternal-mortality": healthcare_maternal_mortality,
+        "suicide-rates": healthcare_suicide_rates,
+    }
+    df = data_map.get(metric, healthcare_cost_per_capita)
+    return _csv(df.sort(["country", "year"]), metric.replace("-", "_"))
+
+@app.get("/api/csv/jail")
+async def csv_jail(race: str = Query("white")):
+    df = (outcomes_upward_mobility_jail.filter(pl.col("metric") == "jail")
+          .filter(pl.col("race") == race)
+          .select(["fips_county", "county", "state", "race", "value"]).sort(["state", "county"]))
+    return _csv(df, f"jail_{race}")
+
+@app.get("/api/csv/electricity-cost")
+async def csv_electricity_cost():
+    return _csv(electricity_cost, "electricity_cost")
+
+@app.get("/api/csv/state-home-affordability")
+async def csv_state_home_affordability(state: str = Query("CO")):
+    df = (house_purchase_cost_as_percent_of_income_state_level
+          .filter(pl.col("state") == state).sort("date"))
+    return _csv(df, f"home_affordability_{state}")

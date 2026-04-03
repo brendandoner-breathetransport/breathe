@@ -318,6 +318,66 @@
     }
     #explain-close:hover { opacity: 0.85; }
 
+    /* ── Sources modal ───────────────────────────────────────────────── */
+    #sources-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0,0,0,0.55);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #sources-overlay.open { display: flex; }
+    #sources-modal {
+      background: var(--modal-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      padding: 2rem 2.25rem 1.5rem;
+    }
+    #sources-modal h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0 0 1rem;
+    }
+    #sources-modal ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.25rem;
+    }
+    #sources-modal li {
+      font-size: 0.95rem;
+      color: var(--text-body);
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    #sources-modal li:last-child { border-bottom: none; }
+    #sources-modal p { font-size: 0.95rem; color: var(--text-body); margin-bottom: 0.5rem; }
+    #sources-modal a { color: var(--accent); text-decoration: none; }
+    #sources-modal a:hover { text-decoration: underline; }
+    #sources-close {
+      display: block;
+      margin-left: auto;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    #sources-close:hover { opacity: 0.85; }
+
     /* ── Page home top offset for fixed nav ─────────────────────────── */
     #page-home { padding-top: var(--nav-h); }
 
@@ -509,6 +569,52 @@
       padding: 0 1.25rem 5rem;
       padding-top: var(--nav-h);
     }
+
+    #page-sources {
+      display: none;
+      padding: 0 1.25rem 5rem;
+      padding-top: var(--nav-h);
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    #page-sources h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 2.5rem 0 0.5rem;
+      color: var(--text);
+    }
+    #page-sources .sources-intro {
+      font-size: 1rem;
+      color: var(--text-body);
+      margin-bottom: 2rem;
+    }
+    #page-sources section {
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    #page-sources section:last-child { border-bottom: none; }
+    #page-sources h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    #page-sources p { font-size: 0.95rem; color: var(--text-body); margin-bottom: 0.5rem; }
+    #page-sources ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #page-sources li {
+      font-size: 0.95rem;
+      color: var(--text-body);
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    #page-sources li:last-child { border-bottom: none; }
+    #page-sources a { color: var(--accent); text-decoration: none; }
+    #page-sources a:hover { text-decoration: underline; }
 
     /* Hero */
     .about-hero {
@@ -799,6 +905,7 @@
 <nav>
   <img src="/static/images/logo_street.png" alt="Breathe" onerror="this.style.display='none'" />
   <button class="page-btn active" data-page="home">Home</button>
+  <button class="page-btn" data-page="sources">Sources</button>
   <button class="page-btn" data-page="about">About</button>
   <div class="nav-spacer"></div>
   <button id="settings-btn" title="Settings" onclick="toggleSettings()">☰</button>
@@ -870,6 +977,14 @@
   </div>
 </div>
 
+<!-- ── Sources modal ────────────────────────────────────────────────── -->
+<div id="sources-overlay" onclick="if(event.target===this)closeSourcesModal()">
+  <div id="sources-modal">
+    <div id="sources-modal-body"></div>
+    <button id="sources-close" onclick="closeSourcesModal()">Got it</button>
+  </div>
+</div>
+
 <!-- ── Home page ─────────────────────────────────────────────────────── -->
 <div id="page-home">
 
@@ -927,7 +1042,7 @@
         <div id="state-economy" style="display: none">
           <h1 id="state-economy-title">Affordability</h1>
           <div class="chart-grid">
-            <div class="chart-card" id="card-state-affordability"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+            <div class="chart-card" id="card-state-affordability"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
           </div>
         </div>
 
@@ -953,25 +1068,25 @@
           </div>
 
           <div class="chart-grid">
-            <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-            <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+            <div class="chart-card" id="card-income"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+            <div class="chart-card" id="card-barchart"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
           </div>
 
           <h2>How has the cost of living changed?</h2>
           <div class="chart-grid">
-            <div class="chart-card" id="card-house-purchase"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-            <div class="chart-card" id="card-f150"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+            <div class="chart-card" id="card-house-purchase"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+            <div class="chart-card" id="card-f150"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
           </div>
 
           <h2>How healthy is the American Dream?</h2>
           <div class="chart-grid">
-            <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+            <div class="chart-card" id="card-american-dream-kids"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
             <div class="chart-card" id="card-mobility-international">
               <div class="chart-loading">Loading…</div>
-              <div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('main')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div>
+              <div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('main')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div>
             </div>
-            <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-            <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+            <div class="chart-card" id="card-upward-mobility-white"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+            <div class="chart-card" id="card-upward-mobility-black"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
           </div>
         </div>
 
@@ -981,11 +1096,11 @@
       <div class="tab-panel" id="tab-healthcare">
         <h1>What is the cost and performance of the American healthcare system?</h1>
         <div class="chart-grid">
-          <div class="chart-card" id="card-hc-cost"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-          <div class="chart-card" id="card-hc-life"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-          <div class="chart-card" id="card-hc-infant"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-          <div class="chart-card" id="card-hc-maternal"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-          <div class="chart-card" id="card-hc-suicide"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+          <div class="chart-card" id="card-hc-cost"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+          <div class="chart-card" id="card-hc-life"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+          <div class="chart-card" id="card-hc-infant"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+          <div class="chart-card" id="card-hc-maternal"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+          <div class="chart-card" id="card-hc-suicide"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
         </div>
       </div>
 
@@ -993,8 +1108,8 @@
       <div class="tab-panel" id="tab-justice">
         <h1>Is there racial bias in the American justice system?</h1>
         <div class="chart-grid">
-          <div class="chart-card" id="card-jail-white"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-          <div class="chart-card" id="card-jail-black"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+          <div class="chart-card" id="card-jail-white"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+          <div class="chart-card" id="card-jail-black"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
         </div>
       </div>
 
@@ -1002,7 +1117,7 @@
       <div class="tab-panel" id="tab-environment">
         <h1>What are the cheapest sources for electricity?</h1>
         <div class="chart-grid">
-          <div class="chart-card full-width" id="card-electricity"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+          <div class="chart-card full-width" id="card-electricity"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
         </div>
       </div>
 
@@ -1025,6 +1140,60 @@
 </div><!-- end #page-home -->
 
 <!-- ── About page ────────────────────────────────────────────────────── -->
+<div id="page-sources">
+  <h1>Sources</h1>
+  <p class="sources-intro">All data used in this dashboard comes from publicly available sources listed below.</p>
+
+  <section id="src-economy">
+    <h2>Economy — Income</h2>
+    <ul>
+      <li><strong>Income Share</strong>: <a href="https://wid.world" target="_blank">World Inequality Database (wid.world)</a> — Bottom 50% and Top 1% income share by country</li>
+      <li><strong>Income U.S. Total</strong>: U.S. Bureau of Economic Analysis, <a href="https://fred.stlouisfed.org/series/A065RC1A027NBEA" target="_blank">Personal income [A065RC1A027NBEA]</a>, FRED</li>
+      <li><strong>Population U.S. Total</strong>: <a href="https://fred.stlouisfed.org/series/POPTOTUSA647NWDB" target="_blank">World Bank Population data [POPTOTUSA647NWDB]</a>, FRED</li>
+      <li><strong>Population Workers Ratio</strong>: U.S. Bureau of Labor Statistics, <a href="https://fred.stlouisfed.org/series/EMRATIO" target="_blank">Employment-Population Ratio [EMRATIO]</a>, FRED</li>
+      <li><strong>Part-Time vs Full-Time Workers</strong>: Brundage, Vernon — U.S. Bureau of Labor Statistics, 2016 earnings report</li>
+      <li><strong>Tax Rates</strong>: U.S. Internal Revenue Service, Historical Table 23</li>
+    </ul>
+  </section>
+
+  <section id="src-housing">
+    <h2>Economy — Housing</h2>
+    <ul>
+      <li><strong>House Purchase Cost</strong>: <a href="https://www.zillow.com/research/data/" target="_blank">Zillow Research</a> — Metro and U.S. home values</li>
+    </ul>
+  </section>
+
+  <section id="src-f150">
+    <h2>Economy — Ford F-150</h2>
+    <p>Historical F-150 base model pricing (1950–2025) compiled from:</p>
+    <ul>
+      <li><a href="https://www.nadaguides.com" target="_blank">NADA Guides</a></li>
+      <li><a href="https://www.kbb.com" target="_blank">Kelley Blue Book</a></li>
+      <li><a href="https://www.hagerty.com" target="_blank">Hagerty</a></li>
+      <li><a href="https://www.oldcarbrochures.com" target="_blank">Old Car Brochures</a></li>
+      <li>The Henry Ford Museum archives</li>
+      <li>Ford Motor Company Archives</li>
+      <li>Classic car forums (Ford-Trucks.com)</li>
+    </ul>
+  </section>
+
+  <section id="src-american-dream">
+    <h2>American Dream</h2>
+    <ul>
+      <li><strong>Absolute Mobility / Upward Mobility</strong>: <a href="https://opportunityinsights.org/data/" target="_blank">Opportunity Insights, Harvard University</a> — Fading American Dream: Baseline Estimates of Absolute Mobility by Parent Income Percentile and Child Birth Cohort</li>
+    </ul>
+  </section>
+
+  <section id="src-healthcare">
+    <h2>Healthcare</h2>
+    <ul>
+      <li><strong>Healthcare Cost Per Capita</strong>: <a href="https://data.worldbank.org/indicator/SH.XPD.CHEX.PC.CD" target="_blank">World Bank</a></li>
+      <li><strong>Life Expectancy</strong>: <a href="https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-(years)" target="_blank">World Health Organization (WHO)</a></li>
+      <li><strong>Infant Mortality, Maternal Mortality, Suicide Rates</strong>: <a href="https://www.who.int/data/gho" target="_blank">World Health Organization (WHO)</a></li>
+    </ul>
+  </section>
+</div>
+
 <div id="page-about">
 
   <!-- Hero -->
@@ -1335,7 +1504,24 @@ function switchPage(page) {
     b.classList.toggle("active", b.dataset.page === page);
   });
   document.getElementById("page-home").style.display = page === "home" ? "block" : "none";
+  document.getElementById("page-sources").style.display = page === "sources" ? "block" : "none";
   document.getElementById("page-about").style.display = page === "about" ? "block" : "none";
+}
+
+function openSources(anchorId) {
+  const section = document.getElementById(anchorId);
+  if (!section) return;
+  document.getElementById('sources-modal-body').innerHTML = section.innerHTML;
+  document.getElementById('sources-overlay').classList.add('open');
+}
+function closeSourcesModal() {
+  document.getElementById('sources-overlay').classList.remove('open');
+}
+function openAllSources() {
+  const ids = ['src-economy','src-housing','src-f150','src-american-dream','src-healthcare'];
+  const html = ids.map(id => { const el = document.getElementById(id); return el ? el.outerHTML : ''; }).join('');
+  document.getElementById('sources-modal-body').innerHTML = html;
+  document.getElementById('sources-overlay').classList.add('open');
 }
 
 // ── Chart helpers ──────────────────────────────────────────────────────────
@@ -1545,36 +1731,38 @@ function closeExplainModal() {
 }
 
 function downloadChartCSV(cardId) {
-  const div = document.getElementById(cardId);
-  if (!div || !div.data || !div.data.length) return;
+  const il = encodeURIComponent(document.querySelector('input[name="income_level"]:checked')?.value || 'Bottom 50%');
+  const country = encodeURIComponent(document.getElementById('countrySelect')?.value || 'usa');
+  const selectedState = (state.selectedArea && state.selectedArea !== 'United States') ? state.selectedArea : 'CO';
 
-  const traces = div.data.filter(t => t.x && t.y && t.x.length > 1);
-  if (!traces.length) return;
+  const urls = {
+    'card-income':                `/api/csv/income?income_level=${il}&country=${country}`,
+    'card-barchart':              `/api/csv/barchart?income_level=${il}`,
+    'card-house-purchase':        `/api/csv/house-purchase-cost?income_level=${il}`,
+    'card-f150':                  `/api/csv/f150?income_level=${il}`,
+    'card-us-income-taxes':       `/api/csv/income-taxes?income_level=${encodeURIComponent('Bottom 50%')}`,
+    'card-american-dream-kids':   `/api/csv/american-dream-kids`,
+    'card-mobility-international':`/api/csv/mobility-international`,
+    'card-upward-mobility-white': `/api/csv/upward-mobility?race=white`,
+    'card-upward-mobility-black': `/api/csv/upward-mobility?race=black`,
+    'card-hc-cost':               `/api/csv/healthcare?metric=cost-per-capita`,
+    'card-hc-life':               `/api/csv/healthcare?metric=life-expectancy`,
+    'card-hc-infant':             `/api/csv/healthcare?metric=infant-mortality`,
+    'card-hc-maternal':           `/api/csv/healthcare?metric=maternal-mortality`,
+    'card-hc-suicide':            `/api/csv/healthcare?metric=suicide-rates`,
+    'card-jail-white':            `/api/csv/jail?race=white`,
+    'card-jail-black':            `/api/csv/jail?race=black`,
+    'card-electricity':           `/api/csv/electricity-cost`,
+    'card-state-affordability':   `/api/csv/state-home-affordability?state=${selectedState}`,
+    'card-mt-income':             `/api/csv/income?income_level=${encodeURIComponent('Bottom 50%')}&country=canada`,
+    'card-mt-income-france':      `/api/csv/income?income_level=${encodeURIComponent('Bottom 50%')}&country=france`,
+  };
 
-  // Collect all unique x values in sorted order
-  const allX = [...new Set(traces.flatMap(t => Array.from(t.x)))].sort((a, b) => a - b);
-
-  // Build header row: first column is the x-axis label, then one column per trace
-  const headers = ['year', ...traces.map(t => (t.name || 'value').replace(/\s+/g, '_'))];
-
-  // Build data rows
-  const rows = allX.map(x => {
-    const row = [x];
-    traces.forEach(t => {
-      const idx = Array.from(t.x).indexOf(x);
-      row.push(idx >= 0 ? t.y[idx] : '');
-    });
-    return row;
-  });
-
-  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
+  const url = urls[cardId];
+  if (!url) return;
   const a = document.createElement('a');
   a.href = url;
-  a.download = cardId + '.csv';
   a.click();
-  URL.revokeObjectURL(url);
 }
 
 document.getElementById('splash-close').addEventListener('keydown', e => {
@@ -1656,7 +1844,7 @@ function updateBallot(area) {
       </div>
       <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:1rem 0;">Since the 1970s, the top marginal tax rate on the wealthiest Americans has dropped from over 90% to under 40%. Below we show how changes to the top tax bracket have coincided with income growth — or the lack of it — for the Bottom 50%.</p>
       <div class="chart-grid" style="margin:1rem 0;">
-        <div class="chart-card full-width" id="card-us-income-taxes"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+        <div class="chart-card full-width" id="card-us-income-taxes"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
       </div>
     `;
     loadUsBallotCharts();
@@ -1689,8 +1877,8 @@ function updateBallot(area) {
       <div class="ballot-grid">${ballotItemHtml(first)}</div>
       <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:1rem 0;">Canada outlawed corporate money in elections in 2004. Below we show how the paychecks of the Bottom 50% have changed and compare the paychecks of the U.S. and Canada in 2023. Both the U.S. and Canada started trending down around 1980, after Canada outlawed corporate money it began to trend up, while the U.S. has continued trending down.</p>
       <div class="chart-grid" style="margin:1rem 0;">
-        <div class="chart-card" id="card-mt-income"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
-        <div class="chart-card" id="card-mt-income-france"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
+        <div class="chart-card" id="card-mt-income"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
+        <div class="chart-card" id="card-mt-income-france"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button><button class="explain-btn" onclick="openAllSources()">Sources</button></div></div>
       </div>
       <div class="ballot-grid">${rest.map(ballotItemHtml).join('')}</div>
     `;
