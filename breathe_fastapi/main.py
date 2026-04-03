@@ -162,13 +162,6 @@ COLORSCALE = {
     ],
 }
 
-SOURCES = {
-    "economy": "World Inequality Database (wid.world)",
-    "economy_f150": "BLS CPI, Ford Motor Co. press releases",
-    "economy_house": "Zillow Research, U.S. Census Bureau",
-    "american_dream": "Opportunity Insights (Raj Chetty et al.)",
-    "healthcare": "OECD Health Statistics, World Bank",
-}
 
 # ---------------------------------------------------------------------------
 # Helper functions
@@ -405,7 +398,6 @@ def make_economy_income(dark_mode: str, income_level: str, country: str, title: 
         ytickpfx="$",
         ytickfmt=AXIS_TITLE_INCOME_FORMAT,
         yaxis_title=_yaxis_title_dict(main="average pay", subtitle=f"{year_max} dollars"),
-        xaxis_title=SOURCES["economy"],
     )
 
     for trace in fig["data"]:
@@ -462,7 +454,7 @@ def make_economy_barchart(dark_mode: str, income_level: str, highlight_canada: b
         title_x=0.5,
         yaxis=dict(tickprefix="$", tickformat=AXIS_TITLE_INCOME_FORMAT, fixedrange=True),
         yaxis_title=_yaxis_title_dict(main="average pay", subtitle=f"{year_max} dollars"),
-        xaxis_title=SOURCES["economy"], xaxis_tickangle=-45, xaxis=dict(fixedrange=True),
+        xaxis_tickangle=-45, xaxis=dict(fixedrange=True),
         showlegend=True,
         template=get_color_template(dark_mode),
         plot_bgcolor=get_background_color(dark_mode),
@@ -511,7 +503,6 @@ def make_economy_income_taxes(dark_mode: str, income_level: str) -> go.Figure:
         yaxis2=dict(title="top tax bracket changes", range=[-0.60, 0.60],
                     anchor="x", overlaying="y", side="right", tickformat="+.0%", fixedrange=True),
         yaxis_title=_yaxis_title_dict(main="average pay", subtitle=f"{year_max} dollars"),
-        xaxis_title=SOURCES["economy"],
         xaxis=dict(range=LAYOUT_ECONOMY_XRANGE, tickmode="array", fixedrange=True),
         showlegend=True,
         template=get_color_template(dark_mode),
@@ -545,7 +536,6 @@ def make_economy_house_purchase(dark_mode: str, income_level: str) -> go.Figure:
         title_x=0.5,
         yaxis_title=f"<b>% of {income_level} Paycheck</b>",
         yaxis=dict(range=[ymin, ymax], tickformat=",.0%", fixedrange=True),
-        xaxis_title=SOURCES["economy_house"],
         xaxis=dict(range=[data["year"].min() - 5, data["year"].max() + 4], fixedrange=True),
         showlegend=True,
         template=get_color_template(dark_mode),
@@ -580,7 +570,6 @@ def make_economy_f150(dark_mode: str, income_level: str) -> go.Figure:
         title_x=0.5,
         yaxis_title=f"<b>% of {income_level} Paycheck</b>",
         yaxis=dict(range=[ymin, ymax], tickformat=",.0%", fixedrange=True),
-        xaxis_title=SOURCES["economy_f150"],
         xaxis=dict(range=[data["year"].min() - 5, data["year"].max() + 4], fixedrange=True),
         showlegend=True,
         template=get_color_template(dark_mode),
@@ -664,7 +653,6 @@ def _multi_country_mobility(dark_mode: str, col: str, title: str, subtitle: str 
     fig.update_layout(
         title=_title_dict(main=title, subtitle=subtitle), title_x=0.5,
         yaxis_title=None,
-        xaxis_title=SOURCES["american_dream"],
         xaxis=dict(fixedrange=True, range=[data["year"].min() - 5, data["year"].max() + 15]),
         yaxis=dict(range=[ymin, ymax], tickformat=".0%", fixedrange=True),
         showlegend=False,
@@ -722,7 +710,7 @@ def make_county_heatmap(dark_mode: str, race: str, metric: str, title: str, subt
     return fig
 
 
-def make_healthcare(data, title, yaxis_title, xaxis_title, dark_mode: str) -> go.Figure:
+def make_healthcare(data, title, yaxis_title, dark_mode: str) -> go.Figure:
     data = data.filter(pl.col("year") >= 2000)
     last = data.join(data.group_by("country").agg(pl.max("year")), on=["country", "year"], how="inner")
     countries = ["united states", "europe", "costa rica", "japan", "china", "canada"]
@@ -757,7 +745,6 @@ def make_healthcare(data, title, yaxis_title, xaxis_title, dark_mode: str) -> go
     fig.update_layout(
         title=_title_dict(main=title), title_x=0.5,
         yaxis_title=f"<b>{yaxis_title}</b>",
-        xaxis_title=xaxis_title,
         xaxis=dict(range=[data["year"].min() - 5, max_year + 8], fixedrange=True),
         showlegend=False,
         template=get_color_template(dark_mode),
@@ -841,7 +828,6 @@ def make_state_home_affordability(state: str, dark_mode: str) -> go.Figure:
         title_x=0.5,
         yaxis_title="<b>% of Annual Income</b>",
         yaxis=dict(range=[ymin, ymax], tickformat=".0%", fixedrange=True),
-        xaxis_title=SOURCES["economy_house"],
         xaxis=dict(type="date", fixedrange=True),
         showlegend=True,
         template=get_color_template(dark_mode),
@@ -952,31 +938,31 @@ async def api_upward_mobility(
 @app.get("/api/healthcare/cost-per-capita")
 async def api_healthcare_cost(dark_mode: str = Query("light")):
     return fig_to_json(fig=make_healthcare(
-        data=healthcare_cost_per_capita, title="Healthcare Cost per Person", yaxis_title="U.S. $", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
+        data=healthcare_cost_per_capita, title="Healthcare Cost per Person", yaxis_title="U.S. $", dark_mode=dark_mode))
 
 
 @app.get("/api/healthcare/life-expectancy")
 async def api_healthcare_life(dark_mode: str = Query("light")):
     return fig_to_json(fig=make_healthcare(
-        data=healthcare_life_expectancy, title="Life Expectancy", yaxis_title="years", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
+        data=healthcare_life_expectancy, title="Life Expectancy", yaxis_title="years", dark_mode=dark_mode))
 
 
 @app.get("/api/healthcare/infant-mortality")
 async def api_healthcare_infant(dark_mode: str = Query("light")):
     return fig_to_json(fig=make_healthcare(
-        data=healthcare_infant_mortality, title="Infant Mortality", yaxis_title="deaths per 1,000 babies", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
+        data=healthcare_infant_mortality, title="Infant Mortality", yaxis_title="deaths per 1,000 babies", dark_mode=dark_mode))
 
 
 @app.get("/api/healthcare/maternal-mortality")
 async def api_healthcare_maternal(dark_mode: str = Query("light")):
     return fig_to_json(fig=make_healthcare(
-        data=healthcare_maternal_mortality, title="Mother Mortality", yaxis_title="deaths per 100,000 births", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
+        data=healthcare_maternal_mortality, title="Mother Mortality", yaxis_title="deaths per 100,000 births", dark_mode=dark_mode))
 
 
 @app.get("/api/healthcare/suicide-rates")
 async def api_healthcare_suicide(dark_mode: str = Query("light")):
     return fig_to_json(fig=make_healthcare(
-        data=healthcare_suicide_rates, title="Suicide Rates", yaxis_title="deaths per 100,000", xaxis_title=SOURCES["healthcare"], dark_mode=dark_mode))
+        data=healthcare_suicide_rates, title="Suicide Rates", yaxis_title="deaths per 100,000", dark_mode=dark_mode))
 
 
 # --- Justice ---
