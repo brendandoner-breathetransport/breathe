@@ -93,6 +93,58 @@ def _inline_md(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Chart title map  (keep in sync with _FUNC_CHARTS in main.py)
+# ---------------------------------------------------------------------------
+
+_FUNC_CHARTS: dict[str, list[str]] = {
+    "make_economy_income": [
+        "American workers get less & less of the pie while the rich take more",
+    ],
+    "make_economy_barchart": [
+        "With the same sized pie, how do other countries divide it?",
+    ],
+    "make_economy_income_taxes": [
+        "Lower taxes for the rich is part of the system that shrinks your paycheck",
+    ],
+    "make_economy_house_purchase": [
+        "Percent of Income to Purchase a Home",
+    ],
+    "make_economy_f150": [
+        "Percent of Income to Purchase a Ford F-150",
+    ],
+    "make_american_dream_kids": [
+        "How likely are you to make more than your parents?",
+    ],
+    "make_mobility_international": [
+        "How does the rich taking more hurt the American Dream?",
+    ],
+    "make_county_heatmap": [
+        "White Male Upward Mobility",
+        "Black Male Upward Mobility",
+        "White Male Jail Rate",
+        "Black Male Jail Rate",
+    ],
+    "make_healthcare": [
+        "Healthcare Cost per Person",
+        "Life Expectancy",
+        "Infant Mortality",
+        "Mother Mortality",
+        "Suicide Rates",
+    ],
+    "make_justice_jail": [
+        "White Male Jail Rate",
+        "Black Male Jail Rate",
+    ],
+    "make_electricity_cost": [
+        "Cost of Electricity",
+    ],
+    "make_state_home_affordability": [
+        "Percent of Income to Purchase a Home (by State)",
+    ],
+}
+
+
+# ---------------------------------------------------------------------------
 # Display name map  (keep in sync with _FUNC_DISPLAY in main.py)
 # ---------------------------------------------------------------------------
 
@@ -138,6 +190,7 @@ def generate_page_html(parsed: dict) -> str:
     for category, funcs in parsed.items():
         for func_name, data in funcs.items():
             sources, steps, notes = data["sources"], data["steps"], data["notes"]
+            charts = _FUNC_CHARTS.get(func_name, [])
             if not sources and not steps and not notes:
                 continue
             display = _func_display(category, func_name)
@@ -151,6 +204,9 @@ def generate_page_html(parsed: dict) -> str:
                 )
             lines.append("  <section>")
             lines.append(f"    <h2>{title}</h2>")
+            if charts:
+                chart_list = ", ".join(f"<em>{c}</em>" for c in charts)
+                lines.append(f'    <p class="chart-list">Used in: {chart_list}</p>')
             for note in notes:
                 lines.append(f"    <p>{_inline_md(note)}</p>")
             if sources:
@@ -173,9 +229,14 @@ def generate_popup_data(parsed: dict) -> dict[str, str]:
             if func_name == "Additional":
                 continue
             sources, steps = data["sources"], data["steps"]
+            charts = _FUNC_CHARTS.get(func_name, [])
             if not sources and not steps:
                 continue
             parts: list[str] = []
+            if charts:
+                parts += ["<p><strong>Charts using this data</strong></p>", "<ul>"]
+                parts += [f"  <li>{c}</li>" for c in charts]
+                parts.append("</ul>")
             if sources:
                 parts += ["<p><strong>Sources</strong></p>", "<ul>"]
                 parts += [f"  <li>{_inline_md(s)}</li>" for s in sources]
