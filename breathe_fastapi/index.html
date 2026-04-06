@@ -1141,57 +1141,7 @@
 
 <!-- ── About page ────────────────────────────────────────────────────── -->
 <div id="page-sources">
-  <h1>Sources</h1>
-  <p class="sources-intro">The data used for the Breathe Voter Compass comes from publicly available sources listed below.</p>
-
-  <section id="src-economy">
-    <h2>Economy — Income</h2>
-    <ul>
-      <li><strong>Income Share</strong>: <a href="https://wid.world" target="_blank">World Inequality Database (wid.world)</a> — Bottom 50% and Top 1% income share by country</li>
-      <li><strong>Income U.S. Total</strong>: U.S. Bureau of Economic Analysis, <a href="https://fred.stlouisfed.org/series/A065RC1A027NBEA" target="_blank">Personal income [A065RC1A027NBEA]</a>, FRED</li>
-      <li><strong>Population U.S. Total</strong>: <a href="https://fred.stlouisfed.org/series/POPTOTUSA647NWDB" target="_blank">World Bank Population data [POPTOTUSA647NWDB]</a>, FRED</li>
-      <li><strong>Population Workers Ratio</strong>: U.S. Bureau of Labor Statistics, <a href="https://fred.stlouisfed.org/series/EMRATIO" target="_blank">Employment-Population Ratio [EMRATIO]</a>, FRED</li>
-      <li><strong>Part-Time vs Full-Time Workers</strong>: Brundage, Vernon — U.S. Bureau of Labor Statistics, 2016 earnings report</li>
-      <li><strong>Tax Rates</strong>: U.S. Internal Revenue Service, Historical Table 23</li>
-    </ul>
-  </section>
-
-  <section id="src-housing">
-    <h2>Economy — Housing</h2>
-    <ul>
-      <li><strong>House Purchase Cost</strong>: <a href="https://www.zillow.com/research/data/" target="_blank">Zillow Research</a> — Metro and U.S. home values</li>
-    </ul>
-  </section>
-
-  <section id="src-f150">
-    <h2>Economy — Ford F-150</h2>
-    <p>Historical F-150 base model pricing (1950–2025) compiled from:</p>
-    <ul>
-      <li><a href="https://www.nadaguides.com" target="_blank">NADA Guides</a></li>
-      <li><a href="https://www.kbb.com" target="_blank">Kelley Blue Book</a></li>
-      <li><a href="https://www.hagerty.com" target="_blank">Hagerty</a></li>
-      <li><a href="https://www.oldcarbrochures.com" target="_blank">Old Car Brochures</a></li>
-      <li>The Henry Ford Museum archives</li>
-      <li>Ford Motor Company Archives</li>
-      <li>Classic car forums (Ford-Trucks.com)</li>
-    </ul>
-  </section>
-
-  <section id="src-american-dream">
-    <h2>American Dream</h2>
-    <ul>
-      <li><strong>Absolute Mobility / Upward Mobility</strong>: <a href="https://opportunityinsights.org/data/" target="_blank">Opportunity Insights, Harvard University</a> — Fading American Dream: Baseline Estimates of Absolute Mobility by Parent Income Percentile and Child Birth Cohort</li>
-    </ul>
-  </section>
-
-  <section id="src-healthcare">
-    <h2>Healthcare</h2>
-    <ul>
-      <li><strong>Healthcare Cost Per Capita</strong>: <a href="https://data.worldbank.org/indicator/SH.XPD.CHEX.PC.CD" target="_blank">World Bank</a></li>
-      <li><strong>Life Expectancy</strong>: <a href="https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-(years)" target="_blank">World Health Organization (WHO)</a></li>
-      <li><strong>Infant Mortality, Maternal Mortality, Suicide Rates</strong>: <a href="https://www.who.int/data/gho" target="_blank">World Health Organization (WHO)</a></li>
-    </ul>
-  </section>
+  <p class="sources-intro" style="color:var(--muted);padding:2rem 0">Loading sources…</p>
 </div>
 
 <div id="page-about">
@@ -1497,6 +1447,7 @@ function togglePickArea() {
 }
 
 // ── Page switching ─────────────────────────────────────────────────────────
+let _sourcesPageLoaded = false;
 function switchPage(page) {
   if (page === state.activePage) return;
   state.activePage = page;
@@ -1506,6 +1457,12 @@ function switchPage(page) {
   document.getElementById("page-home").style.display = page === "home" ? "block" : "none";
   document.getElementById("page-sources").style.display = page === "sources" ? "block" : "none";
   document.getElementById("page-about").style.display = page === "about" ? "block" : "none";
+  if (page === "sources" && !_sourcesPageLoaded) {
+    _sourcesPageLoaded = true;
+    _getSourcesData().then(data => {
+      if (data.page) document.getElementById("page-sources").innerHTML = data.page;
+    });
+  }
 }
 
 function closeSourcesModal() {
@@ -1543,7 +1500,7 @@ async function _getSourcesData() {
       const res = await fetch('/api/sources');
       _sourcesData = await res.json();
     } catch(e) {
-      _sourcesData = {};
+      _sourcesData = { popup: {}, page: '' };
     }
   }
   return _sourcesData;
@@ -1552,8 +1509,8 @@ async function _getSourcesData() {
 async function openCardSources(cardId) {
   const data = await _getSourcesData();
   const funcName = CARD_TO_FUNC[cardId];
-  const html = (funcName && data[funcName])
-    ? data[funcName]
+  const html = (funcName && data.popup && data.popup[funcName])
+    ? data.popup[funcName]
     : '<p style="color:var(--text-body)">Under construction...</p>';
   document.getElementById('sources-modal-body').innerHTML = html;
   document.getElementById('sources-overlay').classList.add('open');

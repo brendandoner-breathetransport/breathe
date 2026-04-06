@@ -8,6 +8,13 @@
 * **Population Part-Time vs Full-Time Workers**: Brundage, Vernon - U.S. Bureau of Labor Statistics. USUAL WEEKLY EARNINGS of WAGE and SALARY WORKERS THIRD QUARTER 2016. 2024. www.bls.gov/news.release/pdf/wkyeng.pdf
 * **Tax Rates Personal**: [U.S. Internal Revenue Service](https://www.irs.gov/statistics/soi-tax-stats-historical-table-23)
 
+### Steps
+1. Download data from the sources
+2. Use the income share data and the total income data with the population data to calculate the average income for each slice of the income pie.
+
+### Notes
+* Pipeline located in breathe/notebooks/pipeline_economy.ipynb
+
 ## make_economy_house_purchase
 ### Sources
 * **House Purchase Cost**: [Zillow](https://www.zillow.com/research/data/). Select "ZHVI All Homes (SFR, Condo/Co-op) Time Series, Smoothed, Seasonally Adjusted ($)" for Geography of "Metro & U.S.".

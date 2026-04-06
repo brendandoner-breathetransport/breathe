@@ -1242,78 +1242,169 @@ async def root():
 # --- Meta endpoints ---
 
 
+def _inline_md(text: str) -> str:
+    """Convert inline markdown (bold, links, bare URLs) to HTML."""
+    import re
+
+    # Markdown links — handle URLs containing one level of parentheses
+    text = re.sub(
+        r"\[([^\]]+)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)",
+        r'<a href="\2" target="_blank">\1</a>',
+        text,
+    )
+    # Bold
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    # Auto-link bare URLs, stripping trailing punctuation
+    text = re.sub(
+        r'(?<!href=")(https?://[^\s<>"]+?)([.,;:)]*)(?=\s|$)',
+        lambda m: f'<a href="{m.group(1)}" target="_blank">{m.group(1)}</a>{m.group(2)}',
+        text,
+    )
+    return text
+
+
+# Display names for the Sources tab, keyed by function name
+_FUNC_DISPLAY: dict[str, str] = {
+    "make_economy_income": "Income",
+    "make_economy_barchart": "Income Bar Chart",
+    "make_economy_house_purchase": "Housing Costs",
+    "make_economy_f150": "Ford F-150 Price",
+    "make_economy_income_taxes": "Income Taxes",
+    "make_american_dream_kids": "American Dream — Kids",
+    "make_mobility_international": "Mobility — International",
+    "make_county_heatmap": "Upward Mobility",
+    "make_healthcare": "Healthcare",
+    "make_justice_jail": "Justice — Incarceration",
+    "make_electricity_cost": "Electricity Cost",
+    "make_state_home_affordability": "State Home Affordability",
+    "Additional": "Additional Sources",
+}
+
+
+def _func_display(category: str, func_name: str) -> str:
+    if func_name in _FUNC_DISPLAY:
+        return _FUNC_DISPLAY[func_name]
+    name = func_name.removeprefix("make_")
+    cat_prefix = category.lower().replace(" ", "_") + "_"
+    if name.startswith(cat_prefix):
+        name = name[len(cat_prefix) :]
+    return name.replace("_", " ").title() or category
+
+
 def _parse_sources_md() -> dict:
-    """Parse sources.md and return a dict mapping function name -> HTML content."""
+    """Parse sources.md at startup into {popup: {func: html}, page: html}.
+
+    sources.md structure:
+      # Category       ← tier 1
+      ## func_name     ← tier 2 (plot function or "Additional")
+      ### Sources / Steps / Notes  ← tier 3
+    """
     import re
 
     sources_path = _here.parent / "sources.md"
     if not sources_path.exists():
-        return {}
-    text = sources_path.read_text(encoding="utf-8")
-    sections = re.split(r"^# ", text, flags=re.MULTILINE)
-    result = {}
-    for section in sections:
-        if not section.strip():
-            continue
-        lines = section.split("\n", 1)
-        func_name = lines[0].strip()
-        body = lines[1].strip() if len(lines) > 1 else ""
-        result[func_name] = _md_to_html(body)
-    return result
+        return {"popup": {}, "page": ""}
+
+    # ── Parse into structured dict ──────────────────────────────────────
+    parsed: dict = {}
+    current_category: str | None = None
+    current_func: str | None = None
+    current_subsec: str | None = None
+
+    for raw_line in sources_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+
+        if re.match(r"^# [^#]", line):
+            current_category = line[2:].strip()
+            parsed[current_category] = {}
+            current_func = None
+            current_subsec = None
+        elif re.match(r"^## [^#]", line):
+            current_func = line[3:].strip()
+            if current_category is not None:
+                parsed[current_category][current_func] = {
+                    "sources": [],
+                    "steps": [],
+                    "notes": [],
+                }
+            current_subsec = None
+        elif re.match(r"^### [^#]", line):
+            label = line[4:].strip().rstrip(":").lower()
+            current_subsec = label if label in ("sources", "steps", "notes") else None
+        elif current_category and current_func and current_subsec:
+            bucket = parsed[current_category][current_func][current_subsec]
+            if line.startswith("* ") or line.startswith("- "):
+                bucket.append(line[2:].strip())
+            elif re.match(r"^\d+\. ", line):
+                bucket.append(re.sub(r"^\d+\. ", "", line).strip())
+            elif line:
+                bucket.append(line)
+
+    # ── Build popup HTML {func_name: html} ─────────────────────────────
+    popup: dict[str, str] = {}
+    for _cat, funcs in parsed.items():
+        for func_name, data in funcs.items():
+            if func_name == "Additional":
+                continue
+            sources, steps = data["sources"], data["steps"]
+            if not sources and not steps:
+                continue
+            parts: list[str] = []
+            if sources:
+                parts += ["<p><strong>Sources</strong></p>", "<ul>"]
+                parts += [f"  <li>{_inline_md(s)}</li>" for s in sources]
+                parts.append("</ul>")
+            if steps:
+                parts += ["<p><strong>Steps</strong></p>", "<ol>"]
+                parts += [f"  <li>{_inline_md(s)}</li>" for s in steps]
+                parts.append("</ol>")
+            popup[func_name] = "\n".join(parts)
+
+    # ── Build Sources tab page HTML ─────────────────────────────────────
+    page_lines = [
+        "<h1>Sources</h1>",
+        '<p class="sources-intro">The data used for the Breathe Voter Compass comes from publicly available sources listed below.</p>',
+        "",
+    ]
+    for category, funcs in parsed.items():
+        for func_name, data in funcs.items():
+            sources, steps, notes = data["sources"], data["steps"], data["notes"]
+            if not sources and not steps and not notes:
+                continue
+            display = _func_display(category, func_name)
+            if func_name == "Additional":
+                title = f"{category} — Additional Sources"
+            else:
+                title = (
+                    display
+                    if display.lower().startswith(category.lower())
+                    else f"{category} — {display}"
+                )
+            page_lines.append("  <section>")
+            page_lines.append(f"    <h2>{title}</h2>")
+            for note in notes:
+                page_lines.append(f"    <p>{_inline_md(note)}</p>")
+            if sources:
+                page_lines.append("    <ul>")
+                page_lines += [f"      <li>{_inline_md(s)}</li>" for s in sources]
+                page_lines.append("    </ul>")
+            if steps:
+                page_lines.append("    <ol>")
+                page_lines += [f"      <li>{_inline_md(s)}</li>" for s in steps]
+                page_lines.append("    </ol>")
+            page_lines.append("  </section>")
+            page_lines.append("")
+
+    return {"popup": popup, "page": "\n".join(page_lines)}
 
 
-def _md_to_html(md: str) -> str:
-    """Convert a limited subset of markdown to HTML for the sources popup."""
-    lines = md.split("\n")
-    html_parts = []
-    in_ul = False
-    for line in lines:
-        stripped = line.strip()
-        if not stripped:
-            if in_ul:
-                html_parts.append("</ul>")
-                in_ul = False
-            continue
-        # h2
-        if stripped.startswith("## "):
-            if in_ul:
-                html_parts.append("</ul>")
-                in_ul = False
-            html_parts.append(f"<p><strong>{_inline_md(stripped[3:])}</strong></p>")
-            continue
-        # bullet (* or -)
-        if stripped.startswith("* ") or stripped.startswith("- "):
-            if not in_ul:
-                html_parts.append("<ul>")
-                in_ul = True
-            html_parts.append(f"<li>{_inline_md(stripped[2:])}</li>")
-            continue
-        # plain text
-        if in_ul:
-            html_parts.append("</ul>")
-            in_ul = False
-        html_parts.append(f"<p>{_inline_md(stripped)}</p>")
-    if in_ul:
-        html_parts.append("</ul>")
-    return "\n".join(html_parts)
-
-
-def _inline_md(text: str) -> str:
-    """Convert inline markdown (bold, links) to HTML."""
-    import re
-
-    # [text](url)
-    text = re.sub(
-        r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2" target="_blank">\1</a>', text
-    )
-    # **bold**
-    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-    return text
+# Parsed once at startup; restart server after editing sources.md
+_SOURCES_CACHE: dict = _parse_sources_md()
 
 
 @app.get("/api/sources")
 async def api_sources():
-    return JSONResponse(_parse_sources_md())
+    return JSONResponse(_SOURCES_CACHE)
 
 
 @app.get("/api/countries")
