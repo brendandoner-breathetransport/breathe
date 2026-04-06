@@ -1142,7 +1142,7 @@
 <!-- ── About page ────────────────────────────────────────────────────── -->
 <div id="page-sources">
   <h1>Sources</h1>
-  <p class="sources-intro">All data used in this dashboard comes from publicly available sources listed below.</p>
+  <p class="sources-intro">The data used for the Breathe Voter Compass comes from publicly available sources listed below.</p>
 
   <section id="src-economy">
     <h2>Economy — Income</h2>
@@ -1215,7 +1215,7 @@
     <div class="about-card">
       <div class="about-card-icon">🎯</div>
       <h2>The Question</h2>
-      <p>The question is not Democrat or Republican, liberal or conservative, progressive or moderate. The question is, rule by the people or rule by corporations &EM billionaires.</p>
+      <p>The question is not Democrat or Republican, liberal or conservative, progressive or moderate. The question is, rule by the people or rule by corporations and billionaires.</p>
     </div>
   </div>
 
@@ -1228,7 +1228,7 @@
     <p>A small group of ultra-wealthy interests has implemented a fantastically successful plan: legalizing the purchasing of politicians, owning the media narrative, appointing judges who favor big business over citizens, and shaping our very understanding of markets through textbooks and university programs.</p>
     <p>Their goals have always been about accumulating money and power — legalizing and creating monopolies to exploit workers, consumers, suppliers, and our land.</p>
     <div class="about-pullquote">
-      <p>"They are the original people who want something for nothing — the most skilled con artists, lawyers, marketers, and scammers in the business."</p>
+      <p>Learn how they did it at <a href="https://the.levernews.com/master-plan/" target="_blank">The Master Plan</a></p>
     </div>
   </div>
 
@@ -1512,32 +1512,49 @@ function closeSourcesModal() {
   document.getElementById('sources-overlay').classList.remove('open');
 }
 
-const CHART_SOURCES = {
-  'card-income':           [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Economy'},{name:'Source: World Inequality Database', link:'https://wid.world/wid-world/'}],
-  'card-mt-income':        [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Economy'},{name:'Source: World Inequality Database', link:'https://wid.world/wid-world/'}],
-  'card-mt-income-france': [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Economy'},{name:'Source: World Inequality Database', link:'https://wid.world/wid-world/'}],
-  'card-barchart':         [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Economy'}],
-  'card-f150':             [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#ford-f-seriesf-150-historical-msrp-1950-2025'}],
-  'card-house-purchase':   [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#housing'}],
-  'card-us-income-taxes':  [{name:'Source: Internal Revenue Service', link:'https://www.irs.gov/statistics/soi-tax-stats-historical-table-23'}],
-  'card-american-dream-kids': [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/American-Dream'}],
-  'card-hc-cost':    [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Healthcare'}],
-  'card-hc-life':    [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Healthcare'}],
-  'card-hc-infant':  [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Healthcare'}],
-  'card-hc-maternal':[{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Healthcare'}],
-  'card-hc-suicide': [{name:'Sources', link:'https://github.com/brendandoner-breathetransport/breathe/wiki/Healthcare'}],
+// Map card IDs to the function name used as the H1 header in sources.md
+const CARD_TO_FUNC = {
+  'card-income':              'make_economy_income',
+  'card-mt-income':           'make_economy_income',
+  'card-mt-income-france':    'make_economy_income',
+  'card-barchart':            'make_economy_barchart',
+  'card-house-purchase':      'make_economy_house_purchase',
+  'card-f150':                'make_economy_f150',
+  'card-us-income-taxes':     'make_economy_income_taxes',
+  'card-american-dream-kids': 'make_american_dream_kids',
+  'card-mobility-international': 'make_mobility_international',
+  'card-upward-mobility-white':  'make_county_heatmap',
+  'card-upward-mobility-black':  'make_county_heatmap',
+  'card-hc-cost':     'make_healthcare',
+  'card-hc-life':     'make_healthcare',
+  'card-hc-infant':   'make_healthcare',
+  'card-hc-maternal': 'make_healthcare',
+  'card-hc-suicide':  'make_healthcare',
+  'card-jail-white':  'make_justice_jail',
+  'card-jail-black':  'make_justice_jail',
+  'card-electricity': 'make_electricity_cost',
+  'card-state-affordability': 'make_state_home_affordability',
 };
 
-function openCardSources(cardId) {
-  const sources = CHART_SOURCES[cardId];
-  let html;
-  if (sources) {
-    html = '<ul style="padding-left:1.2rem;line-height:2;">' +
-      sources.map(s => `<li><a href="${s.link}" target="_blank" style="color:var(--accent)">${s.name}</a></li>`).join('') +
-      '</ul>';
-  } else {
-    html = '<p style="color:var(--text-body)">Under construction...</p>';
+let _sourcesData = null;
+async function _getSourcesData() {
+  if (!_sourcesData) {
+    try {
+      const res = await fetch('/api/sources');
+      _sourcesData = await res.json();
+    } catch(e) {
+      _sourcesData = {};
+    }
   }
+  return _sourcesData;
+}
+
+async function openCardSources(cardId) {
+  const data = await _getSourcesData();
+  const funcName = CARD_TO_FUNC[cardId];
+  const html = (funcName && data[funcName])
+    ? data[funcName]
+    : '<p style="color:var(--text-body)">Under construction...</p>';
   document.getElementById('sources-modal-body').innerHTML = html;
   document.getElementById('sources-overlay').classList.add('open');
 }

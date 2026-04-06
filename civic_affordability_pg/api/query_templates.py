@@ -88,12 +88,15 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
                 "LIMIT %(limit)s"
             ),
             params={"state": state, "year_one": y1, "year_two": y2, "limit": MAX_ROWS},
-            summary=f"Before/after expense-share comparison for {y1} and {y2}" + (" (inflation-adjusted)" if inflation_adjusted else ""),
+            summary=f"Before/after expense-share comparison for {y1} and {y2}"
+            + (" (inflation-adjusted)" if inflation_adjusted else ""),
             extracted_years=years,
             is_inflation_adjusted=inflation_adjusted,
         )
 
-    if "compare" in q and any(c in q for c in ["income", "housing", "healthcare", "childcare", "component"]):
+    if "compare" in q and any(
+        c in q for c in ["income", "housing", "healthcare", "childcare", "component"]
+    ):
         return QueryPlan(
             category="component_comparison",
             template_id="component_comparison_latest_v1",
@@ -107,7 +110,8 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
                 "LIMIT 1"
             ),
             params={"state": state},
-            summary="Latest expense-share comparison" + (" (inflation-adjusted)" if inflation_adjusted else ""),
+            summary="Latest expense-share comparison"
+            + (" (inflation-adjusted)" if inflation_adjusted else ""),
             extracted_years=years,
             is_inflation_adjusted=inflation_adjusted,
         )
@@ -164,7 +168,8 @@ def build_query_plan(question: str, state: str = "CO") -> QueryPlan:
             "LIMIT %(limit)s"
         ),
         params={"state": state, "limit": MAX_ROWS},
-        summary="Expense-share trend summary" + (" (inflation-adjusted)" if inflation_adjusted else ""),
+        summary="Expense-share trend summary"
+        + (" (inflation-adjusted)" if inflation_adjusted else ""),
         extracted_years=years,
         is_inflation_adjusted=inflation_adjusted,
     )

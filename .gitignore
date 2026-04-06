@@ -5,3 +5,5 @@ __pycache__/
 data_raw/
 notebooks/
 .claude/
+.idea/
+civic_affordability_pg/dbt/target/

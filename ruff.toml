@@ -1,0 +1,7 @@
+[lint]
+# E402: imports not at top — expected in files that do sys.path manipulation first
+# F821: undefined names in notebooks — cells depend on prior cells
+per-file-ignores = { "breathe_fastapi/main.py" = ["E402"], "app.py" = ["E402", "E722", "F841"], "notebooks/*.ipynb" = ["F821"], "notebooks/**/*.ipynb" = ["F821"] }
+
+[lint.extend-per-file-ignores]
+"data/*.py" = ["E501"]  # long data literals are fine

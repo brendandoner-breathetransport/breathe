@@ -33,7 +33,9 @@ from data.healthcare_healthcare_maternal_mortality import healthcare_maternal_mo
 from data.healthcare_healthcare_suicide_rates import healthcare_suicide_rates
 from data.environment_electricity_cost import electricity_cost
 from data.justice_outcomes_upward_mobility_jail import outcomes_upward_mobility_jail
-from data.economy_house_purchase_cost_as_percent_of_income_state_level import house_purchase_cost_as_percent_of_income_state_level
+from data.economy_house_purchase_cost_as_percent_of_income_state_level import (
+    house_purchase_cost_as_percent_of_income_state_level,
+)
 
 # ---------------------------------------------------------------------------
 # One-time data prep
@@ -43,19 +45,56 @@ electricity_cost = electricity_cost.sort(["LCOE_Low_USD_MWh"], descending=True)
 year_max = shares_wid.select(pl.max("year")).to_numpy().flatten()[0]
 
 _STATE_ABBREVIATIONS = {
-    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-    "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-    "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-    "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-    "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-    "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-    "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-    "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-    "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-    "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-    "Wisconsin": "WI", "Wyoming": "WY",
+    "Alabama": "AL",
+    "Alaska": "AK",
+    "Arizona": "AZ",
+    "Arkansas": "AR",
+    "California": "CA",
+    "Colorado": "CO",
+    "Connecticut": "CT",
+    "Delaware": "DE",
+    "Florida": "FL",
+    "Georgia": "GA",
+    "Hawaii": "HI",
+    "Idaho": "ID",
+    "Illinois": "IL",
+    "Indiana": "IN",
+    "Iowa": "IA",
+    "Kansas": "KS",
+    "Kentucky": "KY",
+    "Louisiana": "LA",
+    "Maine": "ME",
+    "Maryland": "MD",
+    "Massachusetts": "MA",
+    "Michigan": "MI",
+    "Minnesota": "MN",
+    "Mississippi": "MS",
+    "Missouri": "MO",
+    "Montana": "MT",
+    "Nebraska": "NE",
+    "Nevada": "NV",
+    "New Hampshire": "NH",
+    "New Jersey": "NJ",
+    "New Mexico": "NM",
+    "New York": "NY",
+    "North Carolina": "NC",
+    "North Dakota": "ND",
+    "Ohio": "OH",
+    "Oklahoma": "OK",
+    "Oregon": "OR",
+    "Pennsylvania": "PA",
+    "Rhode Island": "RI",
+    "South Carolina": "SC",
+    "South Dakota": "SD",
+    "Tennessee": "TN",
+    "Texas": "TX",
+    "Utah": "UT",
+    "Vermont": "VT",
+    "Virginia": "VA",
+    "Washington": "WA",
+    "West Virginia": "WV",
+    "Wisconsin": "WI",
+    "Wyoming": "WY",
 }
 _ABBREV_TO_STATE = {v: k for k, v in _STATE_ABBREVIATIONS.items()}
 
@@ -104,7 +143,10 @@ PLOT_MARGIN = dict(t=60, b=50, l=60, r=20)
 AXIS_TITLE_INCOME = "<b>average pay</b>"
 AXIS_TITLE_INCOME_FORMAT = ",.2s"
 LAYOUT_ECONOMY_XRANGE = [1905, 2030]
-LAYOUT_ECONOMY_INCOME_XRANGE = [1880, 2030]  # extended to show 1880 max; revert by changing to LAYOUT_ECONOMY_XRANGE
+LAYOUT_ECONOMY_INCOME_XRANGE = [
+    1880,
+    2030,
+]  # extended to show 1880 max; revert by changing to LAYOUT_ECONOMY_XRANGE
 COUNTRIES_MULTI = ["Canada", "Europe", "Japan", "United States"]
 
 INCOME_LEVELS = {
@@ -167,6 +209,7 @@ COLORSCALE = {
 # Helper functions
 # ---------------------------------------------------------------------------
 
+
 def get_color_template(mode: str) -> str:
     return "plotly_white" if mode == "light" else "plotly_dark"
 
@@ -190,29 +233,60 @@ def _fmt_text(value, prefix, suffix, fmt, context, color="rgb(0,0,0)"):
     return f"<span style='color:{color}'><b>{prefix}{value:{fmt}}{suffix}</b><br>{context}</span>"
 
 
-def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_min, dark_mode="light", fig=None, xrange=None, show_current=True):
-    fmt   = {"thousands": ".0f",  "percentage": ".0%"}[number_type]
-    pfx   = {"thousands": "$",    "percentage": ""}[number_type]
-    sfx   = {"thousands": "k",    "percentage": ""}[number_type]
-    div   = {"thousands": 1000,   "percentage": 1}[number_type]
+def get_highlights_line_min_max(
+    data,
+    col_date,
+    col_metric,
+    number_type,
+    max_or_min,
+    dark_mode="light",
+    fig=None,
+    xrange=None,
+    show_current=True,
+):
+    fmt = {"thousands": ".0f", "percentage": ".0%"}[number_type]
+    pfx = {"thousands": "$", "percentage": ""}[number_type]
+    sfx = {"thousands": "k", "percentage": ""}[number_type]
+    div = {"thousands": 1000, "percentage": 1}[number_type]
 
-    visible = data.filter(pl.col(col_date).is_between(xrange[0], xrange[1])) if xrange else data
+    visible = (
+        data.filter(pl.col(col_date).is_between(xrange[0], xrange[1]))
+        if xrange
+        else data
+    )
     d_latest = data.filter(pl.col(col_date) == data[col_date].max())
-    d_min    = visible.filter(pl.col(col_metric) == visible[col_metric].min()).sort(col_date).tail(1)
-    d_max    = visible.filter(pl.col(col_metric) == visible[col_metric].max()).sort(col_date).tail(1)
+    d_min = (
+        visible.filter(pl.col(col_metric) == visible[col_metric].min())
+        .sort(col_date)
+        .tail(1)
+    )
+    d_max = (
+        visible.filter(pl.col(col_metric) == visible[col_metric].max())
+        .sort(col_date)
+        .tail(1)
+    )
 
     latest_val = d_latest[col_metric].to_numpy().flatten()[0]
-    min_val    = d_min[col_metric].to_numpy().flatten()[0]
-    max_val    = d_max[col_metric].to_numpy().flatten()[0]
+    min_val = d_min[col_metric].to_numpy().flatten()[0]
+    max_val = d_max[col_metric].to_numpy().flatten()[0]
 
     text_color = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"
 
     def scatter(d, label, textposition="top center"):
         return go.Scatter(
-            name="NONE", mode="markers+text",
-            x=d[col_date], y=d[col_metric],
+            name="NONE",
+            mode="markers+text",
+            x=d[col_date],
+            y=d[col_metric],
             marker=dict(color="orange", size=8),
-            text=_fmt_text(value=d[col_metric].to_numpy().flatten()[0] / div, prefix=pfx, suffix=sfx, fmt=fmt, context=label, color=text_color),
+            text=_fmt_text(
+                value=d[col_metric].to_numpy().flatten()[0] / div,
+                prefix=pfx,
+                suffix=sfx,
+                fmt=fmt,
+                context=label,
+                color=text_color,
+            ),
             textposition=textposition,
             textfont=dict(color=text_color),
             cliponaxis=False,
@@ -232,7 +306,9 @@ def get_highlights_line_min_max(data, col_date, col_metric, number_type, max_or_
 
     if fig is not None:
         max_year = d_max[col_date].to_numpy().flatten()[0]
-        line_color = "rgba(255,255,255,0.3)" if dark_mode == "dark" else "rgba(0,0,0,0.3)"
+        line_color = (
+            "rgba(255,255,255,0.3)" if dark_mode == "dark" else "rgba(0,0,0,0.3)"
+        )
         font_color = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "black"
         fig.add_vline(
             x=max_year,
@@ -260,7 +336,7 @@ def add_period_lines(fig, year=None, text=None, dark_mode="light"):
             x=year,
             line=dict(color=line_color, width=2, dash="dash"),
             annotation_text=text,
-            annotation_position="top right",
+            annotation_position="bottom right",
             annotation_font_color=font_color,
         )
 
@@ -269,7 +345,11 @@ def add_period_shading(fig, dark_mode="light"):
     dark_fill = "white" if dark_mode == "dark" else "black"
     for x0, x1, color in [(1938, 1979, "green"), (1980, 2020, dark_fill)]:
         fig.add_vrect(
-            x0=x0, x1=x1, line_width=0, fillcolor=color, opacity=0.05,
+            x0=x0,
+            x1=x1,
+            line_width=0,
+            fillcolor=color,
+            opacity=0.05,
             annotation_text="<b><a href='https://github.com/brendandoner-breathetransport/breathe/wiki/Economy#policies'>Policies</a></b>",
             annotation_position="bottom",
         )
@@ -289,6 +369,7 @@ def fig_to_json(fig) -> JSONResponse:
 # Chart builders
 # ---------------------------------------------------------------------------
 
+
 def _title_dict(main: str, subtitle: str = "", font_size: int = 14) -> dict:
     """Word-wrap main title and return a Plotly title dict.
     automargin=True lets Plotly expand the top margin to fit wrapped lines.
@@ -298,7 +379,7 @@ def _title_dict(main: str, subtitle: str = "", font_size: int = 14) -> dict:
     lines, line, length = [], [], 0
     for word in words:
         word_len = len(word) + (1 if line else 0)
-        if line and length + word_len > 50:
+        if line and length + word_len > 35:
             lines.append(" ".join(line))
             line, length = [word], len(word)
         else:
@@ -330,10 +411,19 @@ def _yaxis_title_dict(main: str, subtitle: str = "", font_size: int = 12) -> dic
     )
 
 
-def _economy_base_layout(fig, title, income_level, dark_mode, xrange=None, y_data=None,
-                          yaxis_title=None, ytickfmt=None, ytickpfx=None,
-                          xaxis_title=""):
-    ymin, ymax = (get_yaxis_range(y_data=y_data) if y_data is not None else (None, None))
+def _economy_base_layout(
+    fig,
+    title,
+    income_level,
+    dark_mode,
+    xrange=None,
+    y_data=None,
+    yaxis_title=None,
+    ytickfmt=None,
+    ytickpfx=None,
+    xaxis_title="",
+):
+    ymin, ymax = get_yaxis_range(y_data=y_data) if y_data is not None else (None, None)
     ydict = dict(fixedrange=True)
     if ymin is not None:
         ydict["range"] = [ymin, ymax]
@@ -347,7 +437,9 @@ def _economy_base_layout(fig, title, income_level, dark_mode, xrange=None, y_dat
         yaxis_title=yaxis_title or AXIS_TITLE_INCOME,
         yaxis=ydict,
         xaxis_title=xaxis_title,
-        xaxis=dict(range=xrange or LAYOUT_ECONOMY_XRANGE, tickmode="array", fixedrange=True),
+        xaxis=dict(
+            range=xrange or LAYOUT_ECONOMY_XRANGE, tickmode="array", fixedrange=True
+        ),
         showlegend=True,
         template=get_color_template(dark_mode),
         plot_bgcolor=get_background_color(dark_mode),
@@ -356,29 +448,76 @@ def _economy_base_layout(fig, title, income_level, dark_mode, xrange=None, y_dat
     )
 
 
-def make_economy_income(dark_mode: str, income_level: str, country: str, title: str = "") -> go.Figure:
+def make_economy_income(
+    dark_mode: str, income_level: str, country: str, title: str = ""
+) -> go.Figure:
     income_col = INCOME_LEVELS[income_level]
-    data = shares_wid.filter(pl.col("country") == country).filter(pl.col("year") >= 1880)
+    data = shares_wid.filter(pl.col("country") == country).filter(
+        pl.col("year") >= 1880
+    )
     usa = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880)
 
-    _income_hover = "<b>%{fullData.name}</b><br>Year: %{x} | average pay: $%{y:,.0f}<extra></extra>"
+    _income_hover = (
+        "<b>%{fullData.name}</b><br>Year: %{x} | average pay: $%{y:,.0f}<extra></extra>"
+    )
     other_color = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
-    country_traces = [] if country == "usa" else (
-        [go.Scatter(name=country.upper(), x=data["year"], y=data[income_col],
+    country_traces = (
+        []
+        if country == "usa"
+        else (
+            [
+                go.Scatter(
+                    name=country.upper(),
+                    x=data["year"],
+                    y=data[income_col],
                     line=dict(color=other_color, width=3),
-                    hovertemplate=_income_hover)]
-        + get_highlights_line_min_max(data=data, col_date="year", col_metric=income_col, number_type="thousands", max_or_min="max", dark_mode=dark_mode, xrange=LAYOUT_ECONOMY_INCOME_XRANGE)
+                    hovertemplate=_income_hover,
+                )
+            ]
+            + get_highlights_line_min_max(
+                data=data,
+                col_date="year",
+                col_metric=income_col,
+                number_type="thousands",
+                max_or_min="max",
+                dark_mode=dark_mode,
+                xrange=LAYOUT_ECONOMY_INCOME_XRANGE,
+            )
+        )
     )
     traces = (
         country_traces
-        + [go.Scatter(name="USA", x=usa["year"], y=usa[income_col],
-                      line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3),
-                      hovertemplate=_income_hover)]
-        + get_highlights_line_min_max(data=usa, col_date="year", col_metric=income_col, number_type="thousands", max_or_min="max", dark_mode=dark_mode, xrange=LAYOUT_ECONOMY_INCOME_XRANGE)
+        + [
+            go.Scatter(
+                name="USA",
+                x=usa["year"],
+                y=usa[income_col],
+                line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3),
+                hovertemplate=_income_hover,
+            )
+        ]
+        + get_highlights_line_min_max(
+            data=usa,
+            col_date="year",
+            col_metric=income_col,
+            number_type="thousands",
+            max_or_min="max",
+            dark_mode=dark_mode,
+            xrange=LAYOUT_ECONOMY_INCOME_XRANGE,
+        )
     )
     fig = go.Figure(data=traces)
     if country not in ("canada", "france"):
-        get_highlights_line_min_max(data=usa, col_date="year", col_metric=income_col, number_type="thousands", max_or_min="max", dark_mode=dark_mode, fig=fig, xrange=LAYOUT_ECONOMY_INCOME_XRANGE)
+        get_highlights_line_min_max(
+            data=usa,
+            col_date="year",
+            col_metric=income_col,
+            number_type="thousands",
+            max_or_min="max",
+            dark_mode=dark_mode,
+            fig=fig,
+            xrange=LAYOUT_ECONOMY_INCOME_XRANGE,
+        )
 
     vline_year = {"canada": 2004, "france": 1995}.get(country)
     vline_text = {
@@ -390,14 +529,20 @@ def make_economy_income(dark_mode: str, income_level: str, country: str, title: 
     all_y = np.concatenate([data[income_col].to_numpy(), usa[income_col].to_numpy()])
     _economy_base_layout(
         fig,
-        title=_title_dict(main=title or "American workers keep getting less of the pie & the rich are taking more", subtitle=None),
+        title=_title_dict(
+            main=title
+            or "American workers get less & less of the pie while the rich take more",
+            subtitle=None,
+        ),
         income_level=income_level,
         dark_mode=dark_mode,
         xrange=LAYOUT_ECONOMY_INCOME_XRANGE,
         y_data=all_y,
         ytickpfx="$",
         ytickfmt=AXIS_TITLE_INCOME_FORMAT,
-        yaxis_title=_yaxis_title_dict(main="average pay", subtitle=f"{year_max} dollars"),
+        yaxis_title=_yaxis_title_dict(
+            main="average pay", subtitle=f"{year_max} dollars"
+        ),
     )
 
     for trace in fig["data"]:
@@ -406,17 +551,22 @@ def make_economy_income(dark_mode: str, income_level: str, country: str, title: 
     return fig
 
 
-def make_economy_barchart(dark_mode: str, income_level: str, highlight_canada: bool = False, selected_country: str = "usa") -> go.Figure:
+def make_economy_barchart(
+    dark_mode: str,
+    income_level: str,
+    highlight_canada: bool = False,
+    selected_country: str = "usa",
+) -> go.Figure:
     income_col = INCOME_LEVELS[income_level]
-    latest = (
-        shares_wid.filter(pl.col("year") == shares_wid["year"].max())
-        .sort([income_col], descending=[False])
+    latest = shares_wid.filter(pl.col("year") == shares_wid["year"].max()).sort(
+        [income_col], descending=[False]
     )
     countries = latest.select("country").to_numpy().flatten()
     highlight_country = selected_country if selected_country != "usa" else None
     gray = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
     bar_colors = [
-        gray if (c == "canada" and highlight_canada) or c == highlight_country
+        gray
+        if (c == "canada" and highlight_canada) or c == highlight_country
         else COLORS_BY_COUNTRY.get(c, "rgba(100,100,100,0.3)")
         for c in countries
     ]
@@ -427,34 +577,95 @@ def make_economy_barchart(dark_mode: str, income_level: str, highlight_canada: b
         "income_mean_top": "<b>%{text:.3s}</b>",
     }[income_col]
 
-    legend_traces = [
-        go.Scatter(x=[None], y=[None], mode="markers", name="Democracies",
-                   marker=dict(color="rgba(90,185,111,0.3)", size=12, symbol="square")),
-        go.Scatter(x=[None], y=[None], mode="markers", name="Authoritarian",
-                   marker=dict(color="rgba(230,78,67,0.7)", size=12, symbol="square")),
-        go.Scatter(x=[None], y=[None], mode="markers", name="USA",
-                   marker=dict(color=COLOR_LIGHT_DARK[dark_mode], size=12, symbol="square")),
-    ] + ([go.Scatter(x=[None], y=[None], mode="markers", name="Canada",
-                     marker=dict(color=gray, size=12, symbol="square"))]
-         if highlight_canada else []
-    ) + ([go.Scatter(x=[None], y=[None], mode="markers", name=highlight_country.replace("_", " ").title(),
-                     marker=dict(color=gray, size=12, symbol="square"))]
-         if highlight_country and not highlight_canada else [])
+    legend_traces = (
+        [
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                name="Democracies",
+                marker=dict(color="rgba(90,185,111,0.3)", size=12, symbol="square"),
+            ),
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                name="Authoritarian",
+                marker=dict(color="rgba(230,78,67,0.7)", size=12, symbol="square"),
+            ),
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                name="USA",
+                marker=dict(
+                    color=COLOR_LIGHT_DARK[dark_mode], size=12, symbol="square"
+                ),
+            ),
+        ]
+        + (
+            [
+                go.Scatter(
+                    x=[None],
+                    y=[None],
+                    mode="markers",
+                    name="Canada",
+                    marker=dict(color=gray, size=12, symbol="square"),
+                )
+            ]
+            if highlight_canada
+            else []
+        )
+        + (
+            [
+                go.Scatter(
+                    x=[None],
+                    y=[None],
+                    mode="markers",
+                    name=highlight_country.replace("_", " ").title(),
+                    marker=dict(color=gray, size=12, symbol="square"),
+                )
+            ]
+            if highlight_country and not highlight_canada
+            else []
+        )
+    )
     x_labels = [c.replace("_", " ").upper() for c in countries]
-    fig = go.Figure(data=[go.Bar(
-        x=x_labels, y=latest[income_col],
-        text=latest[income_col], texttemplate=texttemplate,
-        textfont=dict(size=12, color="rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"), textangle=0,
-        marker_color=bar_colors,
-        showlegend=False,
-        hovertemplate="Country: %{x} | Average Pay: $%{y:,.0f}<extra></extra>",
-    )] + legend_traces)
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=x_labels,
+                y=latest[income_col],
+                text=latest[income_col],
+                texttemplate=texttemplate,
+                textfont=dict(
+                    size=12,
+                    color="rgba(255,255,255,0.85)"
+                    if dark_mode == "dark"
+                    else "rgba(0,0,0,0.85)",
+                ),
+                textangle=0,
+                marker_color=bar_colors,
+                showlegend=False,
+                hovertemplate="Country: %{x} | Average Pay: $%{y:,.0f}<extra></extra>",
+            )
+        ]
+        + legend_traces
+    )
     fig.update_layout(
-        title=_title_dict(main=f"With the same sized pie, how do they divide the pie in other countries?", subtitle=None),
+        title=_title_dict(
+            main="With the same sized pie, how do other countries divide it?",
+            subtitle=None,
+        ),
         title_x=0.5,
-        yaxis=dict(tickprefix="$", tickformat=AXIS_TITLE_INCOME_FORMAT, fixedrange=True),
-        yaxis_title=_yaxis_title_dict(main="average pay", subtitle=f"{year_max} dollars"),
-        xaxis_tickangle=-45, xaxis=dict(fixedrange=True),
+        yaxis=dict(
+            tickprefix="$", tickformat=AXIS_TITLE_INCOME_FORMAT, fixedrange=True
+        ),
+        yaxis_title=_yaxis_title_dict(
+            main="average pay", subtitle=f"{year_max} dollars"
+        ),
+        xaxis_tickangle=-45,
+        xaxis=dict(fixedrange=True),
         showlegend=True,
         template=get_color_template(dark_mode),
         plot_bgcolor=get_background_color(dark_mode),
@@ -470,39 +681,78 @@ def make_economy_income_taxes(dark_mode: str, income_level: str) -> go.Figure:
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_traces(
-        [go.Scatter(name=income_level, showlegend=False, x=usa["year"], y=usa[income_col],
-                    line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3),
-                    hovertemplate="<b>%{fullData.name}</b><br>Year: %{x} | average pay: $%{y:,.0f}<extra></extra>")]
-        + get_highlights_line_min_max(data=usa, col_date="year", col_metric=income_col, number_type="thousands", max_or_min="max", dark_mode=dark_mode)
+        [
+            go.Scatter(
+                name=income_level,
+                showlegend=False,
+                x=usa["year"],
+                y=usa[income_col],
+                line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3),
+                hovertemplate="<b>%{fullData.name}</b><br>Year: %{x} | average pay: $%{y:,.0f}<extra></extra>",
+            )
+        ]
+        + get_highlights_line_min_max(
+            data=usa,
+            col_date="year",
+            col_metric=income_col,
+            number_type="thousands",
+            max_or_min="max",
+            dark_mode=dark_mode,
+        )
     )
 
     tax_data = tax.filter(pl.col("change_top_bracket") != 0).sort(["year"])
     indices = {"up": 0, "down": 0}
     names = {"up": "tax rate increase", "down": "tax rate decrease"}
-    for yr, chg in zip(tax_data["year"].to_list(), tax_data["change_top_bracket"].to_list()):
+    for yr, chg in zip(
+        tax_data["year"].to_list(), tax_data["change_top_bracket"].to_list()
+    ):
         direction = "up" if chg > 0 else "down"
         name = names[direction] if indices[direction] == 0 else "NONE"
         indices[direction] += 1
-        fig.add_trace(go.Scatter(
-            name=name, mode="lines",
-            x=[yr, yr], y=[0, chg],
-            line=dict(color=COLORS_TAX_CHANGES[direction], width=5),
-            yaxis="y2",
-            hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Scatter(
+                name=name,
+                mode="lines",
+                x=[yr, yr],
+                y=[0, chg],
+                line=dict(color=COLORS_TAX_CHANGES[direction], width=5),
+                yaxis="y2",
+                hoverinfo="skip",
+            )
+        )
 
-    fig.add_hline(y=0, line=dict(color="rgba(0,0,0,0.2)", width=1, dash="solid"), secondary_y=True)
+    fig.add_hline(
+        y=0, line=dict(color="rgba(0,0,0,0.2)", width=1, dash="solid"), secondary_y=True
+    )
     add_period_lines(fig=fig, dark_mode=dark_mode)
     add_period_shading(fig=fig, dark_mode=dark_mode)
 
     ymin, ymax = get_yaxis_range(y_data=usa[income_col])
     fig.update_layout(
-        title=_title_dict(main="Lower taxes for the rich is part of the system that shrinks your paycheck", subtitle=None),
+        title=_title_dict(
+            main="Lower taxes for the rich is part of the system that shrinks your paycheck",
+            subtitle=None,
+        ),
         title_x=0.5,
-        yaxis=dict(range=[ymin, ymax], tickprefix="$", tickformat=AXIS_TITLE_INCOME_FORMAT, fixedrange=True),
-        yaxis2=dict(title="top tax bracket changes", range=[-0.60, 0.60],
-                    anchor="x", overlaying="y", side="right", tickformat="+.0%", fixedrange=True),
-        yaxis_title=_yaxis_title_dict(main="average pay", subtitle=f"{year_max} dollars"),
+        yaxis=dict(
+            range=[ymin, ymax],
+            tickprefix="$",
+            tickformat=AXIS_TITLE_INCOME_FORMAT,
+            fixedrange=True,
+        ),
+        yaxis2=dict(
+            title="top tax bracket changes",
+            range=[-0.60, 0.60],
+            anchor="x",
+            overlaying="y",
+            side="right",
+            tickformat="+.0%",
+            fixedrange=True,
+        ),
+        yaxis_title=_yaxis_title_dict(
+            main="average pay", subtitle=f"{year_max} dollars"
+        ),
         xaxis=dict(range=LAYOUT_ECONOMY_XRANGE, tickmode="array", fixedrange=True),
         showlegend=True,
         template=get_color_template(dark_mode),
@@ -517,26 +767,44 @@ def make_economy_income_taxes(dark_mode: str, income_level: str) -> go.Figure:
 
 def make_economy_house_purchase(dark_mode: str, income_level: str) -> go.Figure:
     income_col = INCOME_LEVELS[income_level]
-    income = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880)
-    col = "house_pct"
-    data = (
-        house_purchase_cost_as_percent_of_income
-        .join(income, on=["year"], how="inner")
-        .with_columns((pl.col("cost") / pl.col(income_col)).alias(col))
+    income = shares_wid.filter(pl.col("country") == "usa").filter(
+        pl.col("year") >= 1880
     )
-    fig = go.Figure(data=(
-        [go.Scatter(name=income_level, showlegend=False, x=data["year"], y=data[col],
+    col = "house_pct"
+    data = house_purchase_cost_as_percent_of_income.join(
+        income, on=["year"], how="inner"
+    ).with_columns((pl.col("cost") / pl.col(income_col)).alias(col))
+    fig = go.Figure(
+        data=(
+            [
+                go.Scatter(
+                    name=income_level,
+                    showlegend=False,
+                    x=data["year"],
+                    y=data[col],
                     line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3),
-                    hovertemplate=f"<b>%{{fullData.name}}</b><br>Year: %{{x}} | % of {income_level} Paycheck: %{{y:.1%}}<extra></extra>")]
-        + get_highlights_line_min_max(data=data, col_date="year", col_metric=col, number_type="percentage", max_or_min="min", dark_mode=dark_mode)
-    ))
+                    hovertemplate=f"<b>%{{fullData.name}}</b><br>Year: %{{x}} | % of {income_level} Paycheck: %{{y:.1%}}<extra></extra>",
+                )
+            ]
+            + get_highlights_line_min_max(
+                data=data,
+                col_date="year",
+                col_metric=col,
+                number_type="percentage",
+                max_or_min="min",
+                dark_mode=dark_mode,
+            )
+        )
+    )
     ymin, ymax = get_yaxis_range(y_data=data[col])
     fig.update_layout(
         title=_title_dict(main=f"Percent of {income_level} Income to Purchase a Home"),
         title_x=0.5,
         yaxis_title=f"<b>% of {income_level} Paycheck</b>",
         yaxis=dict(range=[ymin, ymax], tickformat=",.0%", fixedrange=True),
-        xaxis=dict(range=[data["year"].min() - 5, data["year"].max() + 4], fixedrange=True),
+        xaxis=dict(
+            range=[data["year"].min() - 5, data["year"].max() + 4], fixedrange=True
+        ),
         showlegend=True,
         template=get_color_template(dark_mode),
         plot_bgcolor=get_background_color(dark_mode),
@@ -552,25 +820,44 @@ def make_economy_house_purchase(dark_mode: str, income_level: str) -> go.Figure:
 def make_economy_f150(dark_mode: str, income_level: str) -> go.Figure:
     income_col = INCOME_LEVELS[income_level]
     usa = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880)
-    data = (
-        f150.join(usa, on=["year"], how="inner")
-        .with_columns((pl.col("price") / pl.col(income_col)).alias("price_ratio"))
+    data = f150.join(usa, on=["year"], how="inner").with_columns(
+        (pl.col("price") / pl.col(income_col)).alias("price_ratio")
     )
-    fig = go.Figure(data=(
-        [go.Scatter(name=income_level, showlegend=False, x=data["year"], y=data["price_ratio"],
+    fig = go.Figure(
+        data=(
+            [
+                go.Scatter(
+                    name=income_level,
+                    showlegend=False,
+                    x=data["year"],
+                    y=data["price_ratio"],
                     line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3),
-                    hovertemplate=f"<b>%{{fullData.name}}</b><br>Year: %{{x}} | % of {income_level} Paycheck: %{{y:.1%}}<extra></extra>")]
-        + get_highlights_line_min_max(data=data, col_date="year", col_metric="price_ratio", number_type="percentage", max_or_min="min", dark_mode=dark_mode)
-    ))
+                    hovertemplate=f"<b>%{{fullData.name}}</b><br>Year: %{{x}} | % of {income_level} Paycheck: %{{y:.1%}}<extra></extra>",
+                )
+            ]
+            + get_highlights_line_min_max(
+                data=data,
+                col_date="year",
+                col_metric="price_ratio",
+                number_type="percentage",
+                max_or_min="min",
+                dark_mode=dark_mode,
+            )
+        )
+    )
     add_period_lines(fig=fig, dark_mode=dark_mode)
     add_period_shading(fig=fig, dark_mode=dark_mode)
     ymin, ymax = get_yaxis_range(y_data=data["price_ratio"])
     fig.update_layout(
-        title=_title_dict(main=f"Percent of {income_level} Income to Purchase a Ford F-150"),
+        title=_title_dict(
+            main=f"Percent of {income_level} Income to Purchase a Ford F-150"
+        ),
         title_x=0.5,
         yaxis_title=f"<b>% of {income_level} Paycheck</b>",
         yaxis=dict(range=[ymin, ymax], tickformat=",.0%", fixedrange=True),
-        xaxis=dict(range=[data["year"].min() - 5, data["year"].max() + 4], fixedrange=True),
+        xaxis=dict(
+            range=[data["year"].min() - 5, data["year"].max() + 4], fixedrange=True
+        ),
         showlegend=True,
         template=get_color_template(dark_mode),
         plot_bgcolor=get_background_color(dark_mode),
@@ -587,34 +874,35 @@ def _spread_labels(label_y: dict, y_range: float, min_gap_frac: float = 0.06) ->
     """Push label y-positions apart so no two are closer than min_gap_frac * y_range."""
     min_gap = min_gap_frac * y_range
     keys = sorted(label_y, key=label_y.__getitem__)
-    pos  = [label_y[k] for k in keys]
+    pos = [label_y[k] for k in keys]
     for _ in range(200):
         moved = False
         for i in range(1, len(pos)):
             if pos[i] - pos[i - 1] < min_gap:
-                mid       = (pos[i] + pos[i - 1]) / 2
+                mid = (pos[i] + pos[i - 1]) / 2
                 pos[i - 1] = mid - min_gap / 2
-                pos[i]     = mid + min_gap / 2
+                pos[i] = mid + min_gap / 2
                 moved = True
         if not moved:
             break
     return dict(zip(keys, pos))
 
 
-def _multi_country_mobility(dark_mode: str, col: str, title: str, subtitle: str = "") -> go.Figure:
-    data = (
-        mobility_international
-        .filter(pl.col(col).is_not_nan())
-        .filter(pl.col("country").is_in(COUNTRIES_MULTI))
+def _multi_country_mobility(
+    dark_mode: str, col: str, title: str, subtitle: str = ""
+) -> go.Figure:
+    data = mobility_international.filter(pl.col(col).is_not_nan()).filter(
+        pl.col("country").is_in(COUNTRIES_MULTI)
     )
     last = data.join(
         data.group_by("country").agg(pl.max("year")),
-        on=["country", "year"], how="inner",
+        on=["country", "year"],
+        how="inner",
     )
     countries = np.sort(np.unique(data["country"].to_numpy()))
 
     other_color = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
-    text_color  = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"
+    text_color = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"
 
     raw_label_y = {
         c: float(last.filter(pl.col("country") == c)[col].to_numpy()[0])
@@ -623,37 +911,57 @@ def _multi_country_mobility(dark_mode: str, col: str, title: str, subtitle: str 
     ymin, ymax = get_yaxis_range(y_data=data[col])
     label_y = _spread_labels(label_y=raw_label_y, y_range=ymax - ymin)
 
-    fig = go.Figure(data=(
-        [go.Scatter(
-            name=c, mode="lines",
-            x=data.filter(pl.col("country") == c)["year"],
-            y=data.filter(pl.col("country") == c)[col],
-            line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3)
-            if c.lower() == "united states" else dict(color=other_color, width=2),
-            hovertemplate="<b>%{fullData.name}</b><br>Year: %{x} | % earning more than parents: %{y:.1%}<extra></extra>",
-        ) for c in countries]
-        + [go.Scatter(
-            name="NONE", mode="text",
-            x=last.filter(pl.col("country") == c)["year"],
-            y=[label_y[c]],
-            text=f"<span style='color:{text_color}'><b>{c}</b></span>" if c == "United States"
-                 else f"<span style='color:{text_color}'>{c}</span>",
-            textposition="middle right",
-            hoverinfo="skip",
-        ) for c in COUNTRIES_MULTI]
-    ))
+    fig = go.Figure(
+        data=(
+            [
+                go.Scatter(
+                    name=c,
+                    mode="lines",
+                    x=data.filter(pl.col("country") == c)["year"],
+                    y=data.filter(pl.col("country") == c)[col],
+                    line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3)
+                    if c.lower() == "united states"
+                    else dict(color=other_color, width=2),
+                    hovertemplate="<b>%{fullData.name}</b><br>Year: %{x} | % earning more than parents: %{y:.1%}<extra></extra>",
+                )
+                for c in countries
+            ]
+            + [
+                go.Scatter(
+                    name="NONE",
+                    mode="text",
+                    x=last.filter(pl.col("country") == c)["year"],
+                    y=[label_y[c]],
+                    text=f"<span style='color:{text_color}'><b>{c}</b></span>"
+                    if c == "United States"
+                    else f"<span style='color:{text_color}'>{c}</span>",
+                    textposition="middle right",
+                    hoverinfo="skip",
+                )
+                for c in COUNTRIES_MULTI
+            ]
+        )
+    )
     for trace in get_highlights_line_min_max(
         data=data.filter(pl.col("country") == "United States"),
-        col_date="year", col_metric=col, number_type="percentage", max_or_min="max",
-        dark_mode=dark_mode, fig=fig, show_current=False,
+        col_date="year",
+        col_metric=col,
+        number_type="percentage",
+        max_or_min="max",
+        dark_mode=dark_mode,
+        fig=fig,
+        show_current=False,
     ):
         fig.add_trace(trace)
 
     ymin, ymax = get_yaxis_range(y_data=data[col])
     fig.update_layout(
-        title=_title_dict(main=title, subtitle=subtitle), title_x=0.5,
+        title=_title_dict(main=title, subtitle=subtitle),
+        title_x=0.5,
         yaxis_title=None,
-        xaxis=dict(fixedrange=True, range=[data["year"].min() - 5, data["year"].max() + 15]),
+        xaxis=dict(
+            fixedrange=True, range=[data["year"].min() - 5, data["year"].max() + 15]
+        ),
         yaxis=dict(range=[ymin, ymax], tickformat=".0%", fixedrange=True),
         showlegend=False,
         template=get_color_template(dark_mode),
@@ -666,84 +974,128 @@ def _multi_country_mobility(dark_mode: str, col: str, title: str, subtitle: str 
 
 
 def make_american_dream_kids(dark_mode: str) -> go.Figure:
-    return _multi_country_mobility(dark_mode=dark_mode, col="mobility", title="How likely are you to make more than your parents?")
+    return _multi_country_mobility(
+        dark_mode=dark_mode,
+        col="mobility",
+        title="How likely are you to make more than your parents?",
+    )
 
 
 def make_mobility_international(dark_mode: str) -> go.Figure:
     return _multi_country_mobility(
-        dark_mode=dark_mode, col="growth_controlled",
+        dark_mode=dark_mode,
+        col="growth_controlled",
         title="How does the rich taking more hurt the American Dream?",
         subtitle=None,
     )
 
 
-def make_county_heatmap(dark_mode: str, race: str, metric: str, title: str, subtitle: str = "") -> go.Figure:
-    start = outcomes_upward_mobility_jail.filter(pl.col("metric") == metric)["value"].min()
-    stop  = outcomes_upward_mobility_jail.filter(pl.col("metric") == metric)["value"].max()
+def make_county_heatmap(
+    dark_mode: str, race: str, metric: str, title: str, subtitle: str = ""
+) -> go.Figure:
+    start = outcomes_upward_mobility_jail.filter(pl.col("metric") == metric)[
+        "value"
+    ].min()
+    stop = outcomes_upward_mobility_jail.filter(pl.col("metric") == metric)[
+        "value"
+    ].max()
     df = (
-        outcomes_upward_mobility_jail
-        .filter(pl.col("metric") == metric)
+        outcomes_upward_mobility_jail.filter(pl.col("metric") == metric)
         .filter(pl.col("race") == race)
         .to_pandas()
     )
-    fig = go.Figure(go.Choropleth(
-        locations=df["fips_county"], z=df["value"],
-        locationmode="geojson-id", geojson=counties_json,
-        colorscale=COLORSCALE[metric],
-        zmin=start, zmax=stop,
-        hovertemplate="<b>%{text}</b><br>" + f"{title}: %{{z:.2f}}<br><extra></extra>",
-        text=df["county"] + ", " + df["state"],
-        marker=dict(line=dict(width=0)),
-        colorbar=dict(title=None, orientation="h", y=-0.1, yanchor="top", thickness=10, len=0.80),
-    ))
+    fig = go.Figure(
+        go.Choropleth(
+            locations=df["fips_county"],
+            z=df["value"],
+            locationmode="geojson-id",
+            geojson=counties_json,
+            colorscale=COLORSCALE[metric],
+            zmin=start,
+            zmax=stop,
+            hovertemplate="<b>%{text}</b><br>"
+            + f"{title}: %{{z:.2f}}<br><extra></extra>",
+            text=df["county"] + ", " + df["state"],
+            marker=dict(line=dict(width=0)),
+            colorbar=dict(
+                title=None,
+                orientation="h",
+                y=-0.1,
+                yanchor="top",
+                thickness=10,
+                len=0.80,
+            ),
+        )
+    )
     fig.update_layout(
-        title=_title_dict(main=title, subtitle=subtitle), title_x=0.5,
+        title=_title_dict(main=title, subtitle=subtitle),
+        title_x=0.5,
         showlegend=False,
         template=get_color_template(dark_mode),
         plot_bgcolor=get_background_color(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
         margin=PLOT_MARGIN,
-        geo=dict(scope="usa", projection=go.layout.geo.Projection(type="albers usa"),
-                 showlakes=True, lakecolor="rgb(255, 255, 255)",
-                 bgcolor=get_background_color(dark_mode)),
+        geo=dict(
+            scope="usa",
+            projection=go.layout.geo.Projection(type="albers usa"),
+            showlakes=True,
+            lakecolor="rgb(255, 255, 255)",
+            bgcolor=get_background_color(dark_mode),
+        ),
     )
     return fig
 
 
 def make_healthcare(data, title, yaxis_title, dark_mode: str) -> go.Figure:
     data = data.filter(pl.col("year") >= 2000)
-    last = data.join(data.group_by("country").agg(pl.max("year")), on=["country", "year"], how="inner")
+    last = data.join(
+        data.group_by("country").agg(pl.max("year")),
+        on=["country", "year"],
+        how="inner",
+    )
     countries = ["united states", "europe", "costa rica", "japan", "china", "canada"]
 
     other_color = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
-    text_color  = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"
+    text_color = "rgba(255,255,255,0.85)" if dark_mode == "dark" else "rgba(0,0,0,0.85)"
 
     def country_label(c):
         if c == "united states":
             return "<b>USA</b>"
         return f"<br>{c.title()}" if c == "canada" else c.title()
 
-    fig = go.Figure(data=(
-        [go.Scatter(
-            name=c, mode="lines",
-            x=data.filter(pl.col("country") == c)["year"],
-            y=data.filter(pl.col("country") == c)["value"],
-            line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3)
-            if c == "united states" else dict(color=other_color, width=2),
-            hovertemplate=f"<b>%{{fullData.name}}</b><br>Year: %{{x}} | {yaxis_title}: %{{y:,.2f}}<extra></extra>",
-        ) for c in countries]
-        + [go.Scatter(
-            name="NONE", mode="text",
-            x=last.filter(pl.col("country") == c)["year"],
-            y=last.filter(pl.col("country") == c)["value"],
-            text=f"<span style='color:{text_color}'>{country_label(c)}</span>",
-            textposition="middle right",
-            hoverinfo="skip",
-        ) for c in countries]
-    ))
+    fig = go.Figure(
+        data=(
+            [
+                go.Scatter(
+                    name=c,
+                    mode="lines",
+                    x=data.filter(pl.col("country") == c)["year"],
+                    y=data.filter(pl.col("country") == c)["value"],
+                    line=dict(color=COLOR_LIGHT_DARK[dark_mode], width=3)
+                    if c == "united states"
+                    else dict(color=other_color, width=2),
+                    hovertemplate=f"<b>%{{fullData.name}}</b><br>Year: %{{x}} | {yaxis_title}: %{{y:,.2f}}<extra></extra>",
+                )
+                for c in countries
+            ]
+            + [
+                go.Scatter(
+                    name="NONE",
+                    mode="text",
+                    x=last.filter(pl.col("country") == c)["year"],
+                    y=last.filter(pl.col("country") == c)["value"],
+                    text=f"<span style='color:{text_color}'>{country_label(c)}</span>",
+                    textposition="middle right",
+                    hoverinfo="skip",
+                )
+                for c in countries
+            ]
+        )
+    )
     max_year = int(data["year"].max())
     fig.update_layout(
-        title=_title_dict(main=title), title_x=0.5,
+        title=_title_dict(main=title),
+        title_x=0.5,
         yaxis_title=f"<b>{yaxis_title}</b>",
         xaxis=dict(range=[data["year"].min() - 5, max_year + 8], fixedrange=True),
         showlegend=False,
@@ -767,31 +1119,50 @@ def make_electricity_cost(dark_mode: str) -> go.Figure:
         row = electricity_cost.filter(pl.col("Technology") == tech)
         cat = row["Category"].to_numpy()[0]
         counts[cat] += 1
-        fig.add_trace(go.Scatter(
-            x=[float(row["LCOE_Low_USD_MWh"].to_numpy()[0]),
-               float(row["LCOE_High_USD_MWh"].to_numpy()[0])],
-            y=[str(row["Technology"].to_numpy()[0])] * 2,
-            mode="lines+markers",
-            line=dict(color=color_map[cat], width=6),
-            marker=dict(size=8, color=color_map[cat]),
-            name=cat if counts[cat] <= 1 else "",
-            showlegend=counts[cat] <= 1,
-            hovertemplate=f"<b>{tech}</b><br>LCOE Range: ${row['LCOE_Low_USD_MWh'].to_numpy()[0]}"
-                          f"–${row['LCOE_High_USD_MWh'].to_numpy()[0]}/MWh<br><extra></extra>",
-        ))
-    grid_color   = "rgba(255,255,255,0.15)" if dark_mode == "dark" else "lightgray"
-    legend_bg    = "rgba(40,45,48,0.9)"     if dark_mode == "dark" else "rgba(255,255,255,0.8)"
-    legend_border= "rgba(255,255,255,0.2)"  if dark_mode == "dark" else "gray"
+        fig.add_trace(
+            go.Scatter(
+                x=[
+                    float(row["LCOE_Low_USD_MWh"].to_numpy()[0]),
+                    float(row["LCOE_High_USD_MWh"].to_numpy()[0]),
+                ],
+                y=[str(row["Technology"].to_numpy()[0])] * 2,
+                mode="lines+markers",
+                line=dict(color=color_map[cat], width=6),
+                marker=dict(size=8, color=color_map[cat]),
+                name=cat if counts[cat] <= 1 else "",
+                showlegend=counts[cat] <= 1,
+                hovertemplate=f"<b>{tech}</b><br>LCOE Range: ${row['LCOE_Low_USD_MWh'].to_numpy()[0]}"
+                f"–${row['LCOE_High_USD_MWh'].to_numpy()[0]}/MWh<br><extra></extra>",
+            )
+        )
+    grid_color = "rgba(255,255,255,0.15)" if dark_mode == "dark" else "lightgray"
+    legend_bg = "rgba(40,45,48,0.9)" if dark_mode == "dark" else "rgba(255,255,255,0.8)"
+    legend_border = "rgba(255,255,255,0.2)" if dark_mode == "dark" else "gray"
     fig.update_layout(
-        title={**_title_dict(main="Cost of Electricity", subtitle="Ranges by Source"), "x": 0.5, "xanchor": "center"},
-        xaxis=dict(title="$ / megawatt hour", showgrid=True, gridcolor=grid_color, range=[0, 300]),
-        yaxis=dict(title="Technology", showgrid=True, gridcolor=grid_color,
-                   categoryorder="array",
-                   categoryarray=list(electricity_cost["Technology"].to_numpy().flatten()),
-                   tickmode="array",
-                   tickvals=list(electricity_cost["Technology"].to_numpy().flatten()),
-                   ticktext=list(electricity_cost["Technology"].to_numpy().flatten())),
-        legend=dict(x=0.7, y=0.98, bgcolor=legend_bg, bordercolor=legend_border, borderwidth=1),
+        title={
+            **_title_dict(main="Cost of Electricity", subtitle="Ranges by Source"),
+            "x": 0.5,
+            "xanchor": "center",
+        },
+        xaxis=dict(
+            title="$ / megawatt hour",
+            showgrid=True,
+            gridcolor=grid_color,
+            range=[0, 300],
+        ),
+        yaxis=dict(
+            title="Technology",
+            showgrid=True,
+            gridcolor=grid_color,
+            categoryorder="array",
+            categoryarray=list(electricity_cost["Technology"].to_numpy().flatten()),
+            tickmode="array",
+            tickvals=list(electricity_cost["Technology"].to_numpy().flatten()),
+            ticktext=list(electricity_cost["Technology"].to_numpy().flatten()),
+        ),
+        legend=dict(
+            x=0.7, y=0.98, bgcolor=legend_bg, bordercolor=legend_border, borderwidth=1
+        ),
         template=get_color_template(dark_mode),
         plot_bgcolor=get_background_color(dark_mode),
         paper_bgcolor=get_background_color(dark_mode),
@@ -799,32 +1170,40 @@ def make_electricity_cost(dark_mode: str) -> go.Figure:
     )
     return fig
 
+
 # --- State home affordability ---
 
+
 def make_state_home_affordability(state: str, dark_mode: str) -> go.Figure:
-    data = house_purchase_cost_as_percent_of_income_state_level.filter(pl.col("state") == state).sort("date")
+    data = house_purchase_cost_as_percent_of_income_state_level.filter(
+        pl.col("state") == state
+    ).sort("date")
     state_name = _ABBREV_TO_STATE.get(state, state)
     accent = COLOR_LIGHT_DARK[dark_mode]
 
-    fig = go.Figure(data=[
-        go.Scatter(
-            name=state_name,
-            x=data["date"],
-            y=data["percent_of_income"],
-            mode="markers+lines",
-            line=dict(color=accent, width=2),
-        ),
-        go.Scatter(
-            name="U.S. Average",
-            x=data["date"],
-            y=data["percent_of_income_mean"],
-            mode="markers+lines",
-            line=dict(color="rgba(128,128,128,0.5)", width=2, dash="dash"),
-        ),
-    ])
+    fig = go.Figure(
+        data=[
+            go.Scatter(
+                name=state_name,
+                x=data["date"],
+                y=data["percent_of_income"],
+                mode="markers+lines",
+                line=dict(color=accent, width=2),
+            ),
+            go.Scatter(
+                name="U.S. Average",
+                x=data["date"],
+                y=data["percent_of_income_mean"],
+                mode="markers+lines",
+                line=dict(color="rgba(128,128,128,0.5)", width=2, dash="dash"),
+            ),
+        ]
+    )
     ymin, ymax = get_yaxis_range(y_data=data["percent_of_income"])
     fig.update_layout(
-        title=_title_dict(main="Percent of Income to Purchase a Home", subtitle=state_name),
+        title=_title_dict(
+            main="Percent of Income to Purchase a Home", subtitle=state_name
+        ),
         title_x=0.5,
         yaxis_title="<b>% of Annual Income</b>",
         yaxis=dict(range=[ymin, ymax], tickformat=".0%", fixedrange=True),
@@ -837,6 +1216,7 @@ def make_state_home_affordability(state: str, dark_mode: str) -> go.Figure:
         legend=dict(x=0.01, y=0.99, xanchor="left", yanchor="top"),
     )
     return fig
+
 
 # ---------------------------------------------------------------------------
 # FastAPI app
@@ -861,13 +1241,96 @@ async def root():
 
 # --- Meta endpoints ---
 
+
+def _parse_sources_md() -> dict:
+    """Parse sources.md and return a dict mapping function name -> HTML content."""
+    import re
+
+    sources_path = _here.parent / "sources.md"
+    if not sources_path.exists():
+        return {}
+    text = sources_path.read_text(encoding="utf-8")
+    sections = re.split(r"^# ", text, flags=re.MULTILINE)
+    result = {}
+    for section in sections:
+        if not section.strip():
+            continue
+        lines = section.split("\n", 1)
+        func_name = lines[0].strip()
+        body = lines[1].strip() if len(lines) > 1 else ""
+        result[func_name] = _md_to_html(body)
+    return result
+
+
+def _md_to_html(md: str) -> str:
+    """Convert a limited subset of markdown to HTML for the sources popup."""
+    lines = md.split("\n")
+    html_parts = []
+    in_ul = False
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            if in_ul:
+                html_parts.append("</ul>")
+                in_ul = False
+            continue
+        # h2
+        if stripped.startswith("## "):
+            if in_ul:
+                html_parts.append("</ul>")
+                in_ul = False
+            html_parts.append(f"<p><strong>{_inline_md(stripped[3:])}</strong></p>")
+            continue
+        # bullet (* or -)
+        if stripped.startswith("* ") or stripped.startswith("- "):
+            if not in_ul:
+                html_parts.append("<ul>")
+                in_ul = True
+            html_parts.append(f"<li>{_inline_md(stripped[2:])}</li>")
+            continue
+        # plain text
+        if in_ul:
+            html_parts.append("</ul>")
+            in_ul = False
+        html_parts.append(f"<p>{_inline_md(stripped)}</p>")
+    if in_ul:
+        html_parts.append("</ul>")
+    return "\n".join(html_parts)
+
+
+def _inline_md(text: str) -> str:
+    """Convert inline markdown (bold, links) to HTML."""
+    import re
+
+    # [text](url)
+    text = re.sub(
+        r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2" target="_blank">\1</a>', text
+    )
+    # **bold**
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    return text
+
+
+@app.get("/api/sources")
+async def api_sources():
+    return JSONResponse(_parse_sources_md())
+
+
 @app.get("/api/countries")
 async def api_countries():
-    countries = shares_wid.select("country").unique().sort("country").to_numpy().flatten().tolist()
+    countries = (
+        shares_wid.select("country")
+        .unique()
+        .sort("country")
+        .to_numpy()
+        .flatten()
+        .tolist()
+    )
     return {"countries": countries}
 
 
 # --- Economy ---
+
 
 @app.get("/api/economy/income")
 async def api_economy_income(
@@ -876,7 +1339,11 @@ async def api_economy_income(
     country: str = Query("usa"),
     title: str = Query(""),
 ):
-    return fig_to_json(fig=make_economy_income(dark_mode=dark_mode, income_level=income_level, country=country, title=title))
+    return fig_to_json(
+        fig=make_economy_income(
+            dark_mode=dark_mode, income_level=income_level, country=country, title=title
+        )
+    )
 
 
 @app.get("/api/economy/barchart")
@@ -886,7 +1353,14 @@ async def api_economy_barchart(
     highlight_canada: bool = Query(False),
     selected_country: str = Query("usa"),
 ):
-    return fig_to_json(fig=make_economy_barchart(dark_mode=dark_mode, income_level=income_level, highlight_canada=highlight_canada, selected_country=selected_country))
+    return fig_to_json(
+        fig=make_economy_barchart(
+            dark_mode=dark_mode,
+            income_level=income_level,
+            highlight_canada=highlight_canada,
+            selected_country=selected_country,
+        )
+    )
 
 
 @app.get("/api/economy/income-taxes")
@@ -894,7 +1368,9 @@ async def api_economy_income_taxes(
     dark_mode: str = Query("light"),
     income_level: str = Query("Bottom 50%"),
 ):
-    return fig_to_json(fig=make_economy_income_taxes(dark_mode=dark_mode, income_level=income_level))
+    return fig_to_json(
+        fig=make_economy_income_taxes(dark_mode=dark_mode, income_level=income_level)
+    )
 
 
 @app.get("/api/economy/house-purchase-cost")
@@ -902,7 +1378,9 @@ async def api_economy_house(
     dark_mode: str = Query("light"),
     income_level: str = Query("Bottom 50%"),
 ):
-    return fig_to_json(fig=make_economy_house_purchase(dark_mode=dark_mode, income_level=income_level))
+    return fig_to_json(
+        fig=make_economy_house_purchase(dark_mode=dark_mode, income_level=income_level)
+    )
 
 
 @app.get("/api/economy/f150")
@@ -910,7 +1388,9 @@ async def api_economy_f150(
     dark_mode: str = Query("light"),
     income_level: str = Query("Bottom 50%"),
 ):
-    return fig_to_json(fig=make_economy_f150(dark_mode=dark_mode, income_level=income_level))
+    return fig_to_json(
+        fig=make_economy_f150(dark_mode=dark_mode, income_level=income_level)
+    )
 
 
 @app.get("/api/economy/american-dream-kids")
@@ -928,67 +1408,114 @@ async def api_upward_mobility(
     dark_mode: str = Query("light"),
     race: str = Query("white"),
 ):
-    return fig_to_json(fig=make_county_heatmap(dark_mode=dark_mode, race=race, metric="upward_mobility",
-                                               title=f"{race.title()} Male Upward Mobility",
-                                               subtitle="parents in bottom 25th of income"))
+    return fig_to_json(
+        fig=make_county_heatmap(
+            dark_mode=dark_mode,
+            race=race,
+            metric="upward_mobility",
+            title=f"{race.title()} Male Upward Mobility",
+            subtitle="parents in bottom 25th of income",
+        )
+    )
 
 
 # --- Healthcare ---
 
+
 @app.get("/api/healthcare/cost-per-capita")
 async def api_healthcare_cost(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_healthcare(
-        data=healthcare_cost_per_capita, title="Healthcare Cost per Person", yaxis_title="U.S. $", dark_mode=dark_mode))
+    return fig_to_json(
+        fig=make_healthcare(
+            data=healthcare_cost_per_capita,
+            title="Healthcare Cost per Person",
+            yaxis_title="U.S. $",
+            dark_mode=dark_mode,
+        )
+    )
 
 
 @app.get("/api/healthcare/life-expectancy")
 async def api_healthcare_life(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_healthcare(
-        data=healthcare_life_expectancy, title="Life Expectancy", yaxis_title="years", dark_mode=dark_mode))
+    return fig_to_json(
+        fig=make_healthcare(
+            data=healthcare_life_expectancy,
+            title="Life Expectancy",
+            yaxis_title="years",
+            dark_mode=dark_mode,
+        )
+    )
 
 
 @app.get("/api/healthcare/infant-mortality")
 async def api_healthcare_infant(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_healthcare(
-        data=healthcare_infant_mortality, title="Infant Mortality", yaxis_title="deaths per 1,000 babies", dark_mode=dark_mode))
+    return fig_to_json(
+        fig=make_healthcare(
+            data=healthcare_infant_mortality,
+            title="Infant Mortality",
+            yaxis_title="deaths per 1,000 babies",
+            dark_mode=dark_mode,
+        )
+    )
 
 
 @app.get("/api/healthcare/maternal-mortality")
 async def api_healthcare_maternal(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_healthcare(
-        data=healthcare_maternal_mortality, title="Mother Mortality", yaxis_title="deaths per 100,000 births", dark_mode=dark_mode))
+    return fig_to_json(
+        fig=make_healthcare(
+            data=healthcare_maternal_mortality,
+            title="Mother Mortality",
+            yaxis_title="deaths per 100,000 births",
+            dark_mode=dark_mode,
+        )
+    )
 
 
 @app.get("/api/healthcare/suicide-rates")
 async def api_healthcare_suicide(dark_mode: str = Query("light")):
-    return fig_to_json(fig=make_healthcare(
-        data=healthcare_suicide_rates, title="Suicide Rates", yaxis_title="deaths per 100,000", dark_mode=dark_mode))
+    return fig_to_json(
+        fig=make_healthcare(
+            data=healthcare_suicide_rates,
+            title="Suicide Rates",
+            yaxis_title="deaths per 100,000",
+            dark_mode=dark_mode,
+        )
+    )
 
 
 # --- Justice ---
+
 
 @app.get("/api/justice/jail")
 async def api_justice_jail(
     dark_mode: str = Query("light"),
     race: str = Query("white"),
 ):
-    return fig_to_json(fig=make_county_heatmap(dark_mode=dark_mode, race=race, metric="jail",
-                                               title=f"{race.title()} Male Jail Rate",
-                                               subtitle="parents in bottom 25th of income"))
-
+    return fig_to_json(
+        fig=make_county_heatmap(
+            dark_mode=dark_mode,
+            race=race,
+            metric="jail",
+            title=f"{race.title()} Male Jail Rate",
+            subtitle="parents in bottom 25th of income",
+        )
+    )
 
 
 # --- State home affordability ---
+
 
 @app.get("/api/economy/state-home-affordability")
 async def api_state_home_affordability(
     state: str = Query("CO"),
     dark_mode: str = Query("light"),
 ):
-    return fig_to_json(fig=make_state_home_affordability(state=state, dark_mode=dark_mode))
+    return fig_to_json(
+        fig=make_state_home_affordability(state=state, dark_mode=dark_mode)
+    )
 
 
 # --- Environment ---
+
 
 @app.get("/api/environment/electricity-cost")
 async def api_electricity_cost(dark_mode: str = Query("light")):
@@ -999,6 +1526,7 @@ async def api_electricity_cost(dark_mode: str = Query("light")):
 # CSV download endpoints
 # ---------------------------------------------------------------------------
 
+
 def _csv(df: pl.DataFrame, filename: str) -> Response:
     return Response(
         content=df.write_csv(),
@@ -1006,68 +1534,122 @@ def _csv(df: pl.DataFrame, filename: str) -> Response:
         headers={"Content-Disposition": f'attachment; filename="{filename}.csv"'},
     )
 
+
 @app.get("/api/csv/income")
-async def csv_income(income_level: str = Query("Bottom 50%"), country: str = Query("usa")):
+async def csv_income(
+    income_level: str = Query("Bottom 50%"), country: str = Query("usa")
+):
     income_col = INCOME_LEVELS[income_level]
-    usa = (shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880)
-           .select(["year", income_col]).rename({income_col: "usa"}))
+    usa = (
+        shares_wid.filter(pl.col("country") == "usa")
+        .filter(pl.col("year") >= 1880)
+        .select(["year", income_col])
+        .rename({income_col: "usa"})
+    )
     if country == "usa":
         return _csv(usa, "income_usa")
-    other = (shares_wid.filter(pl.col("country") == country).filter(pl.col("year") >= 1880)
-             .select(["year", income_col]).rename({income_col: country}))
-    return _csv(usa.join(other, on="year", how="full").sort("year"), f"income_usa_vs_{country}")
+    other = (
+        shares_wid.filter(pl.col("country") == country)
+        .filter(pl.col("year") >= 1880)
+        .select(["year", income_col])
+        .rename({income_col: country})
+    )
+    return _csv(
+        usa.join(other, on="year", how="full").sort("year"), f"income_usa_vs_{country}"
+    )
+
 
 @app.get("/api/csv/barchart")
 async def csv_barchart(income_level: str = Query("Bottom 50%")):
     income_col = INCOME_LEVELS[income_level]
-    df = (shares_wid.filter(pl.col("year") == shares_wid["year"].max())
-          .select(["country", income_col]).sort("country"))
+    df = (
+        shares_wid.filter(pl.col("year") == shares_wid["year"].max())
+        .select(["country", income_col])
+        .sort("country")
+    )
     return _csv(df, "income_by_country")
+
 
 @app.get("/api/csv/income-taxes")
 async def csv_income_taxes(income_level: str = Query("Bottom 50%")):
     income_col = INCOME_LEVELS[income_level]
-    usa = (shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") > 1880)
-           .select(["year", income_col]))
-    df = usa.join(tax.select(["year", "rate_top_bracket", "change_top_bracket"]), on="year", how="left").sort("year")
+    usa = (
+        shares_wid.filter(pl.col("country") == "usa")
+        .filter(pl.col("year") > 1880)
+        .select(["year", income_col])
+    )
+    df = usa.join(
+        tax.select(["year", "rate_top_bracket", "change_top_bracket"]),
+        on="year",
+        how="left",
+    ).sort("year")
     return _csv(df, "income_and_taxes")
+
 
 @app.get("/api/csv/house-purchase-cost")
 async def csv_house_purchase(income_level: str = Query("Bottom 50%")):
     income_col = INCOME_LEVELS[income_level]
-    income = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880).select(["year", income_col])
-    df = (house_purchase_cost_as_percent_of_income.join(income, on="year", how="inner")
-          .with_columns((pl.col("cost") / pl.col(income_col)).alias("house_pct_of_income"))
-          .sort("year"))
+    income = (
+        shares_wid.filter(pl.col("country") == "usa")
+        .filter(pl.col("year") >= 1880)
+        .select(["year", income_col])
+    )
+    df = (
+        house_purchase_cost_as_percent_of_income.join(income, on="year", how="inner")
+        .with_columns(
+            (pl.col("cost") / pl.col(income_col)).alias("house_pct_of_income")
+        )
+        .sort("year")
+    )
     return _csv(df, "house_purchase_cost")
+
 
 @app.get("/api/csv/f150")
 async def csv_f150(income_level: str = Query("Bottom 50%")):
     income_col = INCOME_LEVELS[income_level]
-    income = shares_wid.filter(pl.col("country") == "usa").filter(pl.col("year") >= 1880).select(["year", income_col])
-    df = (f150.join(income, on="year", how="inner")
-          .with_columns((pl.col("price") / pl.col(income_col)).alias("price_ratio"))
-          .sort("year"))
+    income = (
+        shares_wid.filter(pl.col("country") == "usa")
+        .filter(pl.col("year") >= 1880)
+        .select(["year", income_col])
+    )
+    df = (
+        f150.join(income, on="year", how="inner")
+        .with_columns((pl.col("price") / pl.col(income_col)).alias("price_ratio"))
+        .sort("year")
+    )
     return _csv(df, "f150_cost")
+
 
 @app.get("/api/csv/american-dream-kids")
 async def csv_american_dream_kids():
-    df = (mobility_international.select(["country", "year", "mobility"])
-          .filter(pl.col("mobility").is_not_nan()).sort(["country", "year"]))
+    df = (
+        mobility_international.select(["country", "year", "mobility"])
+        .filter(pl.col("mobility").is_not_nan())
+        .sort(["country", "year"])
+    )
     return _csv(df, "american_dream_kids")
+
 
 @app.get("/api/csv/mobility-international")
 async def csv_mobility_international():
-    df = (mobility_international.select(["country", "year", "growth_controlled"])
-          .filter(pl.col("growth_controlled").is_not_nan()).sort(["country", "year"]))
+    df = (
+        mobility_international.select(["country", "year", "growth_controlled"])
+        .filter(pl.col("growth_controlled").is_not_nan())
+        .sort(["country", "year"])
+    )
     return _csv(df, "mobility_international")
+
 
 @app.get("/api/csv/upward-mobility")
 async def csv_upward_mobility(race: str = Query("white")):
-    df = (outcomes_upward_mobility_jail.filter(pl.col("metric") == "upward_mobility")
-          .filter(pl.col("race") == race)
-          .select(["fips_county", "county", "state", "race", "value"]).sort(["state", "county"]))
+    df = (
+        outcomes_upward_mobility_jail.filter(pl.col("metric") == "upward_mobility")
+        .filter(pl.col("race") == race)
+        .select(["fips_county", "county", "state", "race", "value"])
+        .sort(["state", "county"])
+    )
     return _csv(df, f"upward_mobility_{race}")
+
 
 @app.get("/api/csv/healthcare")
 async def csv_healthcare(metric: str = Query("cost-per-capita")):
@@ -1081,19 +1663,26 @@ async def csv_healthcare(metric: str = Query("cost-per-capita")):
     df = data_map.get(metric, healthcare_cost_per_capita)
     return _csv(df.sort(["country", "year"]), metric.replace("-", "_"))
 
+
 @app.get("/api/csv/jail")
 async def csv_jail(race: str = Query("white")):
-    df = (outcomes_upward_mobility_jail.filter(pl.col("metric") == "jail")
-          .filter(pl.col("race") == race)
-          .select(["fips_county", "county", "state", "race", "value"]).sort(["state", "county"]))
+    df = (
+        outcomes_upward_mobility_jail.filter(pl.col("metric") == "jail")
+        .filter(pl.col("race") == race)
+        .select(["fips_county", "county", "state", "race", "value"])
+        .sort(["state", "county"])
+    )
     return _csv(df, f"jail_{race}")
+
 
 @app.get("/api/csv/electricity-cost")
 async def csv_electricity_cost():
     return _csv(electricity_cost, "electricity_cost")
 
+
 @app.get("/api/csv/state-home-affordability")
 async def csv_state_home_affordability(state: str = Query("CO")):
-    df = (house_purchase_cost_as_percent_of_income_state_level
-          .filter(pl.col("state") == state).sort("date"))
+    df = house_purchase_cost_as_percent_of_income_state_level.filter(
+        pl.col("state") == state
+    ).sort("date")
     return _csv(df, f"home_affordability_{state}")

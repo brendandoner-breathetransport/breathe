@@ -9,7 +9,11 @@ import psycopg
 
 
 ROOT = Path(__file__).resolve().parents[1]
-INFLATION_PATH = Path(__file__).resolve().parents[2] / "data_raw" / "inflation_annual-index-value_annual-percent-change.xls"
+INFLATION_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "data_raw"
+    / "inflation_annual-index-value_annual-percent-change.xls"
+)
 
 
 def load_env_file(path: Path) -> None:
@@ -311,7 +315,9 @@ def verify(cur: psycopg.Cursor) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Sync Civic Affordability MVP schema and data")
+    parser = argparse.ArgumentParser(
+        description="Sync Civic Affordability MVP schema and data"
+    )
     parser.add_argument("--base-year", type=int, default=2003)
     parser.add_argument("--inflation-base-year", type=int, default=2023)
     parser.add_argument("--skip-inflation-adjustment", action="store_true")
@@ -320,7 +326,9 @@ def main() -> None:
     load_env_file(ROOT / ".env")
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
-        raise RuntimeError("DATABASE_URL not found. Set it in environment or civic_affordability_pg/.env")
+        raise RuntimeError(
+            "DATABASE_URL not found. Set it in environment or civic_affordability_pg/.env"
+        )
 
     aff_path = ROOT / "seeds" / "co_affordability_index_annual.csv"
     policy_path = ROOT / "seeds" / "co_policy_events_direct.csv"

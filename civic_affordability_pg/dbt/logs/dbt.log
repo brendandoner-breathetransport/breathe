@@ -72,16 +72,16 @@
 [0m09:56:46.604541 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': 'c8c8dc55-7488-4ee4-afb4-067ef646a258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1069cf550>]}
 [0m09:56:46.604801 [info ] [MainThread]: Found 3 models, 2 seeds, 5 sources, 464 macros
 [0m09:56:46.604963 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': 'c8c8dc55-7488-4ee4-afb4-067ef646a258', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1068c3e10>]}
-[0m09:56:46.605737 [info ] [MainThread]: 
+[0m09:56:46.605737 [info ] [MainThread]:
 [0m09:56:46.605892 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
-[0m09:56:46.606023 [info ] [MainThread]: 
+[0m09:56:46.606023 [info ] [MainThread]:
 [0m09:56:46.606232 [debug] [MainThread]: Acquiring new postgres connection 'master'
 [0m09:56:46.607946 [debug] [ThreadPool]: Acquiring new postgres connection 'list_postgres'
 [0m09:56:46.631001 [debug] [ThreadPool]: Using postgres connection "list_postgres"
 [0m09:56:46.631204 [debug] [ThreadPool]: On list_postgres: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "connection_name": "list_postgres"} */
 
     select distinct nspname from pg_namespace
-  
+
 [0m09:56:46.631329 [debug] [ThreadPool]: Opening a new connection, currently in state init
 [0m09:56:47.868376 [debug] [ThreadPool]: SQL status: SELECT 18 in 1.236 seconds
 [0m09:56:47.871928 [debug] [ThreadPool]: On list_postgres: Close
@@ -127,7 +127,7 @@ select
       'materialized_view' as type
     from pg_matviews
     where schemaname ilike 'analytics_analytics'
-  
+
 [0m09:56:49.231529 [debug] [ThreadPool]: On list_postgres_analytics: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "connection_name": "list_postgres_analytics"} */
 select
       'postgres' as database,
@@ -152,7 +152,7 @@ select
       'materialized_view' as type
     from pg_matviews
     where schemaname ilike 'analytics'
-  
+
 [0m09:56:49.231868 [debug] [ThreadPool]: Opening a new connection, currently in state closed
 [0m09:56:49.232165 [debug] [ThreadPool]: Opening a new connection, currently in state init
 [0m09:56:50.372567 [debug] [ThreadPool]: SQL status: SELECT 3 in 1.140 seconds
@@ -224,8 +224,8 @@ select distinct
 [0m09:56:52.070609 [debug] [Thread-1 (]: On model.civic_affordability.mart_affordability_index_annual: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "node_id": "model.civic_affordability.mart_affordability_index_annual"} */
 
   create view "postgres"."analytics_analytics"."mart_affordability_index_annual__dbt_tmp"
-    
-    
+
+
   as (
     WITH metric_values AS (
     SELECT
@@ -280,8 +280,8 @@ ORDER BY w.geo_id, w.year;
 [0m09:56:52.070871 [debug] [Thread-2 (]: On model.civic_affordability.mart_policy_events_direct: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "node_id": "model.civic_affordability.mart_policy_events_direct"} */
 
   create view "postgres"."analytics_analytics"."mart_policy_events_direct__dbt_tmp"
-    
-    
+
+
   as (
     SELECT
     fpe.event_id,
@@ -349,33 +349,33 @@ LINE 55: ORDER BY w.geo_id, w.year;
 [0m09:56:54.535733 [debug] [MainThread]: Connection 'model.civic_affordability.mart_affordability_index_annual' was properly closed.
 [0m09:56:54.536187 [debug] [MainThread]: Connection 'list_postgres_analytics' was properly closed.
 [0m09:56:54.536625 [debug] [MainThread]: Connection 'model.civic_affordability.mart_policy_events_direct' was properly closed.
-[0m09:56:54.537454 [info ] [MainThread]: 
+[0m09:56:54.537454 [info ] [MainThread]:
 [0m09:56:54.538044 [info ] [MainThread]: Finished running 3 view models in 0 hours 0 minutes and 7.93 seconds (7.93s).
 [0m09:56:54.540157 [debug] [MainThread]: Command end result
 [0m09:56:54.576150 [debug] [MainThread]: Wrote artifact WritableManifest to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/manifest.json
 [0m09:56:54.579291 [debug] [MainThread]: Wrote artifact SemanticManifest to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/semantic_manifest.json
 [0m09:56:54.584748 [debug] [MainThread]: Wrote artifact RunExecutionResult to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/run_results.json
-[0m09:56:54.585025 [info ] [MainThread]: 
+[0m09:56:54.585025 [info ] [MainThread]:
 [0m09:56:54.585387 [info ] [MainThread]: [31mCompleted with 2 errors, 0 partial successes, and 0 warnings:[0m
-[0m09:56:54.585729 [info ] [MainThread]: 
+[0m09:56:54.585729 [info ] [MainThread]:
 [0m09:56:54.586041 [error] [MainThread]: [31mFailure in model mart_affordability_index_annual (models/marts/mart_affordability_index_annual.sql)[0m
 [0m09:56:54.586413 [error] [MainThread]:   Database Error in model mart_affordability_index_annual (models/marts/mart_affordability_index_annual.sql)
   syntax error at or near ";"
   LINE 55: ORDER BY w.geo_id, w.year;
                                     ^
   compiled code at target/run/civic_affordability/models/marts/mart_affordability_index_annual.sql
-[0m09:56:54.586672 [info ] [MainThread]: 
+[0m09:56:54.586672 [info ] [MainThread]:
 [0m09:56:54.586917 [info ] [MainThread]:   compiled code at target/compiled/civic_affordability/models/marts/mart_affordability_index_annual.sql
-[0m09:56:54.587109 [info ] [MainThread]: 
+[0m09:56:54.587109 [info ] [MainThread]:
 [0m09:56:54.587329 [error] [MainThread]: [31mFailure in model mart_policy_events_direct (models/marts/mart_policy_events_direct.sql)[0m
 [0m09:56:54.587549 [error] [MainThread]:   Database Error in model mart_policy_events_direct (models/marts/mart_policy_events_direct.sql)
   syntax error at or near ";"
   LINE 18: ORDER BY fpe.year, fpe.event_id;
                                           ^
   compiled code at target/run/civic_affordability/models/marts/mart_policy_events_direct.sql
-[0m09:56:54.587724 [info ] [MainThread]: 
+[0m09:56:54.587724 [info ] [MainThread]:
 [0m09:56:54.587924 [info ] [MainThread]:   compiled code at target/compiled/civic_affordability/models/marts/mart_policy_events_direct.sql
-[0m09:56:54.588121 [info ] [MainThread]: 
+[0m09:56:54.588121 [info ] [MainThread]:
 [0m09:56:54.588365 [info ] [MainThread]: Done. PASS=0 WARN=0 ERROR=2 SKIP=1 NO-OP=0 TOTAL=3
 [0m09:56:54.589934 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": false, "command_wall_clock_time": 8.759309, "process_in_blocks": "0", "process_kernel_time": 0.248244, "process_mem_max_rss": "135331840", "process_out_blocks": "0", "process_user_time": 1.47877}
 [0m09:56:54.590500 [debug] [MainThread]: Command `dbt run` failed at 09:56:54.590430 after 8.76 seconds
@@ -402,16 +402,16 @@ LINE 55: ORDER BY w.geo_id, w.year;
 [0m09:57:24.330062 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '3957c78d-cc38-430b-96cc-7cb868da86c9', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1122ff1d0>]}
 [0m09:57:24.330321 [info ] [MainThread]: Found 2 seeds, 3 models, 5 sources, 464 macros
 [0m09:57:24.330488 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '3957c78d-cc38-430b-96cc-7cb868da86c9', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x11244b850>]}
-[0m09:57:24.331286 [info ] [MainThread]: 
+[0m09:57:24.331286 [info ] [MainThread]:
 [0m09:57:24.331452 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
-[0m09:57:24.331583 [info ] [MainThread]: 
+[0m09:57:24.331583 [info ] [MainThread]:
 [0m09:57:24.331816 [debug] [MainThread]: Acquiring new postgres connection 'master'
 [0m09:57:24.333458 [debug] [ThreadPool]: Acquiring new postgres connection 'list_postgres'
 [0m09:57:24.356927 [debug] [ThreadPool]: Using postgres connection "list_postgres"
 [0m09:57:24.357129 [debug] [ThreadPool]: On list_postgres: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "connection_name": "list_postgres"} */
 
     select distinct nspname from pg_namespace
-  
+
 [0m09:57:24.357258 [debug] [ThreadPool]: Opening a new connection, currently in state init
 [0m09:57:25.871425 [debug] [ThreadPool]: SQL status: SELECT 19 in 1.514 seconds
 [0m09:57:25.873991 [debug] [ThreadPool]: On list_postgres: Close
@@ -443,7 +443,7 @@ select
       'materialized_view' as type
     from pg_matviews
     where schemaname ilike 'analytics_analytics'
-  
+
 [0m09:57:25.886905 [debug] [ThreadPool]: On list_postgres_analytics: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "connection_name": "list_postgres_analytics"} */
 select
       'postgres' as database,
@@ -468,7 +468,7 @@ select
       'materialized_view' as type
     from pg_matviews
     where schemaname ilike 'analytics'
-  
+
 [0m09:57:25.887141 [debug] [ThreadPool]: Opening a new connection, currently in state closed
 [0m09:57:25.887365 [debug] [ThreadPool]: Opening a new connection, currently in state init
 [0m09:57:27.005446 [debug] [ThreadPool]: SQL status: SELECT 3 in 1.118 seconds
@@ -540,8 +540,8 @@ select distinct
 [0m09:57:28.710976 [debug] [Thread-1 (]: On model.civic_affordability.mart_affordability_index_annual: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "node_id": "model.civic_affordability.mart_affordability_index_annual"} */
 
   create view "postgres"."analytics_analytics"."mart_affordability_index_annual__dbt_tmp"
-    
-    
+
+
   as (
     WITH metric_values AS (
     SELECT
@@ -596,8 +596,8 @@ ORDER BY w.geo_id, w.year
 [0m09:57:28.711257 [debug] [Thread-2 (]: On model.civic_affordability.mart_policy_events_direct: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "node_id": "model.civic_affordability.mart_policy_events_direct"} */
 
   create view "postgres"."analytics_analytics"."mart_policy_events_direct__dbt_tmp"
-    
-    
+
+
   as (
     SELECT
     fpe.event_id,
@@ -661,8 +661,8 @@ drop view if exists "postgres"."analytics_analytics"."mart_affordability_index_a
 [0m09:57:30.310120 [debug] [Thread-4 (]: On model.civic_affordability.mart_cost_pressure_annual: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "node_id": "model.civic_affordability.mart_cost_pressure_annual"} */
 
   create view "postgres"."analytics_analytics"."mart_cost_pressure_annual__dbt_tmp"
-    
-    
+
+
   as (
     WITH affordability AS (
     SELECT * FROM "postgres"."analytics_analytics"."mart_affordability_index_annual"
@@ -705,15 +705,15 @@ drop view if exists "postgres"."analytics_analytics"."mart_cost_pressure_annual_
 [0m09:57:32.936604 [debug] [MainThread]: Connection 'model.civic_affordability.mart_affordability_index_annual' was properly closed.
 [0m09:57:32.937038 [debug] [MainThread]: Connection 'model.civic_affordability.mart_policy_events_direct' was properly closed.
 [0m09:57:32.937455 [debug] [MainThread]: Connection 'model.civic_affordability.mart_cost_pressure_annual' was properly closed.
-[0m09:57:32.938286 [info ] [MainThread]: 
+[0m09:57:32.938286 [info ] [MainThread]:
 [0m09:57:32.939196 [info ] [MainThread]: Finished running 3 view models in 0 hours 0 minutes and 8.61 seconds (8.61s).
 [0m09:57:32.941724 [debug] [MainThread]: Command end result
 [0m09:57:32.970706 [debug] [MainThread]: Wrote artifact WritableManifest to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/manifest.json
 [0m09:57:32.973233 [debug] [MainThread]: Wrote artifact SemanticManifest to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/semantic_manifest.json
 [0m09:57:32.978033 [debug] [MainThread]: Wrote artifact RunExecutionResult to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/run_results.json
-[0m09:57:32.978256 [info ] [MainThread]: 
+[0m09:57:32.978256 [info ] [MainThread]:
 [0m09:57:32.978511 [info ] [MainThread]: [32mCompleted successfully[0m
-[0m09:57:32.978701 [info ] [MainThread]: 
+[0m09:57:32.978701 [info ] [MainThread]:
 [0m09:57:32.978937 [info ] [MainThread]: Done. PASS=3 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=3
 [0m09:57:32.980752 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": true, "command_wall_clock_time": 9.127376, "process_in_blocks": "0", "process_kernel_time": 0.219552, "process_mem_max_rss": "135086080", "process_out_blocks": "0", "process_user_time": 1.232875}
 [0m09:57:32.981388 [debug] [MainThread]: Command `dbt run` succeeded at 09:57:32.981279 after 9.13 seconds
@@ -738,16 +738,16 @@ drop view if exists "postgres"."analytics_analytics"."mart_cost_pressure_annual_
 [0m09:57:57.362528 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': 'b828fc4c-9fd0-49c2-93ed-2b3a3188560f', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1066c4710>]}
 [0m09:57:57.362794 [info ] [MainThread]: Found 3 models, 2 seeds, 5 sources, 464 macros
 [0m09:57:57.362953 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': 'b828fc4c-9fd0-49c2-93ed-2b3a3188560f', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1063e8490>]}
-[0m09:57:57.363916 [info ] [MainThread]: 
+[0m09:57:57.363916 [info ] [MainThread]:
 [0m09:57:57.364113 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
-[0m09:57:57.364253 [info ] [MainThread]: 
+[0m09:57:57.364253 [info ] [MainThread]:
 [0m09:57:57.364476 [debug] [MainThread]: Acquiring new postgres connection 'master'
 [0m09:57:57.366202 [debug] [ThreadPool]: Acquiring new postgres connection 'list_postgres'
 [0m09:57:57.388551 [debug] [ThreadPool]: Using postgres connection "list_postgres"
 [0m09:57:57.388785 [debug] [ThreadPool]: On list_postgres: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "connection_name": "list_postgres"} */
 
     select distinct nspname from pg_namespace
-  
+
 [0m09:57:57.388973 [debug] [ThreadPool]: Opening a new connection, currently in state init
 [0m09:57:58.621510 [debug] [ThreadPool]: SQL status: SELECT 19 in 1.232 seconds
 [0m09:57:58.623835 [debug] [ThreadPool]: On list_postgres: Close
@@ -777,7 +777,7 @@ select
       'materialized_view' as type
     from pg_matviews
     where schemaname ilike 'analytics'
-  
+
 [0m09:57:58.633358 [debug] [ThreadPool]: Opening a new connection, currently in state closed
 [0m09:57:59.762234 [debug] [ThreadPool]: SQL status: SELECT 3 in 1.128 seconds
 [0m09:57:59.766914 [debug] [ThreadPool]: On list_postgres_analytics: ROLLBACK
@@ -845,8 +845,8 @@ select distinct
 [0m09:58:01.490034 [debug] [Thread-2 (]: On model.civic_affordability.mart_policy_events_direct: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "node_id": "model.civic_affordability.mart_policy_events_direct"} */
 
   create view "postgres"."analytics"."mart_policy_events_direct__dbt_tmp"
-    
-    
+
+
   as (
     SELECT
     fpe.event_id,
@@ -864,8 +864,8 @@ ORDER BY fpe.year, fpe.event_id
 [0m09:58:01.490252 [debug] [Thread-1 (]: On model.civic_affordability.mart_affordability_index_annual: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "node_id": "model.civic_affordability.mart_affordability_index_annual"} */
 
   create view "postgres"."analytics"."mart_affordability_index_annual__dbt_tmp"
-    
-    
+
+
   as (
     WITH metric_values AS (
     SELECT
@@ -969,8 +969,8 @@ drop view if exists "postgres"."analytics"."mart_policy_events_direct__dbt_backu
 [0m09:58:03.173693 [debug] [Thread-4 (]: On model.civic_affordability.mart_cost_pressure_annual: /* {"app": "dbt", "dbt_version": "1.11.6", "profile_name": "civic_affordability", "target_name": "dev", "node_id": "model.civic_affordability.mart_cost_pressure_annual"} */
 
   create view "postgres"."analytics"."mart_cost_pressure_annual__dbt_tmp"
-    
-    
+
+
   as (
     WITH affordability AS (
     SELECT * FROM "postgres"."analytics"."mart_affordability_index_annual"
@@ -1018,15 +1018,15 @@ drop view if exists "postgres"."analytics"."mart_cost_pressure_annual__dbt_backu
 [0m09:58:05.991703 [debug] [MainThread]: Connection 'model.civic_affordability.mart_affordability_index_annual' was properly closed.
 [0m09:58:05.991891 [debug] [MainThread]: Connection 'model.civic_affordability.mart_policy_events_direct' was properly closed.
 [0m09:58:05.992070 [debug] [MainThread]: Connection 'model.civic_affordability.mart_cost_pressure_annual' was properly closed.
-[0m09:58:05.992446 [info ] [MainThread]: 
+[0m09:58:05.992446 [info ] [MainThread]:
 [0m09:58:05.992714 [info ] [MainThread]: Finished running 3 view models in 0 hours 0 minutes and 8.63 seconds (8.63s).
 [0m09:58:05.993420 [debug] [MainThread]: Command end result
 [0m09:58:06.011507 [debug] [MainThread]: Wrote artifact WritableManifest to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/manifest.json
 [0m09:58:06.013958 [debug] [MainThread]: Wrote artifact SemanticManifest to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/semantic_manifest.json
 [0m09:58:06.017438 [debug] [MainThread]: Wrote artifact RunExecutionResult to /Users/brentondickerson/git/breathe/civic_affordability_pg/dbt/target/run_results.json
-[0m09:58:06.017619 [info ] [MainThread]: 
+[0m09:58:06.017619 [info ] [MainThread]:
 [0m09:58:06.017835 [info ] [MainThread]: [32mCompleted successfully[0m
-[0m09:58:06.017993 [info ] [MainThread]: 
+[0m09:58:06.017993 [info ] [MainThread]:
 [0m09:58:06.018714 [info ] [MainThread]: Done. PASS=3 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=3
 [0m09:58:06.023387 [debug] [MainThread]: Resource report: {"command_name": "run", "command_success": true, "command_wall_clock_time": 9.457117, "process_in_blocks": "0", "process_kernel_time": 0.252433, "process_mem_max_rss": "140328960", "process_out_blocks": "0", "process_user_time": 1.625705}
 [0m09:58:06.023764 [debug] [MainThread]: Command `dbt run` succeeded at 09:58:06.023712 after 9.46 seconds

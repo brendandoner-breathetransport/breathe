@@ -57,7 +57,9 @@ class PostgresPolarsIO:
 
         database_url = self._get_database_url()
         with psycopg.connect(database_url) as conn:
-            query = self._build_select_query(conn, table_name, numeric_as_float=numeric_as_float)
+            query = self._build_select_query(
+                conn, table_name, numeric_as_float=numeric_as_float
+            )
             return pl.read_database(query=query, connection=conn)
 
     def _get_database_url(self) -> str:
@@ -67,13 +69,17 @@ class PostgresPolarsIO:
 
         parsed = urlparse(database_url)
         if parsed.scheme not in {"postgresql", "postgres"}:
-            raise RuntimeError("DATABASE_URL must start with postgresql:// or postgres://")
+            raise RuntimeError(
+                "DATABASE_URL must start with postgresql:// or postgres://"
+            )
         if not parsed.hostname:
             raise RuntimeError("DATABASE_URL is missing a host.")
 
         return database_url
 
-    def _build_select_query(self, conn: psycopg.Connection, table_name: str, numeric_as_float: bool) -> str:
+    def _build_select_query(
+        self, conn: psycopg.Connection, table_name: str, numeric_as_float: bool
+    ) -> str:
         schema_name, rel_name = self._split_table_name(table_name)
         with conn.cursor() as cur:
             cur.execute(
@@ -88,13 +94,17 @@ class PostgresPolarsIO:
             columns = cur.fetchall()
 
         if not columns:
-            raise RuntimeError(f"Table not found or has no columns: {schema_name}.{rel_name}")
+            raise RuntimeError(
+                f"Table not found or has no columns: {schema_name}.{rel_name}"
+            )
 
         select_exprs = []
         for column_name, data_type in columns:
             quoted_col = self._quote_ident(column_name)
             if numeric_as_float and data_type in {"numeric", "decimal"}:
-                select_exprs.append(f"CAST({quoted_col} AS DOUBLE PRECISION) AS {quoted_col}")
+                select_exprs.append(
+                    f"CAST({quoted_col} AS DOUBLE PRECISION) AS {quoted_col}"
+                )
             else:
                 select_exprs.append(quoted_col)
 
