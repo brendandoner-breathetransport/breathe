@@ -1128,6 +1128,10 @@
     <section class="page-section" id="section-ballot">
       <div class="section-header">
         <h2 class="section-title">Ballot</h2>
+        <div class="section-title-sep"></div>
+        <select id="ballot-year-select" class="country-select" onchange="renderBallotYear(state.selectedArea, this.value)">
+          <option disabled selected>Select a state above</option>
+        </select>
       </div>
       <div id="ballot-content">
         <p class="ballot-placeholder-msg">Select a state on the map above to view local ballot issues.</p>
@@ -1772,61 +1776,102 @@ document.getElementById('splashShowStartup').addEventListener('change', e => {
   document.getElementById('settingsShowSplash').checked = e.target.checked;
 });
 
-// ── Ballot ─────────────────────────────────────────────────────────────────
+// ── Ballot ─────────────────────────────────────────────────────────────────────────
+// Keyed as BALLOT_DATA[areaCode][year] = { label, items }
 const BALLOT_DATA = {
+  'United States': {
+    2024: {
+      label: "2024 Candidate Policy Positions",
+      items: [],
+      _special: 'us',
+    },
+  },
   MT: {
-    state: "Montana",
-    label: "Issues Qualified to Gather Signatures for the 2026 General Election Ballot",
-    items: [
-      {
-        id: "I-194 (Ballot Issue #10)",
-        subject: "An act, if passed, limits the powers of artificial persons to those powers necessary or convenient as provided by law. These powers must exclude contributing anything of value to candidate elections, supporting or opposing political parties, or supporting or opposing state or local ballot issues. Artificial persons include non-profits, trusts, partnerships, corporations, trade associations, or unincorporated associations and includes all such entities doing business in Montana. Any violation of this act is punished by forfeiting all privileges to do business in Montana. Those privileges may be, but are not automatically, restored upon disgorgement and certification of compliance with this act. This act does not apply to the distribution of news, commentary, or editorial content. This act also does not apply to the state of Montana, political subdivisions, individuals, political committees, or public corporations.",
-        submitted: "1/8/2026",
-        status: "Approved to gather signatures on 3/10/2026",
-        submitter: "Jeff Mangan",
-      },
-      {
-        id: "CI-129 (Ballot Issue #1)",
-        subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of a primary residence to 2% when assessing property taxes unless there are changes to the residence or a change of ownership. Upon a change of ownership or a change to the residence, a primary residence is assessed at fair market value starting January 1 of the following year. New primary residences are assessed at fair market value as of January 1 of the year following their construction. Purchases or transfers of primary residences between spouses or between parents and children are not considered changes in ownership. A person may have only one primary residence and must own and occupy that residence for at least 7 months of the year.",
-        submitted: "11/12/2024",
-        status: "Petition approved for signature gathering as of 01/17/2025",
-        submitter: "Matthew Monforton",
-      },
-      {
-        id: "CI-130 (Ballot Issue #2)",
-        subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of real property to 2% when assessing property taxes unless there are changes to the real property or a change of ownership, in which case, the real property is assessed at fair market value starting January 1 of the following year. Purchases or transfers of real property between spouses or between parents and children are not considered changes in ownership. Changes to real property shall be assessed as provided by law; however, after the adjustment for any change to the real property, the property shall be assessed according to this act. Finally, no assessment of real property shall exceed fair market value.",
-        submitted: "4/7/2025",
-        status: "Petition approved for signature gathering as of 06/17/2025",
-        submitter: "Matthew Monforton",
-      },
-      {
-        id: "CI-131 (Ballot Issue #3)",
-        subject: "A constitutional initiative that, if passed, mandates Montana supreme court and district court elections be non-partisan. A non-partisan election prohibits labeling candidates on the ballot according to the political party the candidate aligns with including labels like independent.",
-        submitted: "7/29/2025",
-        status: "Approved to gather signatures on 09/26/2025",
-        submitter: "Ted Dick",
-      },
-      {
-        id: "CI-132 (Ballot Issue #5)",
-        subject: "A constitutional initiative that amends the Montana Constitution to require that judicial elections remain nonpartisan.",
-        submitted: "8/15/2025",
-        status: "Approved to gather signatures on 10/09/2025",
-        submitter: "Monica Paoli & Megan Simpson",
-      },
-      {
-        id: "CI-133 (Ballot Issue #8)",
-        subject: "The Montana constitution reserves to the people the powers of initiative and referendum. This act amends the constitution to protect this fundamental right from unjustified interference by the government. Specifically, this act requires impartial, predictable, open, and timely processes for ballot issues, including approving petitions and ballot statements, resolving legal challenges, and verifying signatures. It requires the state to allow ample time for signature gathering, prohibits disqualification of petitions because of minor or technical issues, and allows voters to withdraw their signatures if they so choose.",
-        submitted: "10/3/2025",
-        status: "Approved to gather signatures on 3/5/2026",
-        submitter: "Claudia Clifford & Theresa Kendrick",
-      },
-    ],
+    2026: {
+      label: "Issues Qualified to Gather Signatures for the 2026 General Election Ballot",
+      items: [
+        {
+          id: "I-194 (Ballot Issue #10)",
+          subject: "An act, if passed, limits the powers of artificial persons to those powers necessary or convenient as provided by law. These powers must exclude contributing anything of value to candidate elections, supporting or opposing political parties, or supporting or opposing state or local ballot issues. Artificial persons include non-profits, trusts, partnerships, corporations, trade associations, or unincorporated associations and includes all such entities doing business in Montana. Any violation of this act is punished by forfeiting all privileges to do business in Montana. Those privileges may be, but are not automatically, restored upon disgorgement and certification of compliance with this act. This act does not apply to the distribution of news, commentary, or editorial content. This act also does not apply to the state of Montana, political subdivisions, individuals, political committees, or public corporations.",
+          submitted: "1/8/2026",
+          status: "Approved to gather signatures on 3/10/2026",
+          submitter: "Jeff Mangan",
+        },
+        {
+          id: "CI-129 (Ballot Issue #1)",
+          subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of a primary residence to 2% when assessing property taxes unless there are changes to the residence or a change of ownership. Upon a change of ownership or a change to the residence, a primary residence is assessed at fair market value starting January 1 of the following year. New primary residences are assessed at fair market value as of January 1 of the year following their construction. Purchases or transfers of primary residences between spouses or between parents and children are not considered changes in ownership. A person may have only one primary residence and must own and occupy that residence for at least 7 months of the year.",
+          submitted: "11/12/2024",
+          status: "Petition approved for signature gathering as of 01/17/2025",
+          submitter: "Matthew Monforton",
+        },
+        {
+          id: "CI-130 (Ballot Issue #2)",
+          subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of real property to 2% when assessing property taxes unless there are changes to the real property or a change of ownership, in which case, the real property is assessed at fair market value starting January 1 of the following year. Purchases or transfers of real property between spouses or between parents and children are not considered changes in ownership. Changes to real property shall be assessed as provided by law; however, after the adjustment for any change to the real property, the property shall be assessed according to this act. Finally, no assessment of real property shall exceed fair market value.",
+          submitted: "4/7/2025",
+          status: "Petition approved for signature gathering as of 06/17/2025",
+          submitter: "Matthew Monforton",
+        },
+        {
+          id: "CI-131 (Ballot Issue #3)",
+          subject: "A constitutional initiative that, if passed, mandates Montana supreme court and district court elections be non-partisan. A non-partisan election prohibits labeling candidates on the ballot according to the political party the candidate aligns with including labels like independent.",
+          submitted: "7/29/2025",
+          status: "Approved to gather signatures on 09/26/2025",
+          submitter: "Ted Dick",
+        },
+        {
+          id: "CI-132 (Ballot Issue #5)",
+          subject: "A constitutional initiative that amends the Montana Constitution to require that judicial elections remain nonpartisan.",
+          submitted: "8/15/2025",
+          status: "Approved to gather signatures on 10/09/2025",
+          submitter: "Monica Paoli & Megan Simpson",
+        },
+        {
+          id: "CI-133 (Ballot Issue #8)",
+          subject: "The Montana constitution reserves to the people the powers of initiative and referendum. This act amends the constitution to protect this fundamental right from unjustified interference by the government. Specifically, this act requires impartial, predictable, open, and timely processes for ballot issues, including approving petitions and ballot statements, resolving legal challenges, and verifying signatures. It requires the state to allow ample time for signature gathering, prohibits disqualification of petitions because of minor or technical issues, and allows voters to withdraw their signatures if they so choose.",
+          submitted: "10/3/2025",
+          status: "Approved to gather signatures on 3/5/2026",
+          submitter: "Claudia Clifford & Theresa Kendrick",
+        },
+      ],
+    },
   },
 };
 
 function updateBallot(area) {
+  const sel = document.getElementById('ballot-year-select');
+  const areaData = BALLOT_DATA[area];
+
+  sel.innerHTML = '';
+  if (areaData) {
+    const years = Object.keys(areaData).map(Number).sort((a, b) => b - a);
+    years.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      sel.appendChild(opt);
+    });
+    sel.disabled = false;
+    renderBallotYear(area, years[0]);
+  } else {
+    const opt = document.createElement('option');
+    opt.textContent = 'Under construction';
+    opt.disabled = true;
+    opt.selected = true;
+    sel.appendChild(opt);
+    sel.disabled = true;
+    const stateName = STATE_NAMES[area] || area;
+    document.getElementById('ballot-content').innerHTML =
+      `<p class="ballot-placeholder-msg">Ballot issues coming soon for ${stateName}.</p>`;
+  }
+}
+
+function renderBallotYear(area, year) {
   const container = document.getElementById('ballot-content');
-  if (area === 'United States') {
+  const areaData = BALLOT_DATA[area];
+  if (!areaData || !areaData[year]) return;
+  const data = areaData[year];
+
+  if (data._special === 'us') {
     container.innerHTML = `
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">2024 Candidate Policy Positions</p>
       <div class="ballot-grid">
@@ -1843,12 +1888,7 @@ function updateBallot(area) {
     loadUsBallotCharts();
     return;
   }
-  const data = BALLOT_DATA[area];
-  if (!data) {
-    const stateName = STATE_NAMES[area] || area;
-    container.innerHTML = `<p class="ballot-placeholder-msg">Ballot issues coming soon for ${stateName}.</p>`;
-    return;
-  }
+
   function ballotItemHtml(item) {
     return `
       <div class="ballot-item">
