@@ -12,7 +12,7 @@
 1. Download data from the sources
 2. Use the income share data and the total income data with the population data to calculate the average income for each slice of the income pie.
 
-### Notes
+### Internal Notes
 * Pipeline located in breathe/notebooks/pipeline_economy.ipynb
 
 ## make_economy_house_purchase
@@ -32,7 +32,7 @@
 * **Fading American Dream: Baseline Estimates of Absolute Mobility by Parent Income Percentile and Child Birth Cohort**: [Opportunity Insights based at Harvard University](https://opportunityinsights.org/data/).
 
 ## make_economy_f150
-### Notes:
+### Internal Notes:
 - Data compiled by https://claude.ai/
 - Prices are for the base model/standard cab configuration at time of introduction
 - The F-150 designation specifically began in 1975 (previously F-100)
