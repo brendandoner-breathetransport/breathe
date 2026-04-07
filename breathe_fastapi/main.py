@@ -1387,12 +1387,34 @@ def _parse_sources_md() -> dict:
             current_subsec = label if label in ("sources", "steps", "notes") else None
         elif current_category and current_func and current_subsec:
             bucket = parsed[current_category][current_func][current_subsec]
-            if line.startswith("* ") or line.startswith("- "):
+            if re.match(r"^#### [^#]", line):
+                # Sub-heading within a recognised subsection — stored with marker
+                bucket.append("__h__" + line[5:].strip())
+            elif line.startswith("* ") or line.startswith("- "):
                 bucket.append(line[2:].strip())
             elif re.match(r"^\d+\. ", line):
                 bucket.append(re.sub(r"^\d+\. ", "", line).strip())
             elif line:
                 bucket.append(line)
+
+    def _render_sources_list(items: list[str], tag: str = "ul") -> list[str]:
+        """Render a list of source items, treating __h__ entries as sub-headings."""
+        out: list[str] = []
+        in_list = False
+        for item in items:
+            if item.startswith("__h__"):
+                if in_list:
+                    out.append(f"</{tag}>")
+                    in_list = False
+                out.append(f'<p class="sources-subhead">{item[5:]}</p>')
+            else:
+                if not in_list:
+                    out.append(f"<{tag}>")
+                    in_list = True
+                out.append(f"  <li>{_inline_md(item)}</li>")
+        if in_list:
+            out.append(f"</{tag}>")
+        return out
 
     # ── Build popup HTML {func_name: html} ─────────────────────────────
     popup: dict[str, str] = {}
@@ -1410,13 +1432,11 @@ def _parse_sources_md() -> dict:
                 parts += [f"  <li>{c}</li>" for c in charts]
                 parts.append("</ul>")
             if sources:
-                parts += ["<p><strong>Sources</strong></p>", "<ul>"]
-                parts += [f"  <li>{_inline_md(s)}</li>" for s in sources]
-                parts.append("</ul>")
+                parts.append("<p><strong>Sources</strong></p>")
+                parts += _render_sources_list(sources)
             if steps:
-                parts += ["<p><strong>Steps</strong></p>", "<ol>"]
-                parts += [f"  <li>{_inline_md(s)}</li>" for s in steps]
-                parts.append("</ol>")
+                parts += ["<p><strong>Steps</strong></p>"]
+                parts += _render_sources_list(steps, tag="ol")
             popup[func_name] = "\n".join(parts)
 
     # ── Build Sources tab page HTML ─────────────────────────────────────
@@ -1450,13 +1470,11 @@ def _parse_sources_md() -> dict:
             for note in notes:
                 page_lines.append(f"    <p>{_inline_md(note)}</p>")
             if sources:
-                page_lines.append("    <ul>")
-                page_lines += [f"      <li>{_inline_md(s)}</li>" for s in sources]
-                page_lines.append("    </ul>")
+                page_lines += ["    " + ln for ln in _render_sources_list(sources)]
             if steps:
-                page_lines.append("    <ol>")
-                page_lines += [f"      <li>{_inline_md(s)}</li>" for s in steps]
-                page_lines.append("    </ol>")
+                page_lines += [
+                    "    " + ln for ln in _render_sources_list(steps, tag="ol")
+                ]
             page_lines.append("  </section>")
             page_lines.append("")
 

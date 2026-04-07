@@ -615,6 +615,8 @@
     #page-sources a { color: var(--accent); text-decoration: none; }
     #page-sources a:hover { text-decoration: underline; }
     #page-sources .chart-list { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.5rem; }
+    #page-sources .sources-subhead { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); margin: 1.25rem 0 0.25rem; }
+    #sources-modal .sources-subhead { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); margin: 0.9rem 0 0.1rem; }
 
     /* Hero */
     .about-hero {
@@ -2422,7 +2424,10 @@ function openLearnMorePopup() {
 
     <div class="popup-note"><strong>What we know — and what we\'re still learning:</strong> The state-level data from programs that launched in 2022–2023 is still early, and it\'s hard to say exactly how much of the improvement comes from meals versus other factors like pandemic recovery and attendance campaigns. The strongest causal evidence comes from older, well-studied programs. But the research from those programs, and the direction of the trends in every state with active data, point the same way: consistent access to food is a foundation that makes everything else in school more possible.</div>
   `;
-  document.getElementById('sources-footer-btn').style.display = 'none';
+  const footerBtn = document.getElementById('sources-footer-btn');
+  footerBtn.textContent = 'Sources';
+  footerBtn.onclick = function() { openCardSources('card-co-ballot-2025'); };
+  footerBtn.style.display = '';
   document.getElementById('sources-overlay').classList.add('open');
 }
 
