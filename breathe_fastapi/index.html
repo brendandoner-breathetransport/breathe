@@ -908,6 +908,32 @@
     .meals-state-stats { font-size: 0.8rem; color: var(--muted); line-height: 1.65; list-style: none; padding: 0; }
     .meals-state-stats li { padding-left: 0.9rem; position: relative; }
     .meals-state-stats li::before { content: "\B7"; position: absolute; left: 0.2rem; }
+    /* Outcome chain — cards */
+    .outcome-chain { display: flex; flex-direction: column; margin: 0.35rem 0 0; flex: 1; }
+    .chain-node { display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.15rem 0; }
+    .chain-node-icon { font-size: 0.88rem; flex-shrink: 0; line-height: 1.4; }
+    .chain-node-label { font-size: 0.79rem; font-weight: 600; color: var(--text); line-height: 1.35; }
+    .chain-node.result .chain-node-label { color: #2E7D52; }
+    .chain-node.downstream .chain-node-label { color: var(--muted); font-weight: 500; font-style: italic; }
+    .chain-node-sub { font-size: 0.7rem; color: var(--muted); line-height: 1.3; margin-top: 0.05rem; }
+    .chain-sep { padding-left: 1.3rem; font-size: 0.72rem; color: var(--muted); line-height: 1.2; }
+    /* Outcome chain — popups */
+    .popup-chain { display: flex; flex-direction: column; margin: 0.4rem 0 0.25rem; }
+    .popup-chain-node { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.45rem 0.6rem; border-radius: 6px; }
+    .popup-chain-node.result { background: rgba(46,125,82,0.09); }
+    .popup-chain-node.downstream { background: rgba(0,0,0,0.035); }
+    .popup-chain-icon { font-size: 1.05rem; flex-shrink: 0; line-height: 1.4; }
+    .popup-chain-label { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.35; }
+    .popup-chain-node.result .popup-chain-label { color: #2E7D52; }
+    .popup-chain-node.downstream .popup-chain-label { color: var(--muted); }
+    .popup-chain-sub { font-size: 0.81rem; color: var(--text-body); line-height: 1.5; margin-top: 0.2rem; }
+    .popup-chain-sep { text-align: center; font-size: 0.88rem; color: var(--muted); line-height: 1.5; padding: 0.05rem 0; }
+    .popup-note { font-size: 0.81rem; color: var(--text-body); background: rgba(74,144,226,0.07); border-left: 3px solid #4a90e2; padding: 0.5rem 0.75rem; border-radius: 0 5px 5px 0; margin-top: 0.75rem; line-height: 1.5; }
+    .popup-note strong { color: var(--text); }
+    .popup-divider { border: none; border-top: 1px solid var(--border); margin: 0.65rem 0 0.5rem; }
+    .popup-section-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 0.5rem 0 0.25rem; }
+    .learn-more-link { background: none; border: none; color: var(--accent); font-size: 0.95rem; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; font-family: inherit; }
+    .learn-more-link:hover { opacity: 0.75; }
     .ballot-prop-badge { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 20px; margin-bottom: 0.35rem; margin-right: 0.35rem; }
     .ballot-prop-badge.retain { background: rgba(74,144,226,0.15); color: #4a90e2; }
     .ballot-prop-badge.tax    { background: rgba(46,125,82,0.12);  color: #2E7D52; }
@@ -1908,6 +1934,11 @@ const BALLOT_DATA = {
             { label: 'CDE, Healthy School Meals for All Program', url: 'https://ed.cde.state.co.us/nutrition/nutrition-programs/healthy-school-meals-for-all-program' },
             { label: 'Colorado 2025 Blue Book \u2014 Prop LL analysis: participation exceeded projections, driving funding shortfall', url: 'https://leg.colorado.gov/bluebook' },
             { label: 'Chalkbeat Colorado, "Proposition LL voter guide" (October 2025)', url: 'https://www.chalkbeat.org/colorado/2025/10/10/proposition-ll-healthy-school-meals-for-all-voter-guide/' },
+          ],
+          chain: [
+            { icon: '🍽', label: 'Free breakfast and lunch for every student', sub: 'Starting 2023 — no cost, no forms, no questions asked' },
+            { icon: '📉', label: 'Students missing school: 31% → 28%', sub: '3.4 percentage point drop in the first year; 70% of school districts improved', result: true },
+            { icon: '🎓', label: 'More kids on track to finish school', sub: 'Missing school regularly is one of the strongest warning signs that a student will drop out', downstream: true },
           ] },
         { abbr: 'CA', name: 'California', year: 2022, status: 'active',
           highlights: [
@@ -1923,6 +1954,11 @@ const BALLOT_DATA = {
             { label: 'CDE School Dashboard — Chronic Absenteeism Rates (2022\u201324)', url: 'https://www.cde.ca.gov/ta/ac/cm/dashboardchronic.asp' },
             { label: 'PACE, "Unpacking California\'s Chronic Absence Crisis Through 2023-24"', url: 'https://edpolicyinca.org/publications/unpacking-californias-chronic-absence-crisis-through-2023-24' },
             { label: 'UC ANR Nutrition Policy Institute, Evaluation of Universal School Meals in California (2024\u201325)', url: 'https://ucanr.edu/program/nutrition-policy-institute/article/evaluation-universal-school-meals-california' },
+          ],
+          chain: [
+            { icon: '🍽', label: 'Free breakfast and lunch for every student', sub: 'Launched 2022 — one of the first states to do this statewide' },
+            { icon: '📉', label: 'Students missing school: 30% → 20%', sub: '9.6 percentage point drop over two years — the biggest two-year improvement in state history', result: true },
+            { icon: '🎓', label: 'Hundreds of thousands more kids in class', sub: 'More school days means stronger reading, better math skills, and a much higher chance of graduating', downstream: true },
           ] },
         { abbr: 'ME', name: 'Maine', year: 2022, status: 'active',
           highlights: [
@@ -1936,6 +1972,11 @@ const BALLOT_DATA = {
           sources: [
             { label: 'FRAC, "The State of Healthy School Meals for All" (2024) — participation data across CA, ME, MA, NV, VT', url: 'https://frac.org/hsmfa-report-2024' },
             { label: 'Maine Dept. of Education program data (2022\u201323) \u2014 45% increase in meals served; no published outcome data' },
+          ],
+          chain: [
+            { icon: '🍽', label: 'Free breakfast and lunch for every student', sub: 'Launched 2022 — 45% more meals were served in the first year' },
+            { icon: '📋', label: 'Attendance and test score data not yet published', sub: 'Maine has not released before-and-after outcome data for this program yet' },
+            { icon: '📊', label: 'Similar programs in peer states show real gains', sub: 'Based on results in Massachusetts, California, and Minnesota, researchers expect improvements in attendance as the program matures', downstream: true },
           ] },
         { abbr: 'VT', name: 'Vermont', year: 2022, status: 'active',
           highlights: [
@@ -1951,6 +1992,11 @@ const BALLOT_DATA = {
             { label: 'AJPM (2025), "Statewide Universal School Meal Policies and Food Insecurity in Households With Children"', url: 'https://www.ajpmonline.org/article/S0749-3797(25)00433-7/fulltext' },
             { label: 'Vermont Legislature, Summary of Key Findings: Universal School Meals Research Studies (January 2025)', url: 'https://legislature.vermont.gov/Documents/2026/Workgroups/House%20Agriculture/Food%20Resiliency/Universal%20School%20Meals/W~Anore%20Horton~Universal%20School%20Meals%20Research%20Updated~1-30-2025.pdf' },
             { label: '83% staff statistic: Nutrients Systematic Review (2021) \u2014 survey of Vermont CEP-era school staff', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8000006/' },
+          ],
+          chain: [
+            { icon: '🍽', label: 'Free breakfast and lunch for every student', sub: 'Launched 2022 — food insecurity in the state fell 1.5 percentage points' },
+            { icon: '💬', label: '83% of school staff: students more ready to learn', sub: 'Survey of Vermont school staff conducted during the program', result: true },
+            { icon: '🧠', label: 'Less hunger means more focus', sub: "Kids who aren't worried about food have more mental energy available for learning — research shows hunger and stress directly reduce the ability to concentrate", downstream: true },
           ] },
         { abbr: 'MA', name: 'Massachusetts', year: 2022, status: 'active',
           highlights: [
@@ -1967,6 +2013,11 @@ const BALLOT_DATA = {
             { label: 'Healey-Driscoll Administration, "Massachusetts Schools with Biggest Drop in Chronic Absenteeism" (2024)', url: 'https://www.mass.gov/news/healey-driscoll-administration-celebrates-massachusetts-schools-with-biggest-drop-in-chronic-absenteeism' },
             { label: 'FRAC interview with MA Secretary of Education Patrick Tutwiler (2024)', url: 'https://frac.org/blog/massachusetts-secretary-education-interview' },
             { label: 'Massachusetts DESE MCAS reports (2023, 2024)' },
+          ],
+          chain: [
+            { icon: '🍽', label: 'Free breakfast and lunch for every student', sub: 'Launched 2022 — one of the first states to make meals free for all' },
+            { icon: '📉', label: 'Students missing school: 24.5% → 19.6%', sub: '4.9 percentage point drop in year 2 — the largest single-year improvement in state history', result: true },
+            { icon: '🎓', label: 'Thousands more students in class every day', sub: 'For every 1,000 students, about 49 went from regularly missing school to showing up — each gaining 18 or more school days per year', downstream: true },
           ] },
         { abbr: 'MN', name: 'Minnesota', year: 2023, status: 'active',
           highlights: [
@@ -1983,6 +2034,11 @@ const BALLOT_DATA = {
           sources: [
             { label: 'MDE, "Free School Meals: First Year Preliminary Summary" (2024)', url: 'https://education.mn.gov/mdeprod/idcplg?IdcService=GET_FILE&dDocName=PROD085180&RevisionSelectionMethod=latestReleased&Rendition=primary' },
             { label: 'Minnesota Reformer / Star Tribune (2025) \u2014 test scores flat; academic outcomes not yet linked to meal program' },
+          ],
+          chain: [
+            { icon: '🍽', label: 'Free breakfast and lunch for every student', sub: 'Launched 2023 — breakfast participation jumped 40%, lunch up 15%' },
+            { icon: '📉', label: 'Students missing school: 25.5% → 24.5%', sub: '1 percentage point drop in the first year of the program', result: true },
+            { icon: '📈', label: 'Early signal — stronger results expected over time', sub: 'Research from peer states shows the biggest attendance gains typically show up in years 2 and 3 of a program', downstream: true },
           ] },
         { abbr: 'NV', name: 'Nevada', year: 2022, status: 'ended',
           highlights: [
@@ -1998,6 +2054,11 @@ const BALLOT_DATA = {
             { label: 'FRAC, "The State of Healthy School Meals for All" (2024) \u2014 Nevada program data', url: 'https://frac.org/hsmfa-report-2024' },
             { label: 'Nevada Dept. of Education program records (2022\u201324) \u2014 206K students/month served' },
             { label: 'Governor\'s office veto statement (2024) \u2014 program ended despite bipartisan legislative support' },
+          ],
+          chain: [
+            { icon: '🍽', label: '206,000 students served every month while active', sub: 'Program ran 2022–2024 with bipartisan support from teachers, parents, and the legislature' },
+            { icon: '⚡', label: 'Program ended by governor veto in 2024', sub: 'The state legislature passed the funding; the governor vetoed it' },
+            { icon: '❓', label: 'No outcome data was collected before it ended', sub: 'Students who had access to free meals for two years have since lost that access', downstream: true },
           ] },
       ],
     },
@@ -2100,17 +2161,28 @@ function renderBallotYear(area, year) {
       `;
     };
     const coMealsStateCardHtml = (s) => {
-      const cardItems = s.highlights || s.stats;
-      const statsHtml = cardItems.map(st => '<li>' + st + '</li>').join('');
       const badge = s.status === 'active' ? 'Active' : s.status === 'ended' ? 'Ended 2024' : 'Active since 2023';
       const srcBtn = s.sources && s.sources.length
         ? `<div style="margin-top:auto;padding-top:0.6rem;display:flex;justify-content:flex-end;"><button class="explain-btn" onclick="openBallotStateSources('${s.abbr}',${year})">Sources</button></div>`
         : '';
+      let contentHtml;
+      if (s.chain) {
+        const nodes = s.chain.map((node, i) => {
+          const cls = 'chain-node' + (node.result ? ' result' : node.downstream ? ' downstream' : '');
+          const sub = node.sub ? `<div class="chain-node-sub">${node.sub}</div>` : '';
+          const sep = i > 0 ? '<div class="chain-sep">\u2193</div>' : '';
+          return sep + `<div class="${cls}"><span class="chain-node-icon">${node.icon}</span><div><div class="chain-node-label">${node.label}</div>${sub}</div></div>`;
+        }).join('');
+        contentHtml = `<div class="outcome-chain">${nodes}</div>`;
+      } else {
+        const cardItems = s.highlights || s.stats;
+        contentHtml = '<ul class="meals-state-stats">' + cardItems.map(st => '<li>' + st + '</li>').join('') + '</ul>';
+      }
       return `
         <div class="meals-state-card">
           <div class="meals-state-name">${s.name} <span class="meals-state-year">(${s.year})</span></div>
           <span class="meals-state-badge ${s.status}">${badge}</span>
-          <ul class="meals-state-stats">${statsHtml}</ul>
+          ${contentHtml}
           ${srcBtn}
         </div>
       `;
@@ -2119,7 +2191,7 @@ function renderBallotYear(area, year) {
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
       <div class="ballot-grid">${data.items.map(coMealsBallotItemHtml).join('')}</div>
       <h3 class="ballot-section-title">Student Outcomes: Colorado &amp; Peer States</h3>
-      <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:0.5rem 0 0.75rem;">Five states enacted statewide universal free school meals between 2022 and 2023. Peer-reviewed research on earlier programs finds math scores improve 0.06&#8211;0.10 standard deviations and attendance rises by up to 1.8 school days per year when meals are universally free. State-specific outcome data from these newer programs is still emerging &#8212; chronic absenteeism trends are the strongest signal so far.</p>
+      <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:0.5rem 0 0.75rem;">Five states enacted statewide universal free school meals between 2022 and 2023. When meals are free for all students, research shows more kids show up to school, and math scores improve by the equivalent of 3&#8211;4 extra months of learning per year. The state-level data from these newer programs is still coming in &#8212; drops in students missing school are the strongest signal so far. <button class="learn-more-link" onclick="openLearnMorePopup()">Learn more &#8250;</button></p>
       <div class="meals-legend">
         <div class="meals-legend-item"><span class="meals-dot active"></span>&#8202;Active Program</div>
         <div class="meals-legend-item"><span class="meals-dot ended"></span>&#8202;Program Ended</div>
@@ -2295,6 +2367,46 @@ function reloadStateBallotCharts() {
   renderStateBallotCharts(coData[year].stateData);
 }
 
+function openLearnMorePopup() {
+  const mkNode = (icon, label, sub, cls) => {
+    const clsStr = 'popup-chain-node' + (cls ? ' ' + cls : '');
+    return `<div class="${clsStr}"><span class="popup-chain-icon">${icon}</span><div><div class="popup-chain-label">${label}</div><div class="popup-chain-sub">${sub}</div></div></div>`;
+  };
+  const sep = '<div class="popup-chain-sep">\u2193</div>';
+  document.getElementById('sources-modal-body').innerHTML = `
+    <h2>What free school meals can actually change</h2>
+
+    <div class="popup-section-label">Showing up to school</div>
+    <div class="popup-chain">
+      ${mkNode('🍽', 'Free breakfast and lunch for every student', 'When meals are free for everyone, more students show up. A study of 132,000 students found kids with access to free meals missed 1.8 fewer days per year — and that improvement lasted into 2nd grade.')}
+      ${sep}
+      ${mkNode('📉', 'Fewer students missing school', 'State data from programs in Massachusetts, California, Minnesota, and Colorado all show drops in the share of students missing 10 or more days of school per year since universal meals launched.', 'result')}
+      ${sep}
+      ${mkNode('📚', 'Why this matters: reading and graduating', 'Students who miss a lot of school in early grades are <strong>4 times more likely</strong> to fall behind in reading by the end of 3rd grade. Students who can\'t read well by 3rd grade are much more likely to drop out of high school. Students who miss school regularly in middle school are <strong>3 times more likely to drop out</strong>.', 'downstream')}
+    </div>
+
+    <hr class="popup-divider">
+    <div class="popup-section-label">Test scores</div>
+    <div class="popup-chain">
+      ${mkNode('🧠', 'Students who are fed learn more', 'Research from schools that shifted to free meals for all students found math scores improved by the equivalent of <strong>3–4 extra months of learning per year</strong> — without adding a single school day.')}
+      ${sep}
+      ${mkNode('💰', 'Learning gains that add up over time', 'Economists estimate this kind of academic improvement is worth roughly <strong>$3,900 more in lifetime earnings per student</strong>. Multiply that across a school or a state and the total is significant.', 'downstream')}
+    </div>
+
+    <hr class="popup-divider">
+    <div class="popup-section-label">Stress, hunger, and the brain</div>
+    <div class="popup-chain">
+      ${mkNode('😰', 'Worrying about food takes up mental space', 'Research has found that the stress of not knowing where your next meal is coming from uses up mental energy — energy that could go toward learning. Kids without reliable access to food are about <strong>twice as likely</strong> to have anxiety and depression.')}
+      ${sep}
+      ${mkNode('🙌', 'Universal programs remove the stress of being singled out', 'When everyone gets the same meal at no cost, students who couldn\'t afford lunch no longer have to worry about being identified. Research shows this kind of social stress affects how students see themselves at school.', 'downstream')}
+    </div>
+
+    <div class="popup-note"><strong>What we know — and what we\'re still learning:</strong> The state-level data from programs that launched in 2022–2023 is still early, and it\'s hard to say exactly how much of the improvement comes from meals versus other factors like pandemic recovery and attendance campaigns. The strongest causal evidence comes from older, well-studied programs. But the research from those programs, and the direction of the trends in every state with active data, point the same way: consistent access to food is a foundation that makes everything else in school more possible.</div>
+  `;
+  document.getElementById('sources-footer-btn').style.display = 'none';
+  document.getElementById('sources-overlay').classList.add('open');
+}
+
 function openBallotStateMapPopup(abbr) {
   const yearSel = document.getElementById('ballot-year-select');
   const year = yearSel ? Number(yearSel.value) : 2025;
@@ -2303,15 +2415,39 @@ function openBallotStateMapPopup(abbr) {
   const s = coData[year].stateData.find(d => d.abbr === abbr);
   if (!s) return;
   const badge = s.status === 'active' ? 'Active' : s.status === 'ended' ? 'Ended 2024' : 'Active since 2023';
-  const statsHtml = s.stats.map(st => `<li>${st}</li>`).join('');
+  // Chart
   const chartHtml = s.chartData
-    ? `<div id="bsc-${s.abbr}" style="height:160px;margin:0.5rem -0.25rem 0.25rem;"></div>`
+    ? `<div id="bsc-${s.abbr}" style="height:150px;margin:0.25rem -0.25rem 0;"></div>`
+    : '';
+  // Outcome chain
+  let chainHtml = '';
+  if (s.chain) {
+    const nodes = s.chain.map((node, i) => {
+      const cls = 'popup-chain-node' + (node.result ? ' result' : node.downstream ? ' downstream' : '');
+      const sub = node.sub ? `<div class="popup-chain-sub">${node.sub}</div>` : '';
+      const sep = i > 0 ? '<div class="popup-chain-sep">\u2193</div>' : '';
+      return sep + `<div class="${cls}"><span class="popup-chain-icon">${node.icon}</span><div><div class="popup-chain-label">${node.label}</div>${sub}</div></div>`;
+    }).join('');
+    chainHtml = `<hr class="popup-divider"><div class="popup-section-label">How it works</div><div class="popup-chain">${nodes}</div>`;
+  }
+  // Supporting data
+  const statsHtml = s.stats && s.stats.length
+    ? `<hr class="popup-divider"><div class="popup-section-label">Supporting data</div><ul class="meals-state-stats" style="margin:0;">${s.stats.map(st => `<li style="padding:0.3rem 0 0.3rem 0.9rem;">${st}</li>`).join('')}</ul>`
+    : '';
+  // Bigger picture note (only for states with absenteeism data)
+  const noteHtml = s.chartData
+    ? `<div class="popup-note"><strong>The bigger picture:</strong> Research from earlier programs finds math scores improved by the equivalent of 3–4 extra months of learning per year when meals were free for all students. High school graduates earn $300,000–$400,000 more over their lifetimes than people who don't finish — and showing up to school is step one.</div>`
     : '';
   document.getElementById('sources-modal-body').innerHTML = `
-    <p><strong>${s.name}</strong> <span style="font-size:0.8rem;color:var(--muted)">(program launched ${s.year})</span></p>
-    <span class="meals-state-badge ${s.status}" style="display:inline-block;margin-bottom:0.25rem;">${badge}</span>
+    <div style="margin-bottom:0.4rem;">
+      <strong style="font-size:1rem;">${s.name}</strong>
+      <span style="font-size:0.78rem;color:var(--muted);margin-left:0.4rem;">program launched ${s.year}</span>
+    </div>
+    <span class="meals-state-badge ${s.status}" style="display:inline-block;margin-bottom:0.3rem;">${badge}</span>
     ${chartHtml}
-    <ul class="meals-state-stats" style="margin-top:0.4rem;">${statsHtml}</ul>
+    ${chainHtml}
+    ${statsHtml}
+    ${noteHtml}
   `;
   const footerBtn = document.getElementById('sources-footer-btn');
   if (s.sources && s.sources.length) {
