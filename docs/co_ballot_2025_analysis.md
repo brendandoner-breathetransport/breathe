@@ -316,3 +316,83 @@ The workforce implications are direct: industries competing globally in technolo
 - **Massachusetts has the strongest state-specific signal** — a 4.9 percentage point chronic absenteeism decline in year 2 — but even that is attributed to multiple concurrent interventions by state officials.
 - **Colorado's program had already been operating for one school year** (2023–24) before these ballot measures, so the 2025 vote was primarily about sustaining and expanding funding — not initiating the program.
 - The $12.4M retained under Prop LL and the $95M/year raised under Prop MM are fiscal figures from the Colorado Legislative Council Staff's official fiscal notes.
+
+---
+
+## Where This Analysis May Not Hold Up — and What Deeper Research Would Require
+
+This section flags specific claims in the analysis where the evidence is weakest, where methodological concerns exist, or where a policy researcher would likely push back. These are areas where further peer-reviewed research is genuinely needed before strong conclusions can be drawn.
+
+---
+
+### 1. The State Attendance Trends Are Descriptive, Not Causal
+
+**The claim:** Chronic absenteeism fell in Colorado, Massachusetts, California, and Minnesota after universal meals launched.
+
+**Why it may not hold up:** Every one of these states simultaneously implemented other interventions — attendance campaigns, expanded mental health supports, community schools, post-pandemic normalization initiatives — making it statistically impossible to attribute the attendance drop to meals specifically. No study has used a control group, difference-in-differences design, or natural experiment to isolate the meal effect in any of these 2022–23 programs.
+
+**What's needed:** A quasi-experimental or difference-in-differences study comparing districts or schools within these states that had different levels of pre-existing meal access, similar to the CEP adoption studies used in earlier research. Longitudinal panel data tracking the same students over 3–5 years would substantially strengthen causal inference.
+
+---
+
+### 2. The $260,000 Dropout Cost Figure Is an Estimate with Real Methodological Disputes
+
+**The claim:** Each high school dropout costs society approximately $260,000 over their lifetime.
+
+**Why it may not hold up:** This figure, drawn from Belfield & Levin (2007) and the Alliance for Excellent Education, aggregates many assumptions: a discount rate for future costs and revenue, probability estimates for incarceration and welfare use, and assumptions about counterfactual earnings. Critics argue the figure suffers from selection bias — dropouts differ from graduates in many pre-existing ways (family income, neighborhood, prior academic performance) that independently predict criminal justice involvement and welfare use. The pure educational effect is likely smaller than the raw comparison suggests. Some economists place the figure closer to $100,000–$150,000 after controlling for selection effects.
+
+**What's needed:** A credible instrumental variable or natural experiment that estimates the causal effect of high school graduation on criminal justice involvement, welfare use, and tax contribution independently — not just the correlation between dropout status and those outcomes. Moretti (2004) and Lochner & Moretti (2004) make progress on crime specifically, but comprehensive causal estimates of the full social cost of a dropout remain contested.
+
+---
+
+### 3. Older Program Research May Not Generalize to Statewide Universal Programs
+
+**The claim:** Research from the Community Eligibility Provision (CEP) and universal breakfast programs shows test score gains of 0.06–0.10 SD and attendance improvements.
+
+**Why it may not hold up:** The CEP studies compare schools that adopted CEP (serving high-poverty populations) to schools that did not — this is a smaller, more targeted expansion than making meals free for all students statewide regardless of income. The marginal benefit is likely concentrated in students who were previously food-insecure; students who were already food-secure gain nothing nutritionally from the program. A statewide universal program serving high-income families dilutes the average effect, potentially substantially. Ruffini (2022) directly found that test score effects from CEP were concentrated in districts with previously low meal participation — suggesting Colorado, with already-high meal uptake in many districts, may see smaller academic effects than the headline figures imply.
+
+**What's needed:** Program evaluations specifically designed for statewide universal programs — not just CEP expansions — using student-level longitudinal data and credible identification strategies. California's ongoing UC ANR / Nutrition Policy Institute evaluation (anticipated through 2025–26) is the most promising near-term source.
+
+---
+
+### 4. The Cognitive Tax of Scarcity Finding Has Replication Concerns
+
+**The claim:** The stress of food insecurity imposes a cognitive burden equivalent to roughly 13 IQ points, directly impairing learning (Mani et al., 2013, *Science*).
+
+**Why it may not hold up:** The Mani et al. (2013) finding has been cited extensively but has faced challenges in independent replication. Subsequent studies have found smaller or null effects of financial stress on cognitive performance, and a 2021 pre-registered replication study found the original effect size could not be reproduced under more rigorous conditions. The directional claim — that economic stress impairs cognition — is broadly supported by the neuroscience literature on stress and working memory, but the specific magnitude is contested.
+
+**What's needed:** A well-powered pre-registered replication study with diverse populations and real-world rather than laboratory conditions. The broader stress-cognition literature (separate from the scarcity-bandwidth framing) provides a more robust evidentiary base for the directional claim.
+
+---
+
+### 5. The U.S. Competitiveness Argument Involves Several Inferential Leaps
+
+**The claim:** Universal school meals improve test scores, which improves the U.S. workforce, which strengthens U.S. competitiveness globally.
+
+**Why it may not hold up:** This argument chains together three links: (a) meals improve test scores, (b) test scores drive workforce quality, (c) workforce quality drives national competitiveness. The Hanushek & Woessmann research establishing the test score–GDP growth relationship is cross-national and operates at the country level over multi-decade timeframes — it was not designed to evaluate the marginal contribution of a specific school nutrition program. The effect size of 0.06–0.10 SD from meal programs, even if real and sustained, is modest relative to the scale of the international achievement gap the U.S. faces (~1.0–1.5 SD behind top-performing nations in math). Attributing meaningful competitive impact to the meal program specifically, as opposed to broader curriculum, teacher quality, or socioeconomic factors, requires a much longer inferential chain than the evidence directly supports.
+
+**What's needed:** The competitiveness framing is more appropriately used as context for why educational investment generally matters — not as a specific, attributable outcome of meal programs. Future analysis should be careful to distinguish between the macroeconomic case for educational investment broadly and the specific causal evidence for this program.
+
+---
+
+### 6. Mental Health: The Causal Chain Is Established in Parts, Not End-to-End
+
+**The claim:** Universal meals reduce food insecurity → reduce anxiety and depression → improve school engagement and outcomes.
+
+**Why it may not hold up:** Each link in this chain has independent research support, but no study has measured the full chain from statewide universal meals to clinical mental health outcomes to academic performance in a single study. The claim rests on combining findings from different populations, contexts, and study designs. It is plausible and directionally supported — but it is a constructed argument, not a measured one. A policy researcher would correctly distinguish between "the evidence is consistent with this pathway" and "the evidence demonstrates this pathway."
+
+**What's needed:** Longitudinal studies that measure validated mental health outcomes (e.g., PHQ-A, GAD-7, or similar instruments) among students in states with and without universal meal programs, ideally beginning before program launch and tracking the same students over multiple years. This research does not yet exist for the 2022–23 programs and would require 3–5 more years of program operation to generate.
+
+---
+
+### Summary Table: Evidence Strength and Scrutiny Risk
+
+| Claim | Evidence Strength | Scrutiny Risk | Research Needed |
+|---|---|---|---|
+| State attendance trends improved post-launch | Moderate (consistent direction, no causal isolation) | High — multi-causal environment | Difference-in-differences or IV study within these states |
+| Meals causally reduce absenteeism | Moderate (peer-reviewed, older programs) | Medium — generalizability uncertain | Statewide-specific causal evaluation |
+| Test score gains (0.06–0.10 SD) | Moderate (peer-reviewed, older programs) | Medium-High — dilution in universal programs | Student-level longitudinal evaluation (CA study forthcoming) |
+| $260K societal cost per dropout | Low-Moderate (widely cited but disputed) | High — selection bias concerns | Causal estimates controlling for pre-existing disadvantage |
+| Cognitive tax of scarcity (13 IQ pts) | Low — replication failures | High | Pre-registered replication with diverse samples |
+| Meals → mental health outcomes | Low — indirect chain only | High — no end-to-end study exists | Longitudinal clinical measurement study |
+| Meals → U.S. competitiveness | Very Low — inferential chain too long | Very High | Appropriate only as broad educational investment context |
