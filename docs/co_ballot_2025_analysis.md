@@ -212,6 +212,71 @@ Even without direct measurement from the 2022–23 state programs, the link betw
 
 ---
 
+### Program Cost vs. Societal Return
+
+The central economic question for universal school meal programs is not whether they cost money — they do — but whether the societal return justifies the investment.
+
+#### What It Costs
+
+Universal school meals cost approximately **$500–$700 per student per year** when federal and state funding are combined (based on USDA National School Lunch Program reimbursement rates of ~$3.91 per free lunch). Over 13 years of K–12, the cumulative per-student investment is roughly **$6,500–$9,000**.
+
+> USDA Food and Nutrition Service, *National School Lunch Program: Reimbursement Rates* (2023–24)
+
+Colorado's Proposition MM raises approximately $95 million per year in new state revenue for the program. At roughly 900,000 enrolled students, that represents an additional ~$105 per student in state funding on top of existing federal reimbursements.
+
+#### The Cost of a Dropout — to Society
+
+Each high school dropout imposes an estimated **$260,000–$290,000 in lifetime societal costs** — not to the individual, but to the public. This figure aggregates:
+
+- **Lost tax revenue**: Dropouts earn substantially less than graduates throughout their working lives, contributing far less in income taxes over 40+ working years.
+- **Higher government assistance use**: Dropouts are significantly more likely to rely on Medicaid, SNAP (food stamps), and housing assistance programs throughout their lives.
+- **Criminal justice costs**: High school dropouts have a 63% higher incarceration rate than graduates. Each year of incarceration costs $35,000–$60,000. Graduation reduces male arrest rates by an estimated 10–20%.
+
+> Belfield & Levin, *The Price We Pay: Economic and Social Consequences of Inadequate Education*, Brookings Institution Press (2007)
+> Lochner & Moretti, *The Effect of Education on Crime: Evidence from Prison Inmates, Arrests, and Self-Reports*, American Economic Review (2004)
+> Alliance for Excellent Education, *The High Cost of High School Dropouts* (2011)
+
+#### The Break-Even Math
+
+The return on investment calculation is straightforward:
+
+| Metric | Value |
+|---|---|
+| Program cost per student (lifetime, K–12) | ~$7,800 |
+| Societal savings per avoided dropout | ~$260,000 |
+| Students needed to prevent 1 dropout to break even | ~30 students |
+| Actual enrollment per program dollar | ~1,000+ students per $780,000 spent |
+
+If universal meals prevent even **1 in 33 students** from dropping out who otherwise would have, the societal savings fully recover the cost of the program for all students enrolled. Given that chronic absenteeism — itself reduced by universal meal programs — is one of the strongest predictors of dropout, this threshold is plausible and likely conservative.
+
+#### U.S. Competitiveness in the Global Economy
+
+The aggregate implications extend beyond individual students to the national economy. American students currently rank approximately **26th in math** among OECD countries on the PISA assessment — substantially behind South Korea, Japan, Estonia, Finland, and Canada.
+
+Research at the national level finds that a country's average student test scores are the single strongest predictor of long-run GDP growth — stronger than years of schooling, institutional quality, or natural resources. Countries that invest in human capital quality see measurably higher economic productivity, innovation output, and wage growth over the following decades.
+
+> Hanushek & Woessmann, *The Knowledge Capital of Nations: Education and the Economics of Growth*, MIT Press (2015)
+> OECD, *PISA 2022 Results* (2023)
+
+A McKinsey analysis found that if the United States had closed its international achievement gap in 1983, GDP would have been **$1.3–$2.3 trillion higher** by 2008 — representing decades of foregone economic output attributable directly to underinvestment in student achievement.
+
+> McKinsey Global Institute, *The Economic Impact of the Achievement Gap in America's Schools* (2009)
+
+The workforce implications are direct: industries competing globally in technology, manufacturing, healthcare, and finance depend on workers with strong foundational math and literacy skills. A school meal program that improves math scores by even 0.06–0.10 standard deviations, sustained over millions of students across multiple years, contributes meaningfully to the human capital base that determines where high-skill jobs locate, what wages they pay, and whether the U.S. maintains its competitive position.
+
+#### Summary: The Investment Case
+
+| Claim | Evidence Strength |
+|---|---|
+| Program improves attendance | Moderate — consistent directional trend across multiple states and peer-reviewed studies |
+| Attendance → graduation | Strong — robust causal research |
+| Graduation → reduced societal costs | Strong — well-established across criminal justice, welfare, and tax revenue research |
+| Program improves test scores | Moderate — peer-reviewed causal evidence from earlier programs (0.06–0.10 SD) |
+| Test scores → economic productivity | Strong — extensive cross-national and individual-level evidence |
+| Cost-benefit ratio is positive | Plausible — break-even requires preventing dropout in ~1 in 33 students; causal link is indirect but well-grounded |
+
+---
+
 ## State-Level Summary
 
 | State | Program Year | Absenteeism | Test Scores | Mental Health |
