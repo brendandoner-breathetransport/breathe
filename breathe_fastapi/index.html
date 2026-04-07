@@ -891,6 +891,31 @@
       text-align: center;
     }
 
+    /* ── CO Meals ballot ─────────────────────────────────────────────── */
+    .meals-legend { display: flex; gap: 1.25rem; margin: 0.5rem 0 1rem; flex-wrap: wrap; }
+    .meals-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: var(--muted); }
+    .meals-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .meals-dot.active { background: #2E7D52; }
+    .meals-dot.ended  { background: #E07030; }
+    .meals-dot.co     { background: #4a90e2; }
+    .meals-states-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+    .meals-state-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; }
+    .meals-state-name { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem; }
+    .meals-state-year { font-size: 0.78rem; color: var(--muted); font-weight: 400; }
+    .meals-state-badge { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 20px; margin: 0.4rem 0 0.5rem; }
+    .meals-state-badge.active { background: rgba(46,125,82,0.15); color: #2E7D52; }
+    .meals-state-badge.ended  { background: rgba(224,112,48,0.15); color: #E07030; }
+    .meals-state-stats { font-size: 0.8rem; color: var(--muted); line-height: 1.65; list-style: none; padding: 0; }
+    .meals-state-stats li { padding-left: 0.9rem; position: relative; }
+    .meals-state-stats li::before { content: "\B7"; position: absolute; left: 0.2rem; }
+    .ballot-prop-badge { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 20px; margin-bottom: 0.35rem; margin-right: 0.35rem; }
+    .ballot-prop-badge.retain { background: rgba(74,144,226,0.15); color: #4a90e2; }
+    .ballot-prop-badge.tax    { background: rgba(46,125,82,0.12);  color: #2E7D52; }
+    .ballot-prop-badge.passed { background: rgba(46,125,82,0.12);  color: #2E7D52; }
+    .ballot-item-fiscal { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.4rem; }
+    .ballot-item-vote   { font-size: 0.78rem; color: var(--muted); font-style: italic; }
+    .ballot-section-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin: 1.5rem 0 0.5rem; }
+
     @media (max-width: 600px) {
       .chart-grid { grid-template-columns: 1fr; }
       nav img { height: 30px; }
@@ -1669,6 +1694,7 @@ document.getElementById("darkModeToggle").addEventListener("change", e => {
   reloadStateChart();
   reloadMtBallotCharts();
   reloadUsBallotCharts();
+  reloadCoBallotMap();
   reloadAreaMap();
 });
 
@@ -1835,6 +1861,46 @@ const BALLOT_DATA = {
       ],
     },
   },
+  CO: {
+    2025: {
+      label: "2025 Colorado Ballot Measures — Healthy School Meals for All",
+      _special: 'co-meals-2025',
+      items: [
+        {
+          id: "Proposition LL",
+          type: "retain",
+          title: "Maintain Healthy School Meals Funding",
+          summary: "Allows the state to retain $12.4 million already collected to continue funding the Healthy School Meals for All program. No new taxes — this proposition prevents the state from having to return money already in the program’s account.",
+          fiscal: "State retains $12.4M already collected. No new taxes.",
+          vote: "YES — keep collected funds in the program · NO — return funds to taxpayers",
+          passed: true,
+        },
+        {
+          id: "Proposition MM",
+          type: "tax",
+          title: "Fund Free School Meals for All Colorado Students",
+          summary: "Lowers income tax deduction limits for households earning over $300,000/year — from $12,000 to $1,000 (single filers) and $16,000 to $2,000 (joint filers). Raises approximately $95 million per year to fund free school meals for all K–12 students, increase school food worker wages, and support local food purchasing.",
+          fiscal: "+$95M/year from households earning $300K+. Average impact: +$486/year for affected households (~5.5% of Colorado filers).",
+          vote: "YES — fund free meals for all students · NO — keep existing deduction limits",
+          passed: true,
+        },
+      ],
+      stateData: [
+        { abbr: 'CA', name: 'California', year: 2022, status: 'active',
+          stats: ['Chronic absenteeism: 30% → 20.4% over two years (CDE, 2024)', 'Universal meals cited among contributing factors', 'Longitudinal academic evaluation ongoing (UC ANR / NPI)'] },
+        { abbr: 'ME', name: 'Maine', year: 2022, status: 'active',
+          stats: ['45% more meals served in first year', 'Attendance and test score outcome data still being collected'] },
+        { abbr: 'VT', name: 'Vermont', year: 2022, status: 'active',
+          stats: ['Food insufficiency down 1.5 pp statewide (USDA ERS, 2024)', '83% of school staff reported students more ready to learn (AOE survey)'] },
+        { abbr: 'MA', name: 'Massachusetts', year: 2022, status: 'active',
+          stats: ['Chronic absenteeism fell 4.9 pp in year 2 — largest single-year decline in state history (DESE)', 'Science scores improved (grades 5 & 10); MCAS trends otherwise mixed'] },
+        { abbr: 'MN', name: 'Minnesota', year: 2023, status: 'active',
+          stats: ['Chronic absenteeism down 1 pp in first full year (MDE, 2024)', 'Breakfast +40%, lunch +15%; academic outcome data still being collected'] },
+        { abbr: 'NV', name: 'Nevada', year: 2022, status: 'ended',
+          stats: ['206K students/month served while active', 'Program ended by governor veto in 2024'] },
+      ],
+    },
+  },
 };
 
 function updateBallot(area) {
@@ -1919,6 +1985,47 @@ function renderBallotYear(area, year) {
     return;
   }
 
+  if (data._special === 'co-meals-2025') {
+    const coMealsBallotItemHtml = (item) => {
+      const passedBadge = item.passed ? '<span class="ballot-prop-badge passed">\u2713 Passed</span>' : '';
+      return `
+        <div class="ballot-item">
+          <span class="ballot-prop-badge ${item.type}">${item.id}</span>${passedBadge}
+          <div class="ballot-item-id" style="margin-top:0.35rem;">${item.title}</div>
+          <div class="ballot-item-body">${item.summary}</div>
+          <div class="ballot-item-fiscal">Fiscal impact: ${item.fiscal}</div>
+          <div class="ballot-item-vote">${item.vote}</div>
+        </div>
+      `;
+    };
+    const coMealsStateCardHtml = (s) => {
+      const statsHtml = s.stats.map(st => '<li>' + st + '</li>').join('');
+      const badge = s.status === 'active' ? 'Active' : 'Ended 2024';
+      return `
+        <div class="meals-state-card">
+          <div class="meals-state-name">${s.name} <span class="meals-state-year">(${s.year})</span></div>
+          <span class="meals-state-badge ${s.status}">${badge}</span>
+          <ul class="meals-state-stats">${statsHtml}</ul>
+        </div>
+      `;
+    };
+    container.innerHTML = `
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
+      <div class="ballot-grid">${data.items.map(coMealsBallotItemHtml).join('')}</div>
+      <h3 class="ballot-section-title">Student Outcomes in Peer States</h3>
+      <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:0.5rem 0 0.75rem;">Five states enacted statewide universal free school meals between 2022 and 2023. Peer-reviewed research on earlier programs finds math scores improve 0.06&#8211;0.10 standard deviations and attendance rises by up to 1.8 school days per year when meals are universally free. State-specific outcome data from these newer programs is still emerging &#8212; chronic absenteeism trends are the strongest signal so far.</p>
+      <div class="meals-legend">
+        <div class="meals-legend-item"><span class="meals-dot active"></span>&#8202;Active Program</div>
+        <div class="meals-legend-item"><span class="meals-dot ended"></span>&#8202;Program Ended</div>
+        <div class="meals-legend-item"><span class="meals-dot co"></span>&#8202;Colorado (program active since 2023)</div>
+      </div>
+      <div id="co-meals-map" style="height:280px;margin:0.5rem 0 1rem;border-radius:8px;overflow:hidden;"></div>
+      <div class="meals-states-grid">${data.stateData.map(coMealsStateCardHtml).join('')}</div>
+    `;
+    loadCoBallotMap(data.stateData);
+    return;
+  }
+
   const itemsHtml = data.items.map(ballotItemHtml).join('');
   container.innerHTML = `
     <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
@@ -1962,6 +2069,83 @@ function reloadUsBallotCharts() {
   if (state.selectedArea !== 'United States') return;
   const card = document.getElementById('card-us-income-taxes');
   if (card && card.querySelector('.plot-div')) loadUsBallotCharts();
+}
+
+// ── CO Meals ballot map ──────────────────────────────────────────
+function loadCoBallotMap(stateData) {
+  const mapDiv = document.getElementById('co-meals-map');
+  if (!mapDiv) return;
+  const isDark = state.darkMode;
+  const paperBg = isDark ? '#253040' : '#f8f6f2';
+  const borderColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.85)';
+  const bgColor = isDark ? '#384558' : '#d8d6d2';
+
+  const allAbbrs = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+    'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY',
+    'NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+  const activeAbbrs = stateData.filter(s => s.status === 'active').map(s => s.abbr);
+  const endedAbbrs  = stateData.filter(s => s.status === 'ended').map(s => s.abbr);
+  const highlighted = [...activeAbbrs, ...endedAbbrs, 'CO'];
+  const bgAbbrs     = allAbbrs.filter(a => !highlighted.includes(a));
+
+  const makeTrace = (abbrs, color, texts) => ({
+    type: 'choropleth',
+    locationmode: 'USA-states',
+    locations: abbrs,
+    z: abbrs.map(() => 1),
+    zmin: 0, zmax: 2,
+    colorscale: [[0, color], [1, color]],
+    showscale: false,
+    text: texts,
+    hovertemplate: '%{text}<extra></extra>',
+    marker: { line: { color: borderColor, width: 0.5 } },
+  });
+
+  const activeTexts = activeAbbrs.map(a => {
+    const s = stateData.find(d => d.abbr === a);
+    return s ? s.name + ' (' + s.year + ')' : a;
+  });
+  const endedTexts = endedAbbrs.map(a => {
+    const s = stateData.find(d => d.abbr === a);
+    return s ? s.name + ' — Program Ended 2024' : a;
+  });
+
+  const bgTrace = makeTrace(bgAbbrs, bgColor, bgAbbrs);
+  bgTrace.hoverinfo = 'none';
+
+  Plotly.newPlot(mapDiv, [
+    bgTrace,
+    makeTrace(activeAbbrs, '#2E7D52', activeTexts),
+    makeTrace(endedAbbrs,  '#E07030', endedTexts),
+    makeTrace(['CO'], '#4a90e2', ['Colorado (program active since 2023)']),
+  ], {
+    geo: {
+      scope: 'usa',
+      showlakes: false,
+      bgcolor: paperBg,
+      lakecolor: paperBg,
+      landcolor: bgColor,
+      subunitcolor: borderColor,
+      showcoastlines: false,
+      showframe: false,
+    },
+    paper_bgcolor: paperBg,
+    plot_bgcolor: paperBg,
+    margin: { t: 0, b: 0, l: 0, r: 0 },
+    dragmode: false,
+    showlegend: false,
+  }, { displayModeBar: false, responsive: true });
+}
+
+function reloadCoBallotMap() {
+  if (state.selectedArea !== 'CO') return;
+  const mapDiv = document.getElementById('co-meals-map');
+  if (!mapDiv || !mapDiv.data) return;
+  const coData = BALLOT_DATA.CO;
+  if (!coData) return;
+  const yearSel = document.getElementById('ballot-year-select');
+  const year = yearSel ? Number(yearSel.value) : 2025;
+  if (coData[year] && coData[year].stateData) loadCoBallotMap(coData[year].stateData);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
