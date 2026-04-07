@@ -363,9 +363,8 @@
     #sources-modal p { font-size: 0.95rem; color: var(--text-body); margin-bottom: 0.5rem; }
     #sources-modal a { color: var(--accent); text-decoration: none; }
     #sources-modal a:hover { text-decoration: underline; }
-    #sources-close {
-      display: block;
-      margin-left: auto;
+    #sources-modal-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; gap: 0.75rem; }
+    #sources-close, #sources-footer-btn {
       background: var(--accent);
       border: none;
       border-radius: 8px;
@@ -376,7 +375,7 @@
       cursor: pointer;
       transition: opacity 0.15s;
     }
-    #sources-close:hover { opacity: 0.85; }
+    #sources-close:hover, #sources-footer-btn:hover { opacity: 0.85; }
 
     /* ── Page home top offset for fixed nav ─────────────────────────── */
     #page-home { padding-top: var(--nav-h); }
@@ -1008,7 +1007,10 @@
 <div id="sources-overlay" onclick="if(event.target===this)closeSourcesModal()">
   <div id="sources-modal">
     <div id="sources-modal-body"></div>
-    <button id="sources-close" onclick="closeSourcesModal()">Got it</button>
+    <div id="sources-modal-footer">
+      <button id="sources-footer-btn" style="display:none;"></button>
+      <button id="sources-close" onclick="closeSourcesModal()">Got it</button>
+    </div>
   </div>
 </div>
 
@@ -1545,6 +1547,7 @@ async function openCardSources(cardId) {
     ? data.popup[funcName]
     : '<p style="color:var(--text-body)">Under construction...</p>';
   document.getElementById('sources-modal-body').innerHTML = html;
+  document.getElementById('sources-footer-btn').style.display = 'none';
   document.getElementById('sources-overlay').classList.add('open');
 }
 
@@ -1890,11 +1893,11 @@ const BALLOT_DATA = {
       stateData: [
         { abbr: 'CO', name: 'Colorado', year: 2023, status: 'co',
           highlights: [
-            'Chronic absenteeism: <strong>31.1% \u2192 27.7%</strong> in first year',
+            '<strong>Chronic absenteeism: 31.1% \u2192 27.7%</strong> in first year',
             'Meal participation <strong>exceeded projections</strong>',
           ],
           stats: [
-            'Chronic absenteeism fell <strong>3.4 pp</strong> (31.1% \u2192 27.7%) in first year of program (CDE, 2024)',
+            '<strong>Chronic absenteeism</strong> fell <strong>3.4 percentage points</strong> (31.1% \u2192 27.7%) in first year of program (CDE, 2024)',
             '<strong>70%</strong> of school districts improved attendance rates',
             'Meal participation exceeded projections \u2014 higher uptake than estimated drove the 2025 funding ballot measures',
             'Academic outcome isolation not yet possible; CDE evaluation ongoing',
@@ -1908,10 +1911,10 @@ const BALLOT_DATA = {
           ] },
         { abbr: 'CA', name: 'California', year: 2022, status: 'active',
           highlights: [
-            'Chronic absenteeism: <strong>30% \u2192 20.4%</strong> over two years',
+            '<strong>Chronic absenteeism: 30% \u2192 20.4%</strong> over two years',
           ],
           stats: [
-            'Chronic absenteeism fell <strong>9.6 pp</strong> over two years (30% \u2192 24.9% \u2192 20.4%) (CDE, 2024)',
+            '<strong>Chronic absenteeism</strong> fell <strong>9.6 percentage points</strong> over two years (30% \u2192 24.9% \u2192 20.4%) (CDE, 2024)',
             'Universal meals cited alongside community schools, expanded learning, and mental health supports \u2014 meal effect not isolated',
             'Multi-year longitudinal academic evaluation ongoing (UC ANR / NPI); no test score data published yet',
           ],
@@ -1937,10 +1940,10 @@ const BALLOT_DATA = {
         { abbr: 'VT', name: 'Vermont', year: 2022, status: 'active',
           highlights: [
             '<strong>83%</strong> of school staff: students more ready to learn',
-            'Food insufficiency down <strong>1.5 pp</strong> statewide',
+            'Food insufficiency down <strong>1.5 percentage points</strong> statewide',
           ],
           stats: [
-            'Food insufficiency down <strong>1.5 pp</strong> statewide (USDA ERS / AJPM, 2024\u201325)',
+            'Food insufficiency down <strong>1.5 percentage points</strong> statewide (USDA ERS / AJPM, 2024\u201325)',
             '<strong>83%</strong> of school staff reported students more ready to learn (Vermont AOE survey, CEP era)',
             'No published before/after attendance or test score data specific to the 2022 universal meals law',
           ],
@@ -1951,13 +1954,13 @@ const BALLOT_DATA = {
           ] },
         { abbr: 'MA', name: 'Massachusetts', year: 2022, status: 'active',
           highlights: [
-            'Chronic absenteeism fell <strong>4.9 pp</strong> in year 2',
+            '<strong>Chronic absenteeism</strong> fell <strong>4.9 percentage points</strong> in year 2',
             'Largest single-year decline in <strong>state history</strong>',
           ],
           stats: [
-            'Chronic absenteeism fell <strong>4.9 pp</strong> in year 2 (24.5% \u2192 19.6%) \u2014 largest single-year decline in state history (DESE)',
+            '<strong>Chronic absenteeism</strong> fell <strong>4.9 percentage points</strong> (24.5% \u2192 19.6%) \u2014 largest single-year decline in state history (DESE)',
             'Universal meals cited alongside attendance campaigns, mental health supports, and community schools; meal effect not isolated',
-            'MCAS science scores improved in grades 5 &amp; 10; ELA declined 2\u20136 pp in grades 3\u20135 (trends not attributed to meals)',
+            'MCAS science scores improved in grades 5 &amp; 10; ELA declined 2\u20136 percentage points in grades 3\u20135 (trends not attributed to meals)',
           ],
           chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Year 1', value: 24.5, color: 'before' }, { label: 'Year 2', value: 19.6, color: 'after' }] },
           sources: [
@@ -1967,11 +1970,11 @@ const BALLOT_DATA = {
           ] },
         { abbr: 'MN', name: 'Minnesota', year: 2023, status: 'active',
           highlights: [
-            'Chronic absenteeism down <strong>1 pp</strong> in first year',
+            '<strong>Chronic absenteeism</strong> down <strong>1 percentage point</strong> in first year',
             'Breakfast <strong>+40%</strong>, lunch <strong>+15%</strong>',
           ],
           stats: [
-            'Chronic absenteeism down <strong>1 pp</strong> (25.5% \u2192 24.5%) in first full year (MDE, 2024)',
+            '<strong>Chronic absenteeism</strong> down <strong>1 percentage point</strong> (25.5% \u2192 24.5%) in first full year (MDE, 2024)',
             'Breakfast participation <strong>+40%</strong>, lunch <strong>+15%</strong>',
             'Test scores flat statewide (43% math, 48% reading proficiency); academic effects not yet isolated',
             'Concurrent school suspension policy changes complicate attendance attribution',
@@ -2304,16 +2307,20 @@ function openBallotStateMapPopup(abbr) {
   const chartHtml = s.chartData
     ? `<div id="bsc-${s.abbr}" style="height:160px;margin:0.5rem -0.25rem 0.25rem;"></div>`
     : '';
-  const srcBtn = s.sources && s.sources.length
-    ? `<div style="margin-top:0.75rem;display:flex;justify-content:flex-end;"><button class="explain-btn" onclick="openBallotStateSources('${abbr}',${year})">Sources</button></div>`
-    : '';
   document.getElementById('sources-modal-body').innerHTML = `
     <p><strong>${s.name}</strong> <span style="font-size:0.8rem;color:var(--muted)">(program launched ${s.year})</span></p>
     <span class="meals-state-badge ${s.status}" style="display:inline-block;margin-bottom:0.25rem;">${badge}</span>
     ${chartHtml}
     <ul class="meals-state-stats" style="margin-top:0.4rem;">${statsHtml}</ul>
-    ${srcBtn}
   `;
+  const footerBtn = document.getElementById('sources-footer-btn');
+  if (s.sources && s.sources.length) {
+    footerBtn.textContent = 'Sources';
+    footerBtn.onclick = function() { openBallotStateSources(abbr, year); };
+    footerBtn.style.display = '';
+  } else {
+    footerBtn.style.display = 'none';
+  }
   document.getElementById('sources-overlay').classList.add('open');
   if (s.chartData) renderStateBallotCharts([s]);
 }
@@ -2330,6 +2337,7 @@ function openBallotStateSources(abbr, year) {
   ).join('');
   document.getElementById('sources-modal-body').innerHTML =
     `<p><strong>Sources \u2014 ${s.name}</strong></p><ul>${items}</ul>`;
+  document.getElementById('sources-footer-btn').style.display = 'none';
   document.getElementById('sources-overlay').classList.add('open');
 }
 
