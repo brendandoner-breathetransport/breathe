@@ -1278,6 +1278,7 @@ _FUNC_DISPLAY: dict[str, str] = {
     "make_electricity_cost": "Electricity Cost",
     "make_state_home_affordability": "State Home Affordability",
     "Additional": "Additional Sources",
+    "co_ballot_2025": "Colorado 2025 — Healthy School Meals for All",
 }
 
 
@@ -1337,6 +1338,9 @@ _FUNC_CHARTS: dict[str, list[str]] = {
     ],
     "make_state_home_affordability": [
         "Percent of Income to Purchase a Home (by State)",
+    ],
+    "co_ballot_2025": [
+        "Colorado 2025 Ballot — Proposition LL & MM",
     ],
 }
 

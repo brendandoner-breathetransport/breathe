@@ -64,3 +64,23 @@
 ## make_electricity_cost
 ### Sources
 * **Cost of Energy**: [Lazard’s Levelized Cost of Energy Analysis](https://www.lazard.com/media/xemfey0k/lazards-lcoeplus-june-2024-_vf.pdf).
+
+# Ballot
+## co_ballot_2025
+### Notes
+Colorado 2025 statewide ballot measures — Healthy School Meals for All (Proposition LL and Proposition MM). Analysis covers both the official ballot measure details from the Colorado Blue Book and peer-reviewed research on student outcomes from universal free school meal programs in peer states.
+### Sources
+* **Colorado 2025 Blue Book**: [Colorado Secretary of State, 2025 State Ballot Information Booklet](https://leg.colorado.gov/bluebook) — Official measure text, fiscal notes, and vote language for Prop LL and Prop MM
+* **Proposition LL Fiscal Note**: Colorado Legislative Council Staff, *Fiscal Note: Proposition LL* (2025) — TABOR retention of $12.4M already collected; no new taxes
+* **Proposition MM Fiscal Note**: Colorado Legislative Council Staff, *Fiscal Note: Proposition MM* (2025) — Income tax deduction limit change raising ~$95M/year for school meals and SNAP
+* **Attendance — NYC Kindergarteners**: [Schwartz & Trajkovski, *Exposure to Free School Meals in Kindergarten Has Lasting Positive Effects on Students’ Attendance*, Syracuse University Lerner Center (2023)](https://surface.syr.edu/lerner/208/) — Chronic absenteeism fell 5.4 pp; 1.8 additional school days/year
+* **Systematic Review — Attendance & Outcomes**: [Vercammen et al., *Universal Free School Meals and School and Student Outcomes: A Systematic Review*, JAMA Network Open (2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11316229/) — Attendance "did not change or modestly improved" across 6 studies; no test score studies found
+* **Test Scores — CEP South Carolina**: [Gordanier et al., *Free Lunch for All! The Effect of the Community Eligibility Provision on Academic Outcomes*, Economics of Education Review (2020)](https://www.sciencedirect.com/science/article/abs/pii/S0272775719307605) — Math scores +0.06 SD in elementary schools
+* **Test Scores — CEP National**: [Ruffini, *Universal Access to Free School Meals and Student Achievement: Evidence from the CEP*, Journal of Human Resources, Vol. 57(3) (2022)](https://jhr.uwpress.org/content/57/3/776) — Effects concentrated in districts with low baseline free-meal eligibility
+* **Test Scores — Classroom Breakfast**: Imberman & Kugler, *The Effect of Providing Breakfast on Student Performance*, Journal of Policy Analysis and Management (2014) — Math and reading +0.10 SD vs. cafeteria breakfast
+* **Massachusetts Attendance**: [Healey-Driscoll Administration, *Massachusetts Schools with Biggest Drop in Chronic Absenteeism* (2024)](https://www.mass.gov/news/healey-driscoll-administration-celebrates-massachusetts-schools-with-biggest-drop-in-chronic-absenteeism) — Chronic absenteeism fell 4.9 pp in year 2; largest single-year decline in state history
+* **Minnesota First Year**: [Minnesota Department of Education, *Free School Meals: First Year Preliminary Summary* (2024)](https://education.mn.gov/mdeprod/idcplg?IdcService=GET_FILE&dDocName=PROD085180&RevisionSelectionMethod=latestReleased&Rendition=primary) — Chronic absenteeism down 1 pp; breakfast +40%, lunch +15%
+* **California Trends**: [PACE, *Unpacking California’s Chronic Absence Crisis Through 2023-24*](https://edpolicyinca.org/publications/unpacking-californias-chronic-absence-crisis-through-2023-24) — Chronic absenteeism fell from 30% (2022) to 20.4% (2024); meals cited among multiple contributing factors
+* **California Academic Evaluation**: [UC ANR Nutrition Policy Institute, *Evaluation of Universal School Meals in California* (2024–25)](https://ucanr.edu/program/nutrition-policy-institute/article/evaluation-universal-school-meals-california) — Multi-year longitudinal evaluation ongoing; no objective test score data published yet
+* **Food Insecurity & State Meal Policies**: [AJPM (2025), *Statewide Universal School Meal Policies and Food Insecurity in Households With Children*](https://www.ajpmonline.org/article/S0749-3797(25)00433-7/fulltext) — States with universal meal policies had significantly lower household food insecurity rates
+* **Universal Meals Systematic Review**: [*Universal School Meals and Associations with Student Participation, Attendance, Academic Performance, Diet Quality, Food Security, and BMI: A Systematic Review*, Nutrients (2021)](https://pmc.ncbi.nlm.nih.gov/articles/PMC8000006/) — 12 studies; positive attendance associations in Wisconsin and NYC; mixed results overall

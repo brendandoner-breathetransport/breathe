@@ -1521,6 +1521,7 @@ const CARD_TO_FUNC = {
   'card-jail-black':  'make_justice_jail',
   'card-electricity': 'make_electricity_cost',
   'card-state-affordability': 'make_state_home_affordability',
+  'card-co-ballot-2025':      'co_ballot_2025',
 };
 
 let _sourcesData = null;
@@ -2012,6 +2013,9 @@ function renderBallotYear(area, year) {
     container.innerHTML = `
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
       <div class="ballot-grid">${data.items.map(coMealsBallotItemHtml).join('')}</div>
+      <div style="margin:0.75rem 0 0.25rem;">
+        <button class="explain-btn" onclick="openCardSources('card-co-ballot-2025')">Sources</button>
+      </div>
       <h3 class="ballot-section-title">Student Outcomes in Peer States</h3>
       <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:0.5rem 0 0.75rem;">Five states enacted statewide universal free school meals between 2022 and 2023. Peer-reviewed research on earlier programs finds math scores improve 0.06&#8211;0.10 standard deviations and attendance rises by up to 1.8 school days per year when meals are universally free. State-specific outcome data from these newer programs is still emerging &#8212; chronic absenteeism trends are the strongest signal so far.</p>
       <div class="meals-legend">
