@@ -1697,6 +1697,7 @@ document.getElementById("darkModeToggle").addEventListener("change", e => {
   reloadMtBallotCharts();
   reloadUsBallotCharts();
   reloadCoBallotMap();
+  reloadStateBallotCharts();
   reloadAreaMap();
 });
 
@@ -1895,6 +1896,7 @@ const BALLOT_DATA = {
             'Meal participation exceeded projections \u2014 more students enrolled than estimated',
             'Academic outcome isolation not yet possible; evaluation ongoing',
           ],
+          chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Before', value: 31.1, color: 'before' }, { label: 'After', value: 27.7, color: 'after' }] },
           sources: [
             { label: 'CDE News Release: "Colorado student attendance data from 2023\u201324 shows continued improvement" (August 2024)', url: 'https://cde.state.co.us/communications/newsrelease082224-attendance' },
             { label: 'CDE, Healthy School Meals for All Program', url: 'https://ed.cde.state.co.us/nutrition/nutrition-programs/healthy-school-meals-for-all-program' },
@@ -1903,6 +1905,7 @@ const BALLOT_DATA = {
           ] },
         { abbr: 'CA', name: 'California', year: 2022, status: 'active',
           stats: ['Chronic absenteeism: 30% → 20.4% over two years (CDE, 2024)', 'Universal meals cited among contributing factors', 'Longitudinal academic evaluation ongoing (UC ANR / NPI)'],
+          chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Before', value: 30.0, color: 'before' }, { label: 'Year 1', value: 24.9, color: 'mid' }, { label: 'Year 2', value: 20.4, color: 'after' }] },
           sources: [
             { label: 'CDE School Dashboard — Chronic Absenteeism Rates (2022–24)', url: 'https://www.cde.ca.gov/ta/ac/cm/dashboardchronic.asp' },
             { label: 'PACE, "Unpacking California\'s Chronic Absence Crisis Through 2023-24" — universal meals cited alongside other concurrent interventions', url: 'https://edpolicyinca.org/publications/unpacking-californias-chronic-absence-crisis-through-2023-24' },
@@ -1923,6 +1926,7 @@ const BALLOT_DATA = {
           ] },
         { abbr: 'MA', name: 'Massachusetts', year: 2022, status: 'active',
           stats: ['Chronic absenteeism fell 4.9 pp in year 2 — largest single-year decline in state history (DESE)', 'Science scores improved (grades 5 & 10); MCAS trends otherwise mixed'],
+          chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Year 1', value: 24.5, color: 'before' }, { label: 'Year 2', value: 19.6, color: 'after' }] },
           sources: [
             { label: 'Healey-Driscoll Administration, "Massachusetts Schools with Biggest Drop in Chronic Absenteeism" (2024) — 4.9 pp decline; meals cited alongside attendance campaigns and mental health supports', url: 'https://www.mass.gov/news/healey-driscoll-administration-celebrates-massachusetts-schools-with-biggest-drop-in-chronic-absenteeism' },
             { label: 'FRAC interview with MA Secretary of Education Patrick Tutwiler (2024)', url: 'https://frac.org/blog/massachusetts-secretary-education-interview' },
@@ -1930,6 +1934,7 @@ const BALLOT_DATA = {
           ] },
         { abbr: 'MN', name: 'Minnesota', year: 2023, status: 'active',
           stats: ['Chronic absenteeism down 1 pp in first full year (MDE, 2024)', 'Breakfast +40%, lunch +15%; academic outcome data still being collected'],
+          chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Before', value: 25.5, color: 'before' }, { label: 'After', value: 24.5, color: 'after' }] },
           sources: [
             { label: 'MDE, "Free School Meals: First Year Preliminary Summary" (2024) — chronic absenteeism, participation data', url: 'https://education.mn.gov/mdeprod/idcplg?IdcService=GET_FILE&dDocName=PROD085180&RevisionSelectionMethod=latestReleased&Rendition=primary' },
             { label: 'Minnesota Reformer / Star Tribune (2025) — test scores flat statewide; academic outcomes not yet linked to meal program' },
@@ -2044,6 +2049,9 @@ function renderBallotYear(area, year) {
     const coMealsStateCardHtml = (s) => {
       const statsHtml = s.stats.map(st => '<li>' + st + '</li>').join('');
       const badge = s.status === 'active' ? 'Active' : s.status === 'ended' ? 'Ended 2024' : 'Active since 2023';
+      const chartDiv = s.chartData
+        ? `<div id="bsc-${s.abbr}" style="height:155px;margin:0.4rem -0.25rem 0;"></div>`
+        : '';
       const srcBtn = s.sources && s.sources.length
         ? `<div style="margin-top:auto;padding-top:0.6rem;display:flex;justify-content:flex-end;"><button class="explain-btn" onclick="openBallotStateSources('${s.abbr}',${year})">Sources</button></div>`
         : '';
@@ -2051,6 +2059,7 @@ function renderBallotYear(area, year) {
         <div class="meals-state-card">
           <div class="meals-state-name">${s.name} <span class="meals-state-year">(${s.year})</span></div>
           <span class="meals-state-badge ${s.status}">${badge}</span>
+          ${chartDiv}
           <ul class="meals-state-stats">${statsHtml}</ul>
           ${srcBtn}
         </div>
@@ -2070,6 +2079,7 @@ function renderBallotYear(area, year) {
       <div class="meals-states-grid">${data.stateData.map(coMealsStateCardHtml).join('')}</div>
     `;
     loadCoBallotMap(data.stateData);
+    renderStateBallotCharts(data.stateData);
     return;
   }
 
@@ -2188,6 +2198,52 @@ function loadCoBallotMap(stateData) {
     const abbr = eventData.points[0].location;
     openBallotStateMapPopup(abbr);
   });
+}
+
+function renderStateBallotCharts(stateData) {
+  const isDark = state.darkMode;
+  const textColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
+  const colors = {
+    before: isDark ? '#64748b' : '#94a3b8',
+    mid:    '#60a5fa',
+    after:  '#2E7D52',
+  };
+  stateData.forEach(s => {
+    if (!s.chartData) return;
+    const div = document.getElementById('bsc-' + s.abbr);
+    if (!div) return;
+    const cd = s.chartData;
+    const xs = cd.bars.map(b => b.label);
+    const ys = cd.bars.map(b => b.value);
+    const cs = cd.bars.map(b => colors[b.color] || colors.after);
+    Plotly.newPlot(div, [{
+      type: 'bar',
+      x: xs, y: ys,
+      text: ys.map(v => v + '%'),
+      textposition: 'outside',
+      textfont: { size: 12, color: textColor },
+      marker: { color: cs, line: { width: 0 } },
+      hoverinfo: 'none',
+    }], {
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor:  'rgba(0,0,0,0)',
+      margin: { t: 34, b: 28, l: 4, r: 4 },
+      title: { text: cd.title, font: { size: 10.5, color: textColor }, x: 0, xref: 'paper' },
+      xaxis: { tickfont: { size: 10, color: textColor }, showgrid: false, zeroline: false, showline: false },
+      yaxis: { range: [0, Math.max(...ys) * 1.38], showgrid: false, zeroline: false, showticklabels: false, showline: false },
+      showlegend: false,
+    }, { displayModeBar: false, responsive: true, staticPlot: true });
+  });
+}
+
+function reloadStateBallotCharts() {
+  if (state.selectedArea !== 'CO') return;
+  const yearSel = document.getElementById('ballot-year-select');
+  if (!yearSel) return;
+  const coData = BALLOT_DATA.CO;
+  const year = Number(yearSel.value);
+  if (!coData || !coData[year] || !coData[year].stateData) return;
+  renderStateBallotCharts(coData[year].stateData);
 }
 
 function openBallotStateMapPopup(abbr) {
