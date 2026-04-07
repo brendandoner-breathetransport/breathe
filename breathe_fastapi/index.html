@@ -1697,7 +1697,6 @@ document.getElementById("darkModeToggle").addEventListener("change", e => {
   reloadMtBallotCharts();
   reloadUsBallotCharts();
   reloadCoBallotMap();
-  reloadStateBallotCharts();
   reloadAreaMap();
 });
 
@@ -1890,11 +1889,15 @@ const BALLOT_DATA = {
       ],
       stateData: [
         { abbr: 'CO', name: 'Colorado', year: 2023, status: 'co',
+          highlights: [
+            'Chronic absenteeism: <strong>31.1% \u2192 27.7%</strong> in first year',
+            'Meal participation <strong>exceeded projections</strong>',
+          ],
           stats: [
-            'Chronic absenteeism fell 3.4 pp (31.1% \u2192 27.7%) in first year of program (CDE, 2024)',
-            '70% of school districts improved attendance rates',
-            'Meal participation exceeded projections \u2014 more students enrolled than estimated',
-            'Academic outcome isolation not yet possible; evaluation ongoing',
+            'Chronic absenteeism fell <strong>3.4 pp</strong> (31.1% \u2192 27.7%) in first year of program (CDE, 2024)',
+            '<strong>70%</strong> of school districts improved attendance rates',
+            'Meal participation exceeded projections \u2014 higher uptake than estimated drove the 2025 funding ballot measures',
+            'Academic outcome isolation not yet possible; CDE evaluation ongoing',
           ],
           chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Before', value: 31.1, color: 'before' }, { label: 'After', value: 27.7, color: 'after' }] },
           sources: [
@@ -1904,47 +1907,94 @@ const BALLOT_DATA = {
             { label: 'Chalkbeat Colorado, "Proposition LL voter guide" (October 2025)', url: 'https://www.chalkbeat.org/colorado/2025/10/10/proposition-ll-healthy-school-meals-for-all-voter-guide/' },
           ] },
         { abbr: 'CA', name: 'California', year: 2022, status: 'active',
-          stats: ['Chronic absenteeism: 30% → 20.4% over two years (CDE, 2024)', 'Universal meals cited among contributing factors', 'Longitudinal academic evaluation ongoing (UC ANR / NPI)'],
+          highlights: [
+            'Chronic absenteeism: <strong>30% \u2192 20.4%</strong> over two years',
+          ],
+          stats: [
+            'Chronic absenteeism fell <strong>9.6 pp</strong> over two years (30% \u2192 24.9% \u2192 20.4%) (CDE, 2024)',
+            'Universal meals cited alongside community schools, expanded learning, and mental health supports \u2014 meal effect not isolated',
+            'Multi-year longitudinal academic evaluation ongoing (UC ANR / NPI); no test score data published yet',
+          ],
           chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Before', value: 30.0, color: 'before' }, { label: 'Year 1', value: 24.9, color: 'mid' }, { label: 'Year 2', value: 20.4, color: 'after' }] },
           sources: [
-            { label: 'CDE School Dashboard — Chronic Absenteeism Rates (2022–24)', url: 'https://www.cde.ca.gov/ta/ac/cm/dashboardchronic.asp' },
-            { label: 'PACE, "Unpacking California\'s Chronic Absence Crisis Through 2023-24" — universal meals cited alongside other concurrent interventions', url: 'https://edpolicyinca.org/publications/unpacking-californias-chronic-absence-crisis-through-2023-24' },
-            { label: 'UC ANR Nutrition Policy Institute, Evaluation of Universal School Meals in California (2024–25) — multi-year longitudinal study; academic outcome findings pending', url: 'https://ucanr.edu/program/nutrition-policy-institute/article/evaluation-universal-school-meals-california' },
+            { label: 'CDE School Dashboard — Chronic Absenteeism Rates (2022\u201324)', url: 'https://www.cde.ca.gov/ta/ac/cm/dashboardchronic.asp' },
+            { label: 'PACE, "Unpacking California\'s Chronic Absence Crisis Through 2023-24"', url: 'https://edpolicyinca.org/publications/unpacking-californias-chronic-absence-crisis-through-2023-24' },
+            { label: 'UC ANR Nutrition Policy Institute, Evaluation of Universal School Meals in California (2024\u201325)', url: 'https://ucanr.edu/program/nutrition-policy-institute/article/evaluation-universal-school-meals-california' },
           ] },
         { abbr: 'ME', name: 'Maine', year: 2022, status: 'active',
-          stats: ['45% more meals served in first year', 'Attendance and test score outcome data still being collected'],
+          highlights: [
+            '<strong>45%</strong> more meals served in first year',
+          ],
+          stats: [
+            '<strong>45%</strong> more meals served in first year (Maine DOE, 2022\u201323)',
+            'No published before/after data on attendance or test scores yet',
+            'Implementation study ongoing; outcome data expected in coming years',
+          ],
           sources: [
             { label: 'FRAC, "The State of Healthy School Meals for All" (2024) — participation data across CA, ME, MA, NV, VT', url: 'https://frac.org/hsmfa-report-2024' },
-            { label: 'Maine Dept. of Education program data (2022–23) — 45% increase in meals served; no published before/after attendance or test score data' },
+            { label: 'Maine Dept. of Education program data (2022\u201323) \u2014 45% increase in meals served; no published outcome data' },
           ] },
         { abbr: 'VT', name: 'Vermont', year: 2022, status: 'active',
-          stats: ['Food insufficiency down 1.5 pp statewide (USDA ERS, 2024)', '83% of school staff reported students more ready to learn (AOE survey)'],
+          highlights: [
+            '<strong>83%</strong> of school staff: students more ready to learn',
+            'Food insufficiency down <strong>1.5 pp</strong> statewide',
+          ],
+          stats: [
+            'Food insufficiency down <strong>1.5 pp</strong> statewide (USDA ERS / AJPM, 2024\u201325)',
+            '<strong>83%</strong> of school staff reported students more ready to learn (Vermont AOE survey, CEP era)',
+            'No published before/after attendance or test score data specific to the 2022 universal meals law',
+          ],
           sources: [
-            { label: 'AJPM (2025), "Statewide Universal School Meal Policies and Food Insecurity in Households With Children" — food insufficiency decline', url: 'https://www.ajpmonline.org/article/S0749-3797(25)00433-7/fulltext' },
+            { label: 'AJPM (2025), "Statewide Universal School Meal Policies and Food Insecurity in Households With Children"', url: 'https://www.ajpmonline.org/article/S0749-3797(25)00433-7/fulltext' },
             { label: 'Vermont Legislature, Summary of Key Findings: Universal School Meals Research Studies (January 2025)', url: 'https://legislature.vermont.gov/Documents/2026/Workgroups/House%20Agriculture/Food%20Resiliency/Universal%20School%20Meals/W~Anore%20Horton~Universal%20School%20Meals%20Research%20Updated~1-30-2025.pdf' },
-            { label: '83% staff statistic: Nutrients Systematic Review (2021) — survey of Vermont CEP-era school staff', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8000006/' },
+            { label: '83% staff statistic: Nutrients Systematic Review (2021) \u2014 survey of Vermont CEP-era school staff', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8000006/' },
           ] },
         { abbr: 'MA', name: 'Massachusetts', year: 2022, status: 'active',
-          stats: ['Chronic absenteeism fell 4.9 pp in year 2 — largest single-year decline in state history (DESE)', 'Science scores improved (grades 5 & 10); MCAS trends otherwise mixed'],
+          highlights: [
+            'Chronic absenteeism fell <strong>4.9 pp</strong> in year 2',
+            'Largest single-year decline in <strong>state history</strong>',
+          ],
+          stats: [
+            'Chronic absenteeism fell <strong>4.9 pp</strong> in year 2 (24.5% \u2192 19.6%) \u2014 largest single-year decline in state history (DESE)',
+            'Universal meals cited alongside attendance campaigns, mental health supports, and community schools; meal effect not isolated',
+            'MCAS science scores improved in grades 5 &amp; 10; ELA declined 2\u20136 pp in grades 3\u20135 (trends not attributed to meals)',
+          ],
           chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Year 1', value: 24.5, color: 'before' }, { label: 'Year 2', value: 19.6, color: 'after' }] },
           sources: [
-            { label: 'Healey-Driscoll Administration, "Massachusetts Schools with Biggest Drop in Chronic Absenteeism" (2024) — 4.9 pp decline; meals cited alongside attendance campaigns and mental health supports', url: 'https://www.mass.gov/news/healey-driscoll-administration-celebrates-massachusetts-schools-with-biggest-drop-in-chronic-absenteeism' },
+            { label: 'Healey-Driscoll Administration, "Massachusetts Schools with Biggest Drop in Chronic Absenteeism" (2024)', url: 'https://www.mass.gov/news/healey-driscoll-administration-celebrates-massachusetts-schools-with-biggest-drop-in-chronic-absenteeism' },
             { label: 'FRAC interview with MA Secretary of Education Patrick Tutwiler (2024)', url: 'https://frac.org/blog/massachusetts-secretary-education-interview' },
-            { label: 'Massachusetts DESE MCAS reports (2023, 2024) — science improved in grades 5 & 10; ELA declined 2–6 pp in grades 3–5' },
+            { label: 'Massachusetts DESE MCAS reports (2023, 2024)' },
           ] },
         { abbr: 'MN', name: 'Minnesota', year: 2023, status: 'active',
-          stats: ['Chronic absenteeism down 1 pp in first full year (MDE, 2024)', 'Breakfast +40%, lunch +15%; academic outcome data still being collected'],
+          highlights: [
+            'Chronic absenteeism down <strong>1 pp</strong> in first year',
+            'Breakfast <strong>+40%</strong>, lunch <strong>+15%</strong>',
+          ],
+          stats: [
+            'Chronic absenteeism down <strong>1 pp</strong> (25.5% \u2192 24.5%) in first full year (MDE, 2024)',
+            'Breakfast participation <strong>+40%</strong>, lunch <strong>+15%</strong>',
+            'Test scores flat statewide (43% math, 48% reading proficiency); academic effects not yet isolated',
+            'Concurrent school suspension policy changes complicate attendance attribution',
+          ],
           chartData: { title: '% Missing 10+ Days of School', bars: [{ label: 'Before', value: 25.5, color: 'before' }, { label: 'After', value: 24.5, color: 'after' }] },
           sources: [
-            { label: 'MDE, "Free School Meals: First Year Preliminary Summary" (2024) — chronic absenteeism, participation data', url: 'https://education.mn.gov/mdeprod/idcplg?IdcService=GET_FILE&dDocName=PROD085180&RevisionSelectionMethod=latestReleased&Rendition=primary' },
-            { label: 'Minnesota Reformer / Star Tribune (2025) — test scores flat statewide; academic outcomes not yet linked to meal program' },
+            { label: 'MDE, "Free School Meals: First Year Preliminary Summary" (2024)', url: 'https://education.mn.gov/mdeprod/idcplg?IdcService=GET_FILE&dDocName=PROD085180&RevisionSelectionMethod=latestReleased&Rendition=primary' },
+            { label: 'Minnesota Reformer / Star Tribune (2025) \u2014 test scores flat; academic outcomes not yet linked to meal program' },
           ] },
         { abbr: 'NV', name: 'Nevada', year: 2022, status: 'ended',
-          stats: ['206K students/month served while active', 'Program ended by governor veto in 2024'],
+          highlights: [
+            '<strong>206K</strong> students/month served while active',
+            'Program ended by <strong>governor veto</strong> in 2024',
+          ],
+          stats: [
+            '<strong>206K</strong> students/month served during the program',
+            'Program ended by governor veto in 2024 despite bipartisan legislative support',
+            'No published outcome data on attendance or academic performance',
+          ],
           sources: [
-            { label: 'FRAC, "The State of Healthy School Meals for All" (2024) — Nevada program data', url: 'https://frac.org/hsmfa-report-2024' },
-            { label: 'Nevada Dept. of Education program records (2022–24) — 206K students/month served' },
-            { label: 'Governor\'s office veto statement (2024) — program ended despite bipartisan legislative support' },
+            { label: 'FRAC, "The State of Healthy School Meals for All" (2024) \u2014 Nevada program data', url: 'https://frac.org/hsmfa-report-2024' },
+            { label: 'Nevada Dept. of Education program records (2022\u201324) \u2014 206K students/month served' },
+            { label: 'Governor\'s office veto statement (2024) \u2014 program ended despite bipartisan legislative support' },
           ] },
       ],
     },
@@ -2047,11 +2097,9 @@ function renderBallotYear(area, year) {
       `;
     };
     const coMealsStateCardHtml = (s) => {
-      const statsHtml = s.stats.map(st => '<li>' + st + '</li>').join('');
+      const cardItems = s.highlights || s.stats;
+      const statsHtml = cardItems.map(st => '<li>' + st + '</li>').join('');
       const badge = s.status === 'active' ? 'Active' : s.status === 'ended' ? 'Ended 2024' : 'Active since 2023';
-      const chartDiv = s.chartData
-        ? `<div id="bsc-${s.abbr}" style="height:155px;margin:0.4rem -0.25rem 0;"></div>`
-        : '';
       const srcBtn = s.sources && s.sources.length
         ? `<div style="margin-top:auto;padding-top:0.6rem;display:flex;justify-content:flex-end;"><button class="explain-btn" onclick="openBallotStateSources('${s.abbr}',${year})">Sources</button></div>`
         : '';
@@ -2059,7 +2107,6 @@ function renderBallotYear(area, year) {
         <div class="meals-state-card">
           <div class="meals-state-name">${s.name} <span class="meals-state-year">(${s.year})</span></div>
           <span class="meals-state-badge ${s.status}">${badge}</span>
-          ${chartDiv}
           <ul class="meals-state-stats">${statsHtml}</ul>
           ${srcBtn}
         </div>
@@ -2079,7 +2126,6 @@ function renderBallotYear(area, year) {
       <div class="meals-states-grid">${data.stateData.map(coMealsStateCardHtml).join('')}</div>
     `;
     loadCoBallotMap(data.stateData);
-    renderStateBallotCharts(data.stateData);
     return;
   }
 
@@ -2255,16 +2301,21 @@ function openBallotStateMapPopup(abbr) {
   if (!s) return;
   const badge = s.status === 'active' ? 'Active' : s.status === 'ended' ? 'Ended 2024' : 'Active since 2023';
   const statsHtml = s.stats.map(st => `<li>${st}</li>`).join('');
+  const chartHtml = s.chartData
+    ? `<div id="bsc-${s.abbr}" style="height:160px;margin:0.5rem -0.25rem 0.25rem;"></div>`
+    : '';
   const srcBtn = s.sources && s.sources.length
-    ? `<button class="explain-btn" style="margin-top:0.75rem;" onclick="openBallotStateSources('${abbr}',${year})">Sources</button>`
+    ? `<div style="margin-top:0.75rem;display:flex;justify-content:flex-end;"><button class="explain-btn" onclick="openBallotStateSources('${abbr}',${year})">Sources</button></div>`
     : '';
   document.getElementById('sources-modal-body').innerHTML = `
     <p><strong>${s.name}</strong> <span style="font-size:0.8rem;color:var(--muted)">(program launched ${s.year})</span></p>
-    <span class="meals-state-badge ${s.status}" style="display:inline-block;margin-bottom:0.5rem;">${badge}</span>
+    <span class="meals-state-badge ${s.status}" style="display:inline-block;margin-bottom:0.25rem;">${badge}</span>
+    ${chartHtml}
     <ul class="meals-state-stats" style="margin-top:0.4rem;">${statsHtml}</ul>
     ${srcBtn}
   `;
   document.getElementById('sources-overlay').classList.add('open');
+  if (s.chartData) renderStateBallotCharts([s]);
 }
 
 function openBallotStateSources(abbr, year) {
