@@ -7,7 +7,10 @@ on:
 
 jobs:
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
+    concurrency: deploy-breathe
+
     steps:
       - uses: actions/checkout@v4
 
