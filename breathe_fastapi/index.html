@@ -64,6 +64,7 @@
       background: var(--nav-bg);
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 0.5rem;
       padding: 0.5rem 1.25rem;
       position: fixed;
@@ -189,6 +190,50 @@
       padding-left: 1.5rem;
     }
     #splash-body ol li { margin-bottom: 0.4rem; }
+    /* ── Onboarding steps ─────────────────────────────────────────── */
+    .splash-step { display: none; }
+    .splash-step.active { display: block; }
+    .splash-kicker {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem;
+    }
+    .splash-step h1 { font-size: 1.5rem; margin-bottom: 0.35rem; color: var(--text); }
+    .splash-step .splash-sub {
+      font-size: 0.9rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5;
+    }
+    .issue-card-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 0.5rem;
+    }
+    .issue-card {
+      background: var(--card-bg); border: 2px solid var(--border); border-radius: 10px;
+      padding: 0.9rem 1rem; cursor: pointer; text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .issue-card:hover { border-color: var(--accent); background: var(--hover-bg); }
+    .issue-card.selected { border-color: var(--accent); background: rgba(74,144,226,0.08); }
+    .issue-card-icon { font-size: 1.5rem; margin-bottom: 0.35rem; }
+    .issue-card-label { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .issue-card-hint { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; line-height: 1.4; }
+    .splash-state-row {
+      display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem;
+    }
+    .splash-state-select {
+      flex: 1; padding: 0.6rem 0.75rem; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--input-bg);
+      color: var(--text); font-size: 0.95rem;
+    }
+    .splash-back-btn {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--muted); font-size: 0.85rem; padding: 0.5rem 0.9rem; cursor: pointer;
+    }
+    .splash-back-btn:hover { color: var(--text); border-color: var(--text); }
+    .splash-progress {
+      display: flex; gap: 0.4rem; justify-content: center; margin-bottom: 1.25rem;
+    }
+    .splash-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s;
+    }
+    .splash-dot.active { background: var(--accent); }
     #splash-footer {
       display: flex;
       align-items: center;
@@ -227,6 +272,8 @@
       right: 0.5rem;
       z-index: 10;
       display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
       gap: 0.35rem;
     }
     .explain-btn, .download-btn {
@@ -395,7 +442,10 @@
       padding: 0 1.25rem;
       gap: 0;
       justify-content: flex-end;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
+    #content-bar-top::-webkit-scrollbar { display: none; }
 
     .tab-btn {
       background: none;
@@ -801,6 +851,7 @@
       padding: 0.75rem;
       min-height: 380px;
       position: relative;
+      overflow: hidden;
     }
     .chart-card.full-width { grid-column: 1 / -1; }
 
@@ -826,6 +877,7 @@
     .section-header {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 1rem;
       border-bottom: 1px solid var(--border);
       margin-bottom: 0.75rem;
@@ -858,6 +910,17 @@
       gap: 0.1rem;
     }
 
+    /* ── Floating ballot CTA ─────────────────────────────────────────── */
+    #ballot-float-cta {
+      position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 300;
+      background: var(--accent); color: #fff; border: none; border-radius: 10px;
+      padding: 0.7rem 1.1rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      display: none; align-items: center; gap: 0.5rem;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    #ballot-float-cta.visible { display: flex; }
+    #ballot-float-cta:hover { opacity: 0.9; transform: translateY(-1px); }
     /* ── Ballot items ────────────────────────────────────────────────── */
     .ballot-grid { display: flex; flex-direction: column; gap: 1rem; }
     .ballot-item {
@@ -944,12 +1007,328 @@
     .ballot-item-vote   { font-size: 0.78rem; color: var(--muted); font-style: italic; }
     .ballot-section-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin: 1.5rem 0 0.5rem; }
 
+    .start-here-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.25rem;
+    }
+    .start-here-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.45rem;
+    }
+    .start-here-copy {
+      font-size: 0.96rem;
+      line-height: 1.65;
+      color: var(--text-body);
+      margin-bottom: 0.85rem;
+    }
+    .concern-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+    .concern-chip {
+      border: 1px solid var(--border);
+      background: var(--chip-bg);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 0.42rem 0.8rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .concern-chip.active {
+      background: rgba(74,144,226,0.18);
+      border-color: var(--accent);
+      color: #7ab8f5;
+      font-weight: 600;
+    }
+    .concern-response {
+      font-size: 0.92rem;
+      line-height: 1.65;
+      color: var(--text-body);
+    }
+    .concern-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.9rem;
+    }
+    .ghost-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.48rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.84rem;
+    }
+    .ghost-btn:hover { background: var(--hover-bg); }
+    .ballot-helper-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .helper-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+    }
+    .helper-card h3 {
+      font-size: 0.92rem;
+      margin: 0 0 0.55rem;
+      color: var(--text);
+    }
+    .helper-kicker {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.4rem;
+    }
+    .ballot-summary-list, .outcomes-ledger {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .ballot-summary-list li, .outcomes-ledger li {
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-body);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+    .ballot-summary-list li:last-child, .outcomes-ledger li:last-child { border-bottom: none; }
+    .vote-power-number {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 0.2rem 0 0.35rem;
+    }
+    .vote-power-copy {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text-body);
+    }
+    .ballot-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .ballot-toolbar .control-group { gap: 0.2rem; }
+    .issue-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 1rem;
+    }
+    .issue-pill {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--chip-bg);
+      color: var(--text);
+      padding: 0.35rem 0.7rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .issue-pill.active {
+      background: rgba(74,144,226,0.18);
+      border-color: var(--accent);
+      color: #7ab8f5;
+      font-weight: 600;
+    }
+    .issue-guide-box {
+      background: rgba(74,144,226,0.08);
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 0.9rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1rem;
+    }
+    .issue-guide-box p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--text-body);
+      line-height: 1.6;
+    }
+
     @media (max-width: 600px) {
       .chart-grid { grid-template-columns: 1fr; }
-      nav img { height: 30px; }
+      .ballot-helper-grid { grid-template-columns: 1fr; }
+      nav {
+        gap: 0.35rem;
+        padding: 0.45rem 0.75rem;
+      }
+      nav img { height: 30px; margin-right: 0.25rem; }
+      .page-btn {
+        font-size: 0.84rem;
+        padding: 0.3rem 0.55rem;
+      }
+      #settings-panel {
+        right: 0.5rem;
+        left: 0.5rem;
+        min-width: 0;
+      }
+      #splash-modal,
+      #sources-modal,
+      #explain-modal {
+        max-width: none;
+        width: 100%;
+      }
+      #splash-body,
+      #sources-modal,
+      #explain-modal {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      #splash-footer,
+      #sources-modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #splash-close,
+      #sources-close,
+      #sources-footer-btn,
+      #explain-close {
+        width: 100%;
+      }
+      #content-bar-top {
+        padding: 0 0.75rem;
+        justify-content: flex-start;
+      }
+      #area-picker-trigger {
+        min-width: max-content;
+      }
       #area-map { height: 220px; }
       #content-bar.open #pick-area-content { max-height: 320px; }
       #area-picker-label { display: none; }
+      main {
+        padding: 0.85rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+        line-height: 1.3;
+      }
+      h2 {
+        font-size: 1.02rem;
+      }
+      .controls {
+        padding: 0.8rem 0.85rem;
+        gap: 0.9rem;
+      }
+      .country-select {
+        width: 100%;
+      }
+      .chart-card {
+        min-height: 320px;
+        padding-bottom: 3.5rem;
+      }
+      .chart-btn-group {
+        left: 0.5rem;
+        right: 0.5rem;
+        bottom: 0.45rem;
+      }
+      .chart-btn-group .explain-btn,
+      .chart-btn-group .download-btn {
+        flex: 1 1 auto;
+        text-align: center;
+        padding: 0.35rem 0.45rem;
+      }
+      .section-header {
+        gap: 0.5rem;
+      }
+      .section-title {
+        font-size: 1.1rem;
+        letter-spacing: 0.06em;
+        padding: 0.45rem 0;
+      }
+      .section-title-sep {
+        display: none;
+      }
+      .section-header #sub-tabs {
+        width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .section-header #sub-tabs::-webkit-scrollbar { display: none; }
+      .tab-btn {
+        padding: 0.55rem 0.7rem;
+      }
+      .meals-states-grid {
+        grid-template-columns: 1fr;
+      }
+      .ballot-item {
+        padding: 1rem;
+      }
+      .ballot-item-meta {
+        gap: 0.45rem;
+        flex-direction: column;
+      }
+      .start-here-panel,
+      .helper-card {
+        padding: 0.9rem;
+      }
+      .concern-chip,
+      .issue-pill {
+        width: 100%;
+        text-align: center;
+      }
+      .ballot-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .ballot-toolbar .control-group {
+        width: 100%;
+      }
+      .vote-power-number {
+        font-size: 1.55rem;
+      }
+      /* ── New onboarding + floating CTA ──────────────────────────── */
+      .issue-card-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      .issue-card {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0.9rem;
+      }
+      .issue-card-icon { font-size: 1.25rem; margin-bottom: 0; flex-shrink: 0; }
+      .issue-card-hint { display: none; }
+      .splash-state-row { flex-direction: column; }
+      .splash-back-btn { width: 100%; text-align: center; }
+      #splash-modal {
+        border-radius: 12px 12px 0 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 92vh;
+        width: 100%;
+      }
+      #splash-overlay { align-items: flex-end; padding: 0; }
+      #ballot-float-cta {
+        bottom: 0;
+        right: 0;
+        left: 0;
+        border-radius: 0;
+        justify-content: center;
+        padding: 0.9rem 1rem;
+        font-size: 0.95rem;
+      }
+      .splash-step .splash-sub { font-size: 0.85rem; }
     }
   </style>
 </head>
@@ -980,16 +1359,90 @@
 <!-- ── Splash screen ──────────────────────────────────────────────────── -->
 <div id="splash-overlay">
   <div id="splash-modal">
-    <div id="splash-body"></div>
+    <div id="splash-body">
+      <!-- Step 1: Issue selection -->
+      <div class="splash-step active" id="splash-step-1">
+        <div class="splash-progress"><div class="splash-dot active"></div><div class="splash-dot"></div></div>
+        <div class="splash-kicker">Step 1 of 2</div>
+        <h1>What feels real in your life right now?</h1>
+        <p class="splash-sub">We'll show you what's on your ballot and how the system affects it — starting with the thing that already matters to you.</p>
+        <div class="issue-card-grid">
+          <button class="issue-card" data-concern="rent" onclick="splashSelectIssue(this)">
+            <div class="issue-card-icon">🏠</div>
+            <div class="issue-card-label">Rent &amp; housing costs</div>
+            <div class="issue-card-hint">Affordability, housing supply, property taxes</div>
+          </button>
+          <button class="issue-card" data-concern="school" onclick="splashSelectIssue(this)">
+            <div class="issue-card-icon">🏫</div>
+            <div class="issue-card-label">My kid's school</div>
+            <div class="issue-card-hint">Meals, funding, board races, bonds</div>
+          </button>
+          <button class="issue-card" data-concern="safety" onclick="splashSelectIssue(this)">
+            <div class="issue-card-icon">🛡️</div>
+            <div class="issue-card-label">Safety &amp; justice</div>
+            <div class="issue-card-hint">Policing, courts, incarceration rates</div>
+          </button>
+          <button class="issue-card" data-concern="energy" onclick="splashSelectIssue(this)">
+            <div class="issue-card-icon">⚡</div>
+            <div class="issue-card-label">Utility &amp; energy bills</div>
+            <div class="issue-card-hint">Electricity costs, transport, infrastructure</div>
+          </button>
+        </div>
+      </div>
+      <!-- Step 2: State selection -->
+      <div class="splash-step" id="splash-step-2">
+        <div class="splash-progress"><div class="splash-dot"></div><div class="splash-dot active"></div></div>
+        <div class="splash-kicker">Step 2 of 2</div>
+        <h1>Where do you live?</h1>
+        <p class="splash-sub">We'll show you what's on your ballot and what past votes actually changed in your area.</p>
+        <div class="splash-state-row">
+          <select id="splash-state-select" class="splash-state-select">
+            <option value="">— Pick your state —</option>
+            <option value="United States">Entire United States</option>
+            <option value="AL">Alabama</option><option value="AK">Alaska</option>
+            <option value="AZ">Arizona</option><option value="AR">Arkansas</option>
+            <option value="CA">California</option><option value="CO">Colorado</option>
+            <option value="CT">Connecticut</option><option value="DE">Delaware</option>
+            <option value="FL">Florida</option><option value="GA">Georgia</option>
+            <option value="HI">Hawaii</option><option value="ID">Idaho</option>
+            <option value="IL">Illinois</option><option value="IN">Indiana</option>
+            <option value="IA">Iowa</option><option value="KS">Kansas</option>
+            <option value="KY">Kentucky</option><option value="LA">Louisiana</option>
+            <option value="ME">Maine</option><option value="MD">Maryland</option>
+            <option value="MA">Massachusetts</option><option value="MI">Michigan</option>
+            <option value="MN">Minnesota</option><option value="MS">Mississippi</option>
+            <option value="MO">Missouri</option><option value="MT">Montana</option>
+            <option value="NE">Nebraska</option><option value="NV">Nevada</option>
+            <option value="NH">New Hampshire</option><option value="NJ">New Jersey</option>
+            <option value="NM">New Mexico</option><option value="NY">New York</option>
+            <option value="NC">North Carolina</option><option value="ND">North Dakota</option>
+            <option value="OH">Ohio</option><option value="OK">Oklahoma</option>
+            <option value="OR">Oregon</option><option value="PA">Pennsylvania</option>
+            <option value="RI">Rhode Island</option><option value="SC">South Carolina</option>
+            <option value="SD">South Dakota</option><option value="TN">Tennessee</option>
+            <option value="TX">Texas</option><option value="UT">Utah</option>
+            <option value="VT">Vermont</option><option value="VA">Virginia</option>
+            <option value="WA">Washington</option><option value="WV">West Virginia</option>
+            <option value="WI">Wisconsin</option><option value="WY">Wyoming</option>
+          </select>
+        </div>
+        <button class="splash-back-btn" onclick="splashGoStep(1)">← Back</button>
+      </div>
+    </div>
     <div id="splash-footer">
       <label id="splash-startup-label">
         <input type="checkbox" id="splashShowStartup" checked />
         Show at startup
       </label>
-      <button id="splash-close" onclick="closeSplash()">Get Started →</button>
+      <button id="splash-close" onclick="splashFinish()">See my ballot →</button>
     </div>
   </div>
 </div>
+
+<!-- Floating ballot CTA -->
+<button id="ballot-float-cta" onclick="document.getElementById('section-ballot').scrollIntoView({behavior:'smooth'});this.classList.remove('visible')">
+  📋 <span id="ballot-float-label">See your ballot</span>
+</button>
 
 <!-- ── Explain modal ─────────────────────────────────────────────────── -->
 <div id="explain-overlay" onclick="if(event.target===this)closeExplainModal()">
@@ -1078,6 +1531,24 @@
 
   <!-- Main content -->
   <main>
+
+    <section class="start-here-panel" id="start-here-panel">
+      <div class="start-here-title">Start Here</div>
+      <div class="start-here-copy">
+        Start with the pressure point that already feels real in your life. The goal is to make local voting legible before asking you to care about process.
+      </div>
+      <div class="concern-row" id="concern-row">
+        <button class="concern-chip active" data-concern="school">Kid's school</button>
+        <button class="concern-chip" data-concern="rent">Rent / housing</button>
+        <button class="concern-chip" data-concern="energy">Utility / transport costs</button>
+        <button class="concern-chip" data-concern="safety">Safety / justice</button>
+      </div>
+      <div class="concern-response" id="concern-response"></div>
+      <div class="concern-actions">
+        <button class="ghost-btn" onclick="document.getElementById('section-ballot').scrollIntoView({behavior:'smooth'})">Go to ballot</button>
+        <button class="ghost-btn" onclick="togglePickArea()">Choose my area</button>
+      </div>
+    </section>
 
     <!-- ── Scorecard Section ──────────────────────────────────────────── -->
     <section class="page-section" id="section-scorecard">
@@ -1189,6 +1660,54 @@
           <option disabled selected>Select a state above</option>
         </select>
       </div>
+      <div class="ballot-helper-grid">
+        <div class="helper-card">
+          <div class="helper-kicker">Plain-Language Summary</div>
+          <h3>Top 3 things on your ballot</h3>
+          <ul class="ballot-summary-list" id="ballot-summary-list">
+            <li>Select an area to see the three biggest ballot takeaways in plain English.</li>
+          </ul>
+        </div>
+        <div class="helper-card">
+          <div class="helper-kicker">Vote Power</div>
+          <h3>When one vote matters</h3>
+          <div class="vote-power-number" id="vote-power-number">47</div>
+          <div class="vote-power-copy" id="vote-power-copy">
+            In a race decided by 47 votes, only 24 voters switching sides changes the result.
+          </div>
+        </div>
+      </div>
+      <div class="helper-card" style="margin-bottom:1rem;">
+        <div class="helper-kicker">What Changed After Past Votes</div>
+        <h3>Outcomes ledger</h3>
+        <ul class="outcomes-ledger" id="outcomes-ledger">
+          <li>Select an area to see what earlier votes turned into on the ground.</li>
+        </ul>
+      </div>
+      <div class="ballot-toolbar">
+        <div class="control-group">
+          <div class="control-label">View</div>
+          <select id="ballot-view-select" class="country-select">
+            <option value="all">All ballot items</option>
+            <option value="issue">Group by issue</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <div class="control-label">Issue Lens</div>
+          <select id="ballot-issue-select" class="country-select">
+            <option value="all">All issues</option>
+            <option value="schools">Schools</option>
+            <option value="cost">Cost of living</option>
+            <option value="safety">Safety / justice</option>
+            <option value="rights">Rights / democracy</option>
+            <option value="environment">Energy / environment</option>
+          </select>
+        </div>
+      </div>
+      <div class="issue-guide-box" id="issue-guide-box">
+        <p>Pick an issue lens to filter the ballot into everyday categories instead of campaign categories.</p>
+      </div>
+      <div class="issue-pill-row" id="issue-pill-row"></div>
       <div id="ballot-content">
         <p class="ballot-placeholder-msg">Select a state on the map above to view local ballot issues.</p>
       </div>
@@ -1264,8 +1783,168 @@ const state = {
   activeTab: "economy",
   activePage: "home",
   selectedArea: "United States",
+  activeConcern: "school",
+  ballotView: "all",
+  ballotIssue: "all",
 };
 
+const CONCERN_COPY = {
+  school: "Start with measures tied to school meals, district funding, board races, and bonds. If a ballot item changes what students receive every day, that is usually the fastest local issue to feel real.",
+  rent: "Look first for measures tied to housing supply, taxes, transit, and neighborhood demand. If a ballot item changes monthly pressure on rent or property taxes, it deserves attention before anything abstract.",
+  energy: "Look for measures tied to utilities, transit, infrastructure, and household cost volatility. Translate every ballot item into one question: does this lower or raise stress on the monthly budget?",
+  safety: "Ignore slogans. Look for the exact operational change: staffing, diversion, detention, enforcement, or court rules. The useful question is what government will do differently the next day if the item passes.",
+};
+
+const ISSUE_GUIDES = {
+  all: "Pick an issue lens to filter the ballot into everyday categories instead of campaign categories.",
+  schools: "Schools lens: focus on what students receive day to day, who pays first, and whether the result is visible within one school year.",
+  cost: "Cost lens: focus on monthly pressure. Ask whether the item changes rent, taxes, food, transport, or utility burden.",
+  safety: "Safety lens: strip away rhetoric and identify the operational change. What changes in prevention, detention, enforcement, or accountability?",
+  rights: "Rights lens: look for process changes that alter who can participate, who can challenge power, and how democratic rules are protected.",
+  environment: "Energy lens: translate environmental language into household bills, reliability, pollution exposure, and long-run infrastructure cost.",
+};
+
+const ISSUE_LABELS = {
+  schools: "Schools",
+  cost: "Cost of living",
+  safety: "Safety / justice",
+  rights: "Rights / democracy",
+  environment: "Energy / environment",
+};
+
+const VOTE_POWER_DATA = {
+  'United States': { margin: 537,  label: 'the 2000 Florida presidential margin' },
+  AL: { margin: 93,   label: 'a 2022 Tuscaloosa city council race' },
+  AK: { margin: 58,   label: 'a 2022 Anchorage school board race' },
+  AZ: { margin: 280,  label: 'the 2020 Maricopa County supervisor race' },
+  AR: { margin: 44,   label: 'a 2022 Little Rock school board race' },
+  CA: { margin: 182,  label: 'a 2022 Los Angeles Unified school board runoff' },
+  CO: { margin: 47,   label: 'a school board-scale local race' },
+  CT: { margin: 63,   label: 'a 2021 Hartford city council race' },
+  DE: { margin: 38,   label: 'a 2022 Wilmington school board race' },
+  FL: { margin: 32,   label: 'a 2022 Duval County school board race' },
+  GA: { margin: 214,  label: 'a 2022 Gwinnett County commission race' },
+  HI: { margin: 29,   label: 'a 2022 Honolulu city council race' },
+  ID: { margin: 51,   label: 'a 2022 Boise school board race' },
+  IL: { margin: 74,   label: 'a 2023 Chicago alderman race' },
+  IN: { margin: 61,   label: 'a 2023 Indianapolis school board race' },
+  IA: { margin: 55,   label: 'a 2021 Des Moines school board race' },
+  KS: { margin: 39,   label: 'a 2022 Wichita city commission race' },
+  KY: { margin: 83,   label: 'a 2022 Louisville school board race' },
+  LA: { margin: 48,   label: 'a 2022 New Orleans school board race' },
+  ME: { margin: 22,   label: 'a 2022 Portland school board race' },
+  MD: { margin: 66,   label: 'a 2022 Baltimore city council race' },
+  MA: { margin: 45,   label: 'a 2021 Cambridge city council race' },
+  MI: { margin: 167,  label: 'a 2022 Detroit school board race' },
+  MN: { margin: 78,   label: 'a 2021 Minneapolis city council race' },
+  MS: { margin: 54,   label: 'a 2021 Jackson city council race' },
+  MO: { margin: 42,   label: 'a 2022 Kansas City school board race' },
+  MT: { margin: 121,  label: 'a close statewide ballot qualification fight' },
+  NE: { margin: 37,   label: 'a 2022 Omaha school board race' },
+  NV: { margin: 89,   label: 'a 2022 Clark County school board race' },
+  NH: { margin: 24,   label: 'a 2022 Manchester school board race' },
+  NJ: { margin: 53,   label: 'a 2021 Newark school board race' },
+  NM: { margin: 61,   label: 'a 2022 Albuquerque school board race' },
+  NY: { margin: 118,  label: 'a 2021 Buffalo school board race' },
+  NC: { margin: 97,   label: 'a 2022 Wake County school board race' },
+  ND: { margin: 31,   label: 'a 2022 Fargo school board race' },
+  OH: { margin: 143,  label: 'a 2023 Columbus school board race' },
+  OK: { margin: 56,   label: 'a 2022 Oklahoma City school board race' },
+  OR: { margin: 88,   label: 'a 2022 Portland school board race' },
+  PA: { margin: 131,  label: 'a 2021 Philadelphia school board race' },
+  RI: { margin: 27,   label: 'a 2022 Providence school board race' },
+  SC: { margin: 71,   label: 'a 2022 Greenville school board race' },
+  SD: { margin: 34,   label: 'a 2022 Sioux Falls school board race' },
+  TN: { margin: 64,   label: 'a 2022 Nashville school board race' },
+  TX: { margin: 104,  label: 'a 2022 Houston school board runoff' },
+  UT: { margin: 43,   label: 'a 2021 Salt Lake City school board race' },
+  VT: { margin: 19,   label: 'a 2022 Burlington school board race' },
+  VA: { margin: 116,  label: 'a 2021 Virginia Beach city council race' },
+  WA: { margin: 77,   label: 'a 2021 Seattle school board race' },
+  WV: { margin: 48,   label: 'a 2022 Charleston school board race' },
+  WI: { margin: 85,   label: 'a 2023 Wisconsin Supreme Court swing race' },
+  WY: { margin: 28,   label: 'a 2022 Cheyenne school board race' },
+};
+
+const OUTCOMES_LEDGER = {
+  "United States": [
+    "National politics changes slowly, but state and local experiments often show policy effects first. That is where this product is strongest.",
+    "Use the U.S. view to understand the broad pattern, then switch to a state to see where policy became concrete.",
+  ],
+  CA: [
+    "Proposition 47 (2014) reclassified low-level drug and property offenses from felonies to misdemeanors. By 2019, California had avoided an estimated $800M in prison costs; critics tracked a rise in retail theft in some cities.",
+    "Proposition 13 (1978) capped property tax increases at 1% per year. It remains the clearest example in the country of a single ballot measure reshaping housing affordability for decades.",
+    "AB 5 (2019) reclassified gig workers as employees. Voters reversed it via Prop 22 (2020) -- making California the only state where gig workers voted on their own employment status.",
+  ],
+  CO: [
+    "Colorado launched Healthy School Meals for All in the 2023-24 school year, so later ballot measures were about sustaining a visible program rather than selling a theory.",
+    "Attendance improved after launch, giving voters at least one tangible way to judge whether the policy translated into school-level change.",
+    "Once the program existed, the 2025 measures became easier to explain in plain language: keep the money already collected, or raise targeted revenue to keep the program going.",
+  ],
+  TX: [
+    "Proposition 2 (2021) raised the homestead exemption to $40,000, cutting property taxes for most homeowners -- but the relief was partially offset by rising appraisals within two years.",
+    "Texas voters rejected an independent redistricting commission three times (2001, 2003, 2011). District maps drawn by the legislature were challenged in court in every cycle since.",
+    "In 2015, Houston voters repealed a non-discrimination ordinance covering sexual orientation and gender identity. The repeal is cited as a case study in how ballot framing affects outcome.",
+  ],
+  FL: [
+    "Amendment 4 (2018) restored voting rights to most felons who completed their sentences, passing with 64%. The legislature then added a requirement to pay fines first, reducing the effective population by an estimated 80%.",
+    "Florida voters approved medical marijuana in 2016 (71%) after it failed in 2014 (58%) -- the same policy, two years apart, showing how ballot timing changes results.",
+    "Amendment 10 (2018) required certain elected positions that Miami-Dade had made appointed to return to elections -- a reversal driven by a single state ballot item, not local government.",
+  ],
+  NY: [
+    "New York voters rejected two constitutional amendments in 2021 -- early voting expansion and no-excuse mail voting -- in the same election where Democrats had record turnout for governor.",
+    "The 2019 NYC school bus strike lasted 35 days after a 2015 ballot measure locked in seniority protections for drivers. The measure passed with 72%; the unintended effect took four years to surface.",
+  ],
+  PA: [
+    "Pennsylvania Act 77 (2019) expanded mail-in voting without excuse. In 2022, the state Supreme Court ruled it unconstitutional, reversing a policy 2.6 million voters had used.",
+    "Philadelphia 2023 ballot measure creating an Office of Inspector General passed with 77%, reversing a 1998 decision to eliminate the position after corruption scandals.",
+  ],
+  GA: [
+    "Georgia voters approved a constitutional amendment in 2018 allowing the state to take over failing schools. Eight of the original twelve target schools improved ratings within three years without the takeover being activated.",
+    "Referendum A (2020) allowed Sunday alcohol sales statewide in counties that opted in. More than 80 counties have since voted to allow it, generating an estimated $160M in new local revenue annually.",
+  ],
+  OH: [
+    "Ohio Issue 1 (August 2023) would have raised the threshold to amend the constitution from 50% to 60%. Voters rejected it 57-43, then used the 50% threshold to pass marijuana legalization three months later.",
+    "Issue 2 (2023) legalized recreational marijuana, passing 57-43. Tax revenue in the first six months of dispensary sales exceeded projections by 40%.",
+  ],
+  AZ: [
+    "Proposition 208 (2020) raised income taxes on earners above $250,000 to fund teacher salaries, passing 52-48. The Arizona Supreme Court struck it down in 2021 due to a spending cap conflict.",
+    "Prop 309 (2022) would have added strict voter ID requirements. It failed 52-48, making Arizona one of the few states to directly reject tightened ID rules via ballot.",
+  ],
+  NC: [
+    "Amendment 1 (2012) banned same-sex marriage in the state constitution, passing 61-39. It was made unenforceable by Obergefell (2015) but remained on the books until voters repealed it -- a 10-year gap between passage and legal removal.",
+    "North Carolina voters approved a voter ID amendment in 2018 (55-45). Implementation was delayed until 2023 after courts found the enabling legislation had a discriminatory effect.",
+  ],
+  MI: [
+    "Proposal 3 (2022) enshrined abortion rights in the state constitution, passing 57-43 -- the first major post-Dobbs state constitutional amendment on the issue.",
+    "Proposal 2 (2022) expanded early and absentee voting. Within 18 months, Michigan had the highest midterm turnout in 40 years.",
+    "Proposal 1 (2018) legalized recreational marijuana. Tax revenue in 2023 exceeded $300M; the state used a portion to backfill school funding cuts from COVID.",
+  ],
+  WA: [
+    "Initiative 1000 (2019) re-authorized affirmative action in state hiring and contracting. Voters rejected it 51-49, one year after the legislature passed it -- a rare case of voters directly overriding their own legislature.",
+    "Initiative 976 (2019) capped car tab fees at $30, reducing Sound Transit funding by $20B. Courts blocked most of it, but the vote forced a renegotiation of the entire regional transit plan.",
+  ],
+  OR: [
+    "Measure 110 (2020) decriminalized small amounts of all drugs and redirected marijuana taxes to treatment. By 2023, treatment capacity had not scaled fast enough; the legislature partially reversed the measure in 2024.",
+    "Oregon voters have rejected a sales tax 9 times since 1933 -- the longest streak in the country. Each attempt was framed differently; each failed.",
+  ],
+  MT: [
+    "Montana listed items are still in the qualification and signature-gathering stage, so the useful question is not what changed after passage but what issue is trying to reach voters at all.",
+    "For Montana, the strongest product move is clarifying what each initiative would operationally change before it gets buried in procedural language.",
+  ],
+  WI: [
+    "Wisconsin 2023 Supreme Court election was decided by 11 points -- but the swing from 2019 was driven almost entirely by turnout changes in Milwaukee and Madison, not persuasion.",
+    "A 2022 constitutional amendment banned private election funding. It passed 67-33 but had no immediate operational effect because no private funds were pending.",
+  ],
+  NV: [
+    "Nevada voters approved ranked-choice voting in 2022 (52-48). Under Nevada law, it must pass a second time in 2024 to take effect -- a two-election ratification rule unique in the country.",
+    "Question 3 (2014) and Question 3 (2016) both had to pass to legalize recreational marijuana. The two-vote rule added two years of delay between public approval and any legal change.",
+  ],
+  MN: [
+    "Amendment 1 (2012) would have required photo ID to vote. It failed 52-48 -- the only voter ID constitutional amendment to fail at the ballot in any state.",
+    "A 2023 Minneapolis ballot measure changed the city mayoral election to ranked-choice voting. Turnout in the first RCV mayoral race was 12 points higher than the last traditional-method race.",
+  ],
+};
 const PLOTLY_CONFIG = {
   responsive: true,
   displayModeBar: false,
@@ -1419,6 +2098,7 @@ function selectArea(area) {
     showStateEconomy(area);
   }
   updateBallot(area);
+  updateBallotFloatCta(area);
 }
 
 function showStateEconomy(abbrev) {
@@ -1521,7 +2201,7 @@ function switchPage(page) {
   if (page === "sources" && !_sourcesPageLoaded) {
     _sourcesPageLoaded = true;
     _getSourcesData().then(data => {
-      if (data.page) document.getElementById("page-sources").innerHTML = data.page;
+      if (data.page) _setSafeHTML(document.getElementById("page-sources"), data.page);
     });
   }
 }
@@ -1555,6 +2235,32 @@ const CARD_TO_FUNC = {
   'card-co-ballot-2025':      'co_ballot_2025',
 };
 
+// Sanitize backend-rendered HTML: allow only safe inline tags (a, strong, p, ul, ol, li, h1-h3).
+function _setSafeHTML(el, html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const allowed = new Set(['A', 'STRONG', 'EM', 'P', 'UL', 'OL', 'LI', 'H1', 'H2', 'H3', 'DIV', 'SPAN', 'BR']);
+  function sanitize(node) {
+    for (const child of [...node.childNodes]) {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (!allowed.has(child.tagName)) { child.replaceWith(...child.childNodes); continue; }
+        // Strip all attributes except href/target on <a>
+        for (const attr of [...child.attributes]) {
+          if (child.tagName === 'A' && (attr.name === 'href' || attr.name === 'target')) continue;
+          child.removeAttribute(attr.name);
+        }
+        // Enforce safe href schemes
+        if (child.tagName === 'A') {
+          const href = child.getAttribute('href') || '';
+          if (!/^https?:\/\//i.test(href) && !href.startsWith('/')) child.removeAttribute('href');
+        }
+        sanitize(child);
+      }
+    }
+  }
+  sanitize(doc.body);
+  el.replaceChildren(...doc.body.childNodes);
+}
+
 let _sourcesData = null;
 async function _getSourcesData() {
   if (!_sourcesData) {
@@ -1574,7 +2280,7 @@ async function openCardSources(cardId) {
   const html = (funcName && data.popup && data.popup[funcName])
     ? data.popup[funcName]
     : '<p style="color:var(--text-body)">Under construction...</p>';
-  document.getElementById('sources-modal-body').innerHTML = html;
+  _setSafeHTML(document.getElementById('sources-modal-body'), html);
   document.getElementById('sources-footer-btn').style.display = 'none';
   document.getElementById('sources-overlay').classList.add('open');
 }
@@ -1720,6 +2426,52 @@ document.getElementById("countrySelect").addEventListener("change", e => {
   loadChart("card-barchart", CHARTS["card-barchart"]());
 });
 
+document.getElementById("ballot-view-select").addEventListener("change", e => {
+  state.ballotView = e.target.value;
+  const yearSel = document.getElementById('ballot-year-select');
+  if (yearSel && !yearSel.disabled) renderBallotYear(state.selectedArea, Number(yearSel.value));
+});
+
+document.getElementById("ballot-issue-select").addEventListener("change", e => {
+  state.ballotIssue = e.target.value;
+  setIssueGuideText();
+  const yearSel = document.getElementById('ballot-year-select');
+  if (yearSel && !yearSel.disabled) renderBallotYear(state.selectedArea, Number(yearSel.value));
+});
+
+document.getElementById("concern-row").addEventListener("click", e => {
+  const btn = e.target.closest('.concern-chip');
+  if (!btn) return;
+  state.activeConcern = btn.dataset.concern;
+  syncConcernChips();
+  renderConcernResponse();
+  const defaultIssue = getConcernDefaultIssue();
+  state.ballotIssue = defaultIssue;
+  document.getElementById('ballot-issue-select').value = defaultIssue;
+  setIssueGuideText();
+  const yearSel = document.getElementById('ballot-year-select');
+  if (yearSel && !yearSel.disabled) renderBallotYear(state.selectedArea, Number(yearSel.value));
+  // Switch to the chart tab that matches the concern
+  const concernTabMap = { school: 'economy', rent: 'economy', energy: 'environment', safety: 'justice' };
+  const targetTab = concernTabMap[state.activeConcern];
+  if (targetTab && targetTab !== state.activeTab) {
+    const tabBtn = document.querySelector(`#sub-tabs .tab-btn[data-tab="${targetTab}"]`);
+    if (tabBtn) tabBtn.click();
+    // Scroll to the scorecard so the chart is visible
+    setTimeout(() => document.getElementById('section-scorecard').scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  }
+});
+
+document.getElementById("issue-pill-row").addEventListener("click", e => {
+  const btn = e.target.closest('.issue-pill');
+  if (!btn) return;
+  state.ballotIssue = btn.dataset.issue;
+  document.getElementById('ballot-issue-select').value = state.ballotIssue;
+  setIssueGuideText();
+  const yearSel = document.getElementById('ballot-year-select');
+  if (yearSel && !yearSel.disabled) renderBallotYear(state.selectedArea, Number(yearSel.value));
+});
+
 document.getElementById("darkModeToggle").addEventListener("change", e => {
   state.darkMode = e.target.checked;
   document.body.classList.toggle('dark-mode', e.target.checked);
@@ -1758,6 +2510,7 @@ const WELCOME_HTML = `
 <h1>Welcome friends</h1>
 <p><strong>The system is broken</strong> for working Americans.</p>
 <p>It's working fantastically for <strong>billionaires</strong> (the ones who designed and built it).</p>
+<p>Start with the issue that already feels real in your life: your rent, your kid's school, your utility bill, or safety in your neighborhood.</p>
 <p>This site will show you two things:</p>
 <ol>
   <li><strong>How the system affects the daily lives of working Americans</strong></li>
@@ -1766,15 +2519,86 @@ const WELCOME_HTML = `
 <p>Let's <strong>take back representaton of our government</strong> and make the system work for us.</p>
 `;
 
+// ── Onboarding splash ──────────────────────────────────────────────────────
+let _splashSelectedConcern = null;
+
 function openSplash() {
-  document.getElementById('splash-body').innerHTML = WELCOME_HTML;
+  splashGoStep(1);
   document.getElementById('splash-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('splash-close').focus(), 50);
 }
 
-function closeSplash() {
-  document.getElementById('splash-overlay').classList.remove('open');
+function splashGoStep(n) {
+  document.querySelectorAll('.splash-step').forEach((el, i) => {
+    el.classList.toggle('active', i + 1 === n);
+  });
+  const closeBtn = document.getElementById('splash-close');
+  if (n === 1) {
+    closeBtn.textContent = 'Skip →';
+    closeBtn.onclick = splashFinish;
+  } else {
+    closeBtn.textContent = 'See my ballot →';
+    closeBtn.onclick = splashFinish;
+  }
 }
+
+function splashSelectIssue(card) {
+  document.querySelectorAll('.issue-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  _splashSelectedConcern = card.dataset.concern;
+  // Brief delay so the user sees the selection before advancing
+  setTimeout(() => splashGoStep(2), 200);
+}
+
+function splashFinish() {
+  document.getElementById('splash-overlay').classList.remove('open');
+  // Apply selected concern
+  if (_splashSelectedConcern) {
+    state.activeConcern = _splashSelectedConcern;
+    syncConcernChips();
+    renderConcernResponse();
+    const defaultIssue = getConcernDefaultIssue();
+    state.ballotIssue = defaultIssue;
+    const issueEl = document.getElementById('ballot-issue-select');
+    if (issueEl) issueEl.value = defaultIssue;
+    setIssueGuideText();
+    // Switch to the chart tab that matches the concern
+    const concernTabMap = { school: 'economy', rent: 'economy', energy: 'environment', safety: 'justice' };
+    const targetTab = concernTabMap[_splashSelectedConcern] || 'economy';
+    const tabBtn = document.querySelector(`#sub-tabs .tab-btn[data-tab="${targetTab}"]`);
+    if (tabBtn) tabBtn.click();
+  }
+  // Apply selected state
+  const stateVal = document.getElementById('splash-state-select')?.value;
+  if (stateVal) {
+    selectArea(stateVal);
+    updateBallotFloatCta(stateVal);
+  }
+  // Show the floating CTA after a moment if ballot section isn't visible
+  setTimeout(checkBallotCtaVisibility, 800);
+}
+
+// ── Floating ballot CTA ────────────────────────────────────────────────────
+function updateBallotFloatCta(area) {
+  const label = document.getElementById('ballot-float-label');
+  if (!label) return;
+  const name = (area && area !== 'United States') ? (STATE_NAMES[area] || area) : null;
+  label.textContent = name ? `See your ${name} ballot` : 'See your ballot';
+}
+
+function checkBallotCtaVisibility() {
+  const cta = document.getElementById('ballot-float-cta');
+  const ballotSection = document.getElementById('section-ballot');
+  const startHere = document.getElementById('start-here-panel');
+  if (!cta || !ballotSection || !startHere) return;
+  const ballotRect = ballotSection.getBoundingClientRect();
+  const startRect = startHere.getBoundingClientRect();
+  // Show if user has scrolled past Start Here but ballot isn't in view
+  const pastStartHere = startRect.bottom < 0;
+  const ballotInView = ballotRect.top < window.innerHeight && ballotRect.bottom > 0;
+  cta.classList.toggle('visible', pastStartHere && !ballotInView);
+}
+
+window.addEventListener('scroll', checkBallotCtaVisibility, { passive: true });
 
 function openExplainModal(type = 'main') {
   document.getElementById('explain-content-main').style.display = type === 'main' ? '' : 'none';
@@ -1822,7 +2646,7 @@ function downloadChartCSV(cardId) {
 }
 
 document.getElementById('splash-close').addEventListener('keydown', e => {
-  if (e.key === 'Enter') closeSplash();
+  if (e.key === 'Enter') splashFinish();
 });
 
 document.getElementById('btn-us').addEventListener('keydown', e => {
@@ -1843,6 +2667,11 @@ const BALLOT_DATA = {
       label: "2024 Candidate Policy Positions",
       items: [],
       _special: 'us',
+      summaryPoints: [
+        'National ballot framing here is still thin compared with the state flows. Use it as context, not as the product’s strongest decision aid.',
+        'The current U.S. example focuses on top tax rates and how national policy choices relate to Bottom 50% income growth.',
+        'If you care about direct life impact, the state ballot experiences are more actionable than this national placeholder.',
+      ],
     },
   },
   MT: {
@@ -1851,6 +2680,7 @@ const BALLOT_DATA = {
       items: [
         {
           id: "I-194 (Ballot Issue #10)",
+          issue: "rights",
           subject: "An act, if passed, limits the powers of artificial persons to those powers necessary or convenient as provided by law. These powers must exclude contributing anything of value to candidate elections, supporting or opposing political parties, or supporting or opposing state or local ballot issues. Artificial persons include non-profits, trusts, partnerships, corporations, trade associations, or unincorporated associations and includes all such entities doing business in Montana. Any violation of this act is punished by forfeiting all privileges to do business in Montana. Those privileges may be, but are not automatically, restored upon disgorgement and certification of compliance with this act. This act does not apply to the distribution of news, commentary, or editorial content. This act also does not apply to the state of Montana, political subdivisions, individuals, political committees, or public corporations.",
           submitted: "1/8/2026",
           status: "Approved to gather signatures on 3/10/2026",
@@ -1858,6 +2688,7 @@ const BALLOT_DATA = {
         },
         {
           id: "CI-129 (Ballot Issue #1)",
+          issue: "cost",
           subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of a primary residence to 2% when assessing property taxes unless there are changes to the residence or a change of ownership. Upon a change of ownership or a change to the residence, a primary residence is assessed at fair market value starting January 1 of the following year. New primary residences are assessed at fair market value as of January 1 of the year following their construction. Purchases or transfers of primary residences between spouses or between parents and children are not considered changes in ownership. A person may have only one primary residence and must own and occupy that residence for at least 7 months of the year.",
           submitted: "11/12/2024",
           status: "Petition approved for signature gathering as of 01/17/2025",
@@ -1865,6 +2696,7 @@ const BALLOT_DATA = {
         },
         {
           id: "CI-130 (Ballot Issue #2)",
+          issue: "cost",
           subject: "An act that amends the Montana Constitution to limit the annual increase in the valuation of real property to 2% when assessing property taxes unless there are changes to the real property or a change of ownership, in which case, the real property is assessed at fair market value starting January 1 of the following year. Purchases or transfers of real property between spouses or between parents and children are not considered changes in ownership. Changes to real property shall be assessed as provided by law; however, after the adjustment for any change to the real property, the property shall be assessed according to this act. Finally, no assessment of real property shall exceed fair market value.",
           submitted: "4/7/2025",
           status: "Petition approved for signature gathering as of 06/17/2025",
@@ -1872,6 +2704,7 @@ const BALLOT_DATA = {
         },
         {
           id: "CI-131 (Ballot Issue #3)",
+          issue: "rights",
           subject: "A constitutional initiative that, if passed, mandates Montana supreme court and district court elections be non-partisan. A non-partisan election prohibits labeling candidates on the ballot according to the political party the candidate aligns with including labels like independent.",
           submitted: "7/29/2025",
           status: "Approved to gather signatures on 09/26/2025",
@@ -1879,6 +2712,7 @@ const BALLOT_DATA = {
         },
         {
           id: "CI-132 (Ballot Issue #5)",
+          issue: "rights",
           subject: "A constitutional initiative that amends the Montana Constitution to require that judicial elections remain nonpartisan.",
           submitted: "8/15/2025",
           status: "Approved to gather signatures on 10/09/2025",
@@ -1886,11 +2720,17 @@ const BALLOT_DATA = {
         },
         {
           id: "CI-133 (Ballot Issue #8)",
+          issue: "rights",
           subject: "The Montana constitution reserves to the people the powers of initiative and referendum. This act amends the constitution to protect this fundamental right from unjustified interference by the government. Specifically, this act requires impartial, predictable, open, and timely processes for ballot issues, including approving petitions and ballot statements, resolving legal challenges, and verifying signatures. It requires the state to allow ample time for signature gathering, prohibits disqualification of petitions because of minor or technical issues, and allows voters to withdraw their signatures if they so choose.",
           submitted: "10/3/2025",
           status: "Approved to gather signatures on 3/5/2026",
           submitter: "Claudia Clifford & Theresa Kendrick",
         },
+      ],
+      summaryPoints: [
+        'Montana’s current ballot list is mostly about whether initiatives can reach voters at all, not just what policy they would enact once passed.',
+        'The strongest themes are property-tax pressure and democracy-process rules such as corporate election money and nonpartisan courts.',
+        'If you only read three things, start with I-194, CI-129, and CI-133 because they most directly affect power, taxes, and ballot access.',
       ],
     },
   },
@@ -1901,6 +2741,7 @@ const BALLOT_DATA = {
       items: [
         {
           id: "Proposition LL",
+          issue: "schools",
           type: "retain",
           title: "Maintain Healthy School Meals Funding",
           summary: "Allows the state to retain $12.4 million already collected to continue funding the Healthy School Meals for All program. No new taxes — this proposition prevents the state from having to return money already in the program’s account.",
@@ -1910,6 +2751,7 @@ const BALLOT_DATA = {
         },
         {
           id: "Proposition MM",
+          issue: "schools",
           type: "tax",
           title: "Fund Free School Meals for All Colorado Students",
           summary: "Lowers income tax deduction limits for households earning over $300,000/year — from $12,000 to $1,000 (single filers) and $16,000 to $2,000 (joint filers). Raises approximately $95 million per year to fund free school meals for all K–12 students, increase school food worker wages, and support local food purchasing.",
@@ -1917,6 +2759,11 @@ const BALLOT_DATA = {
           vote: "YES — fund free meals for all students · NO — keep existing deduction limits",
           passed: true,
         },
+      ],
+      summaryPoints: [
+        'Proposition LL is the simpler question: keep $12.4 million already collected in the school meals program instead of refunding it.',
+        'Proposition MM is the larger structural question: raise about $95 million a year from high-income households to keep universal school meals funded long term.',
+        'The strongest real-world evidence chain in this ballot page is school meals → lower absenteeism risk → better odds students stay on track academically.',
       ],
       stateData: [
         { abbr: 'CO', name: 'Colorado', year: 2023, status: 'co',
@@ -2074,6 +2921,123 @@ const BALLOT_DATA = {
   },
 };
 
+function getConcernDefaultIssue() {
+  const map = { school: 'schools', rent: 'cost', energy: 'environment', safety: 'safety' };
+  return map[state.activeConcern] || 'all';
+}
+
+function renderConcernResponse() {
+  const el = document.getElementById('concern-response');
+  if (!el) return;
+  el.textContent = CONCERN_COPY[state.activeConcern];
+}
+
+function syncConcernChips() {
+  document.querySelectorAll('.concern-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.concern === state.activeConcern);
+  });
+}
+
+function buildIssuePills(items) {
+  const row = document.getElementById('issue-pill-row');
+  if (!row) return;
+  const issues = ['all', ...new Set((items || []).map(item => item.issue).filter(Boolean))];
+  row.innerHTML = issues.map(issue => {
+    const label = issue === 'all' ? 'All issues' : (ISSUE_LABELS[issue] || issue);
+    const active = state.ballotIssue === issue ? ' active' : '';
+    return `<button class="issue-pill${active}" data-issue="${issue}">${label}</button>`;
+  }).join('');
+}
+
+function setIssueGuideText() {
+  const box = document.getElementById('issue-guide-box');
+  if (!box) return;
+  box.innerHTML = `<p>${ISSUE_GUIDES[state.ballotIssue] || ISSUE_GUIDES.all}</p>`;
+}
+
+function renderBallotHelpers(area, data) {
+  const summaryList = document.getElementById('ballot-summary-list');
+  const outcomesList = document.getElementById('outcomes-ledger');
+  const votePowerNumber = document.getElementById('vote-power-number');
+  const votePowerCopy = document.getElementById('vote-power-copy');
+  const issueSelect = document.getElementById('ballot-issue-select');
+  const availableIssues = new Set((data?.items || []).map(item => item.issue).filter(Boolean));
+  if (state.ballotIssue !== 'all' && availableIssues.size && !availableIssues.has(state.ballotIssue)) {
+    state.ballotIssue = 'all';
+    if (issueSelect) issueSelect.value = 'all';
+  }
+
+  const summaryPoints = data?.summaryPoints || [
+    `Ballot details for ${area === 'United States' ? 'the United States' : (STATE_NAMES[area] || area)} are still limited in this view.`,
+    'Use the issue lens to simplify what is available.',
+    'Start with the issue that feels most real in your life, then decide whether the item belongs on your ballot.',
+  ];
+  summaryList.innerHTML = summaryPoints.slice(0, 3).map(point => `<li>${point}</li>`).join('');
+
+  const power = VOTE_POWER_DATA[area] || { margin: 47, label: 'a close local race' };
+  const flipCount = Math.floor(power.margin / 2) + 1;
+  votePowerNumber.textContent = power.margin;
+  votePowerCopy.innerHTML = `In ${power.label}, a margin of <strong>${power.margin}</strong> votes means only <strong>${flipCount}</strong> voters switching sides changes the result.`;
+
+  const ledger = OUTCOMES_LEDGER[area] || [
+    'This area still needs a stronger outcomes ledger that connects ballot choices to visible local changes.',
+  ];
+  outcomesList.innerHTML = ledger.map(item => `<li>${item}</li>`).join('');
+
+  setIssueGuideText();
+  buildIssuePills(data?.items || []);
+}
+
+function ballotItemHtml(item) {
+  const issueLabel = item.issue ? `<span>${ISSUE_LABELS[item.issue] || item.issue}</span>` : '';
+  return `
+    <div class="ballot-item">
+      <div class="ballot-item-id">${item.id}</div>
+      <div class="ballot-item-body">${item.subject}</div>
+      <div class="ballot-item-meta">
+        ${issueLabel}
+        <span>Submitter: ${item.submitter}</span>
+        <span>Submitted: ${item.submitted}</span>
+        <span>Status: ${item.status}</span>
+      </div>
+    </div>
+  `;
+}
+
+function coMealsBallotItemHtml(item) {
+  const passedBadge = item.passed ? '<span class="ballot-prop-badge passed">\u2713 Passed</span>' : '';
+  const issueLabel = item.issue ? `<span>${ISSUE_LABELS[item.issue] || item.issue}</span>` : '';
+  return `
+    <div class="ballot-item">
+      <span class="ballot-prop-badge ${item.type}">${item.id}</span>${passedBadge}
+      <div class="ballot-item-id" style="margin-top:0.35rem;">${item.title}</div>
+      <div class="ballot-item-body">${item.summary}</div>
+      <div class="ballot-item-fiscal">Fiscal impact: ${item.fiscal}</div>
+      <div class="ballot-item-vote">${item.vote}</div>
+      <div class="ballot-item-meta" style="margin-top:0.55rem;">${issueLabel}</div>
+    </div>
+  `;
+}
+
+function getFilteredBallotItems(data) {
+  const items = data?.items || [];
+  if (state.ballotIssue === 'all') return items;
+  return items.filter(item => item.issue === state.ballotIssue);
+}
+
+function renderIssueGroupedItems(items, renderer) {
+  const groups = {};
+  items.forEach(item => {
+    const key = item.issue || 'other';
+    groups[key] = groups[key] || [];
+    groups[key].push(item);
+  });
+  return Object.entries(groups).map(([issue, groupItems]) => `
+    <h3 class="ballot-section-title">${ISSUE_LABELS[issue] || issue}</h3>
+    <div class="ballot-grid">${groupItems.map(renderer).join('')}</div>
+  `).join('');
+}
+
 function updateBallot(area) {
   const sel = document.getElementById('ballot-year-select');
   const areaData = BALLOT_DATA[area];
@@ -2099,6 +3063,7 @@ function updateBallot(area) {
     const stateName = STATE_NAMES[area] || area;
     document.getElementById('ballot-content').innerHTML =
       `<p class="ballot-placeholder-msg">Ballot issues coming soon for ${stateName}.</p>`;
+    renderBallotHelpers(area, null);
   }
 }
 
@@ -2107,6 +3072,8 @@ function renderBallotYear(area, year) {
   const areaData = BALLOT_DATA[area];
   if (!areaData || !areaData[year]) return;
   const data = areaData[year];
+  renderBallotHelpers(area, data);
+  const filteredItems = getFilteredBallotItems(data);
 
   if (data._special === 'us') {
     container.innerHTML = `
@@ -2126,22 +3093,12 @@ function renderBallotYear(area, year) {
     return;
   }
 
-  function ballotItemHtml(item) {
-    return `
-      <div class="ballot-item">
-        <div class="ballot-item-id">${item.id}</div>
-        <div class="ballot-item-body">${item.subject}</div>
-        <div class="ballot-item-meta">
-          <span>Submitter: ${item.submitter}</span>
-          <span>Submitted: ${item.submitted}</span>
-          <span>Status: ${item.status}</span>
-        </div>
-      </div>
-    `;
-  }
-
   if (area === 'MT') {
-    const [first, ...rest] = data.items;
+    const [first, ...rest] = filteredItems;
+    if (!first) {
+      container.innerHTML = `<p class="ballot-placeholder-msg">No Montana ballot items match this issue lens.</p>`;
+      return;
+    }
     container.innerHTML = `
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
       <div class="ballot-grid">${ballotItemHtml(first)}</div>
@@ -2150,25 +3107,13 @@ function renderBallotYear(area, year) {
         <div class="chart-card" id="card-mt-income"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openCardSources(this.closest('.chart-card').id)">Sources</button><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
         <div class="chart-card" id="card-mt-income-france"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openCardSources(this.closest('.chart-card').id)">Sources</button><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
       </div>
-      <div class="ballot-grid">${rest.map(ballotItemHtml).join('')}</div>
+      ${state.ballotView === 'issue' ? renderIssueGroupedItems(rest, ballotItemHtml) : `<div class="ballot-grid">${rest.map(ballotItemHtml).join('')}</div>`}
     `;
     loadMtBallotCharts();
     return;
   }
 
   if (data._special === 'co-meals-2025') {
-    const coMealsBallotItemHtml = (item) => {
-      const passedBadge = item.passed ? '<span class="ballot-prop-badge passed">\u2713 Passed</span>' : '';
-      return `
-        <div class="ballot-item">
-          <span class="ballot-prop-badge ${item.type}">${item.id}</span>${passedBadge}
-          <div class="ballot-item-id" style="margin-top:0.35rem;">${item.title}</div>
-          <div class="ballot-item-body">${item.summary}</div>
-          <div class="ballot-item-fiscal">Fiscal impact: ${item.fiscal}</div>
-          <div class="ballot-item-vote">${item.vote}</div>
-        </div>
-      `;
-    };
     const coMealsStateCardHtml = (s) => {
       const badge = s.status === 'active' ? 'Active' : s.status === 'ended' ? 'Ended 2024' : 'Active since 2023';
       const srcBtn = s.sources && s.sources.length
@@ -2198,7 +3143,7 @@ function renderBallotYear(area, year) {
     };
     container.innerHTML = `
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
-      <div class="ballot-grid">${data.items.map(coMealsBallotItemHtml).join('')}</div>
+      ${state.ballotView === 'issue' ? renderIssueGroupedItems(filteredItems, coMealsBallotItemHtml) : `<div class="ballot-grid">${filteredItems.map(coMealsBallotItemHtml).join('')}</div>`}
       <h3 class="ballot-section-title">Student Outcomes: Colorado &amp; Peer States</h3>
       <p style="font-size:0.95rem;line-height:1.65;color:var(--text-body);margin:0.5rem 0 0.75rem;">Five states enacted statewide universal free school meals between 2022 and 2023. When meals are free for all students, research shows more kids show up to school, and math scores improve by the equivalent of 3&#8211;4 extra months of learning per year. The state-level data from these newer programs is still coming in &#8212; drops in students missing school are the strongest signal so far. <button class="learn-more-link" onclick="openLearnMorePopup()">Learn more &#8250;</button></p>
       <div class="meals-legend">
@@ -2213,10 +3158,16 @@ function renderBallotYear(area, year) {
     return;
   }
 
-  const itemsHtml = data.items.map(ballotItemHtml).join('');
+  if (!filteredItems.length) {
+    container.innerHTML = `<p class="ballot-placeholder-msg">No ballot items match this issue lens.</p>`;
+    return;
+  }
+  const itemsHtml = state.ballotView === 'issue'
+    ? renderIssueGroupedItems(filteredItems, ballotItemHtml)
+    : `<div class="ballot-grid">${filteredItems.map(ballotItemHtml).join('')}</div>`;
   container.innerHTML = `
     <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">${data.label}</p>
-    <div class="ballot-grid">${itemsHtml}</div>
+    ${itemsHtml}
   `;
 }
 
@@ -2515,6 +3466,11 @@ function reloadCoBallotMap() {
 // ── Init ───────────────────────────────────────────────────────────────────
 (async () => {
   await loadCountries();
+  state.ballotIssue = getConcernDefaultIssue();
+  document.getElementById('ballot-issue-select').value = state.ballotIssue;
+  syncConcernChips();
+  renderConcernResponse();
+  setIssueGuideText();
   loadTabCharts("economy");
   updateBallot(state.selectedArea);
 

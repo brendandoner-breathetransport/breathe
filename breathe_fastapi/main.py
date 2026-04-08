@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+from typing import Annotated, Literal
 
 # Allow importing data modules from the parent Breathe directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -11,7 +12,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from pathlib import Path
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, Response
 
@@ -1223,6 +1224,40 @@ def make_state_home_affordability(state: str, dark_mode: str) -> go.Figure:
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Breathe Dashboard", version="1.0.0")
 
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.plot.ly https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "connect-src 'self' https://cdn.plot.ly; "
+        "font-src 'self';"
+    )
+    return response
+
+
+# ---------------------------------------------------------------------------
+# Validated query parameter types
+# ---------------------------------------------------------------------------
+DarkMode = Annotated[Literal["light", "dark"], Query()]
+Race = Annotated[Literal["black", "white"], Query()]
+IncomeLevel = Annotated[Literal["Bottom 50%", "Upper 51-99%", "Top 1%"], Query()]
+Country = Annotated[
+    Literal[
+        "australia", "canada", "france", "germany", "italy", "japan",
+        "new_zealand", "norway", "switzerland", "uk", "russia", "china", "usa",
+    ],
+    Query(),
+]
+# Two-letter US state code, e.g. "CO"
+StateCode = Annotated[str, Query(pattern=r"^[A-Z]{2}$")]
+
 _parent = Path(__file__).parent.parent
 app.mount("/static", StaticFiles(directory=str(_parent / "static")), name="static")
 
@@ -1508,9 +1543,9 @@ async def api_countries():
 
 @app.get("/api/economy/income")
 async def api_economy_income(
-    dark_mode: str = Query("light"),
-    income_level: str = Query("Bottom 50%"),
-    country: str = Query("usa"),
+    dark_mode: DarkMode = "light",
+    income_level: IncomeLevel = "Bottom 50%",
+    country: Country = "usa",
     title: str = Query(""),
 ):
     return fig_to_json(
@@ -1522,10 +1557,10 @@ async def api_economy_income(
 
 @app.get("/api/economy/barchart")
 async def api_economy_barchart(
-    dark_mode: str = Query("light"),
-    income_level: str = Query("Bottom 50%"),
+    dark_mode: DarkMode = "light",
+    income_level: IncomeLevel = "Bottom 50%",
     highlight_canada: bool = Query(False),
-    selected_country: str = Query("usa"),
+    selected_country: Country = "usa",
 ):
     return fig_to_json(
         fig=make_economy_barchart(
@@ -1539,8 +1574,8 @@ async def api_economy_barchart(
 
 @app.get("/api/economy/income-taxes")
 async def api_economy_income_taxes(
-    dark_mode: str = Query("light"),
-    income_level: str = Query("Bottom 50%"),
+    dark_mode: DarkMode = "light",
+    income_level: IncomeLevel = "Bottom 50%",
 ):
     return fig_to_json(
         fig=make_economy_income_taxes(dark_mode=dark_mode, income_level=income_level)
@@ -1549,8 +1584,8 @@ async def api_economy_income_taxes(
 
 @app.get("/api/economy/house-purchase-cost")
 async def api_economy_house(
-    dark_mode: str = Query("light"),
-    income_level: str = Query("Bottom 50%"),
+    dark_mode: DarkMode = "light",
+    income_level: IncomeLevel = "Bottom 50%",
 ):
     return fig_to_json(
         fig=make_economy_house_purchase(dark_mode=dark_mode, income_level=income_level)
@@ -1559,8 +1594,8 @@ async def api_economy_house(
 
 @app.get("/api/economy/f150")
 async def api_economy_f150(
-    dark_mode: str = Query("light"),
-    income_level: str = Query("Bottom 50%"),
+    dark_mode: DarkMode = "light",
+    income_level: IncomeLevel = "Bottom 50%",
 ):
     return fig_to_json(
         fig=make_economy_f150(dark_mode=dark_mode, income_level=income_level)
@@ -1568,19 +1603,19 @@ async def api_economy_f150(
 
 
 @app.get("/api/economy/american-dream-kids")
-async def api_american_dream_kids(dark_mode: str = Query("light")):
+async def api_american_dream_kids(dark_mode: DarkMode = "light"):
     return fig_to_json(fig=make_american_dream_kids(dark_mode=dark_mode))
 
 
 @app.get("/api/economy/mobility-international")
-async def api_mobility_international(dark_mode: str = Query("light")):
+async def api_mobility_international(dark_mode: DarkMode = "light"):
     return fig_to_json(fig=make_mobility_international(dark_mode=dark_mode))
 
 
 @app.get("/api/economy/upward-mobility")
 async def api_upward_mobility(
-    dark_mode: str = Query("light"),
-    race: str = Query("white"),
+    dark_mode: DarkMode = "light",
+    race: Race = "white",
 ):
     return fig_to_json(
         fig=make_county_heatmap(
@@ -1597,7 +1632,7 @@ async def api_upward_mobility(
 
 
 @app.get("/api/healthcare/cost-per-capita")
-async def api_healthcare_cost(dark_mode: str = Query("light")):
+async def api_healthcare_cost(dark_mode: DarkMode = "light"):
     return fig_to_json(
         fig=make_healthcare(
             data=healthcare_cost_per_capita,
@@ -1609,7 +1644,7 @@ async def api_healthcare_cost(dark_mode: str = Query("light")):
 
 
 @app.get("/api/healthcare/life-expectancy")
-async def api_healthcare_life(dark_mode: str = Query("light")):
+async def api_healthcare_life(dark_mode: DarkMode = "light"):
     return fig_to_json(
         fig=make_healthcare(
             data=healthcare_life_expectancy,
@@ -1621,7 +1656,7 @@ async def api_healthcare_life(dark_mode: str = Query("light")):
 
 
 @app.get("/api/healthcare/infant-mortality")
-async def api_healthcare_infant(dark_mode: str = Query("light")):
+async def api_healthcare_infant(dark_mode: DarkMode = "light"):
     return fig_to_json(
         fig=make_healthcare(
             data=healthcare_infant_mortality,
@@ -1633,7 +1668,7 @@ async def api_healthcare_infant(dark_mode: str = Query("light")):
 
 
 @app.get("/api/healthcare/maternal-mortality")
-async def api_healthcare_maternal(dark_mode: str = Query("light")):
+async def api_healthcare_maternal(dark_mode: DarkMode = "light"):
     return fig_to_json(
         fig=make_healthcare(
             data=healthcare_maternal_mortality,
@@ -1645,7 +1680,7 @@ async def api_healthcare_maternal(dark_mode: str = Query("light")):
 
 
 @app.get("/api/healthcare/suicide-rates")
-async def api_healthcare_suicide(dark_mode: str = Query("light")):
+async def api_healthcare_suicide(dark_mode: DarkMode = "light"):
     return fig_to_json(
         fig=make_healthcare(
             data=healthcare_suicide_rates,
@@ -1661,8 +1696,8 @@ async def api_healthcare_suicide(dark_mode: str = Query("light")):
 
 @app.get("/api/justice/jail")
 async def api_justice_jail(
-    dark_mode: str = Query("light"),
-    race: str = Query("white"),
+    dark_mode: DarkMode = "light",
+    race: Race = "white",
 ):
     return fig_to_json(
         fig=make_county_heatmap(
@@ -1680,8 +1715,8 @@ async def api_justice_jail(
 
 @app.get("/api/economy/state-home-affordability")
 async def api_state_home_affordability(
-    state: str = Query("CO"),
-    dark_mode: str = Query("light"),
+    state: StateCode = "CO",
+    dark_mode: DarkMode = "light",
 ):
     return fig_to_json(
         fig=make_state_home_affordability(state=state, dark_mode=dark_mode)
@@ -1692,7 +1727,7 @@ async def api_state_home_affordability(
 
 
 @app.get("/api/environment/electricity-cost")
-async def api_electricity_cost(dark_mode: str = Query("light")):
+async def api_electricity_cost(dark_mode: DarkMode = "light"):
     return fig_to_json(fig=make_electricity_cost(dark_mode=dark_mode))
 
 
@@ -1711,7 +1746,7 @@ def _csv(df: pl.DataFrame, filename: str) -> Response:
 
 @app.get("/api/csv/income")
 async def csv_income(
-    income_level: str = Query("Bottom 50%"), country: str = Query("usa")
+    income_level: IncomeLevel = "Bottom 50%", country: Country = "usa"
 ):
     income_col = INCOME_LEVELS[income_level]
     usa = (
@@ -1734,7 +1769,7 @@ async def csv_income(
 
 
 @app.get("/api/csv/barchart")
-async def csv_barchart(income_level: str = Query("Bottom 50%")):
+async def csv_barchart(income_level: IncomeLevel = "Bottom 50%"):
     income_col = INCOME_LEVELS[income_level]
     df = (
         shares_wid.filter(pl.col("year") == shares_wid["year"].max())
@@ -1745,7 +1780,7 @@ async def csv_barchart(income_level: str = Query("Bottom 50%")):
 
 
 @app.get("/api/csv/income-taxes")
-async def csv_income_taxes(income_level: str = Query("Bottom 50%")):
+async def csv_income_taxes(income_level: IncomeLevel = "Bottom 50%"):
     income_col = INCOME_LEVELS[income_level]
     usa = (
         shares_wid.filter(pl.col("country") == "usa")
@@ -1761,7 +1796,7 @@ async def csv_income_taxes(income_level: str = Query("Bottom 50%")):
 
 
 @app.get("/api/csv/house-purchase-cost")
-async def csv_house_purchase(income_level: str = Query("Bottom 50%")):
+async def csv_house_purchase(income_level: IncomeLevel = "Bottom 50%"):
     income_col = INCOME_LEVELS[income_level]
     income = (
         shares_wid.filter(pl.col("country") == "usa")
@@ -1779,7 +1814,7 @@ async def csv_house_purchase(income_level: str = Query("Bottom 50%")):
 
 
 @app.get("/api/csv/f150")
-async def csv_f150(income_level: str = Query("Bottom 50%")):
+async def csv_f150(income_level: IncomeLevel = "Bottom 50%"):
     income_col = INCOME_LEVELS[income_level]
     income = (
         shares_wid.filter(pl.col("country") == "usa")
@@ -1815,7 +1850,7 @@ async def csv_mobility_international():
 
 
 @app.get("/api/csv/upward-mobility")
-async def csv_upward_mobility(race: str = Query("white")):
+async def csv_upward_mobility(race: Race = "white"):
     df = (
         outcomes_upward_mobility_jail.filter(pl.col("metric") == "upward_mobility")
         .filter(pl.col("race") == race)
@@ -1839,7 +1874,7 @@ async def csv_healthcare(metric: str = Query("cost-per-capita")):
 
 
 @app.get("/api/csv/jail")
-async def csv_jail(race: str = Query("white")):
+async def csv_jail(race: Race = "white"):
     df = (
         outcomes_upward_mobility_jail.filter(pl.col("metric") == "jail")
         .filter(pl.col("race") == race)
@@ -1855,7 +1890,7 @@ async def csv_electricity_cost():
 
 
 @app.get("/api/csv/state-home-affordability")
-async def csv_state_home_affordability(state: str = Query("CO")):
+async def csv_state_home_affordability(state: StateCode = "CO"):
     df = house_purchase_cost_as_percent_of_income_state_level.filter(
         pl.col("state") == state
     ).sort("date")
