@@ -105,6 +105,107 @@ config = dict(
     ],
 )
 
+START_HERE_CONCERNS = {
+    "rent": {
+        "title": "Your rent and housing costs",
+        "impact": "When local votes change school funding, zoning, transit, or taxes, your monthly housing budget usually feels it before anything else.",
+        "ballot_hook": "Start with measures tied to housing supply, property taxes, transit access, and school funding because those decisions often flow into rents and neighborhood demand.",
+        "next_step": "Find the one measure most likely to affect your next 12 months, then check whether it is on your ballot before you do anything else.",
+    },
+    "school": {
+        "title": "Your kid's school",
+        "impact": "School-related measures are easier to care about because the feedback loop is visible: meals, staffing, attendance support, buildings, and district funding.",
+        "ballot_hook": "Look for school meals, district funding, board races, and bond questions first. Those are usually the fastest local choices to translate into daily family impact.",
+        "next_step": "Read the plain-language explainer, decide whether the measure helps your household, then use that as the reason to register or turn out.",
+    },
+    "healthcare": {
+        "title": "Healthcare and family stability",
+        "impact": "State and local choices shape food security, school supports, pollution exposure, and public-health capacity even when the ballot item does not look like a hospital issue.",
+        "ballot_hook": "Start with measures touching school meals, environmental costs, and county services because they often move the real-life stress around healthcare costs.",
+        "next_step": "Use one issue you already pay for in time, money, or stress as the anchor. If the ballot changes that, the decision is no longer abstract.",
+    },
+    "energy": {
+        "title": "Your utility bill and transportation costs",
+        "impact": "The app already shows energy and cost-of-living trends. Local votes can determine whether those costs get cushioned or passed through.",
+        "ballot_hook": "Look first for measures related to public infrastructure, utilities, transit, and housing because those shape household energy burden indirectly and directly.",
+        "next_step": "Decide whether the measure lowers pressure on your monthly budget. If yes, that is your reason to act.",
+    },
+}
+
+ISSUE_GUIDES = {
+    "schools": {
+        "title": "Schools and family support",
+        "summary": "School-related ballot items are usually the easiest local measures to explain in daily-life terms because the outputs are concrete: meals, staffing, attendance, buildings, and after-school support.",
+        "questions": [
+            "Does this change what students receive day to day?",
+            "Who pays, and who benefits first?",
+            "Will the result be visible within one school year?",
+        ],
+    },
+    "cost": {
+        "title": "Cost of living",
+        "summary": "Measures tied to taxes, housing, transit, or utilities should be framed around household pressure, not ideology. The right question is whether they change your monthly cash flow or neighborhood affordability.",
+        "questions": [
+            "Does this raise or lower monthly pressure on rent, food, transport, or taxes?",
+            "Is the cost broad-based or concentrated on high earners, landlords, or new development?",
+            "What changes first if the measure passes?",
+        ],
+    },
+    "safety": {
+        "title": "Safety and justice",
+        "summary": "Local public-safety decisions often feel abstract because campaigns talk in slogans. Voters need a plain statement of what actually changes in staffing, enforcement, diversion, or detention.",
+        "questions": [
+            "What will government do differently the next day if this passes?",
+            "Which neighborhoods or groups feel the change first?",
+            "Is success measured by arrests, prevention, or outcomes?",
+        ],
+    },
+    "environment": {
+        "title": "Energy and environment",
+        "summary": "Environmental measures land best when they are translated into price, reliability, and health effects instead of moral language. That is how they stop feeling partisan.",
+        "questions": [
+            "What changes for household bills or public infrastructure?",
+            "What are the short-term costs and long-term savings?",
+            "Does the measure change exposure to pollution or energy volatility?",
+        ],
+    },
+}
+
+BALLOT_EXPLAINERS = {
+    "ll": {
+        "title": "Colorado Proposition LL",
+        "what_changes": "The state keeps $12.4 million it already collected for Healthy School Meals for All instead of refunding that money under TABOR.",
+        "who_is_affected": "Students, families, and school meal operations benefit directly. Taxpayers give up a small refund in exchange.",
+        "daily_life": "The real-world question is simple: keep existing money in school meals, or send roughly $8 per taxpayer back out.",
+        "decision_frame": "This is a retention question, not a new-tax question.",
+    },
+    "mm": {
+        "title": "Colorado Proposition MM",
+        "what_changes": "High-income households face tighter itemized deduction caps, and the new revenue funds universal school meals, higher food-service wages, local food purchasing, and some SNAP admin costs.",
+        "who_is_affected": "About 5.5% of Colorado filers pay more. Students, schools, and food-service systems get the direct benefits.",
+        "daily_life": "If it passes, more school meal funding becomes ongoing instead of temporary, and the costs land mostly on higher-income tax filers.",
+        "decision_frame": "This is a targeted tax-change question tied to a visible school-service outcome.",
+    },
+}
+
+OUTCOMES_LEDGER = [
+    {
+        "title": "Healthy School Meals for All launched statewide",
+        "what_happened": "Colorado began statewide universal free school meals in the 2023-24 school year.",
+        "why_it_matters": "That gives skeptical voters a concrete bridge between a ballot question and an everyday school experience families can actually see.",
+    },
+    {
+        "title": "Attendance improved after launch",
+        "what_happened": "Colorado attendance data improved in 2023-24, and the research dossier in this repo ties school meal access to lower absenteeism in the strongest available evidence base.",
+        "why_it_matters": "This does not prove every attendance gain came from the ballot-linked program, but it does show what “something changed” can look like after a vote.",
+    },
+    {
+        "title": "Funding questions became easier to explain",
+        "what_happened": "Once the program existed, later ballot measures could be framed around keeping or expanding something voters could already picture.",
+        "why_it_matters": "That is the pattern cynics need: not promises, but a visible chain from vote to program to neighborhood-level effects.",
+    },
+]
+
 # #-----------------------------------------------------------------------------------------
 # # Race Data
 # #-----------------------------------------------------------------------------------------
@@ -751,6 +852,21 @@ config["plotly_mobile"] = {
     },
 }
 
+config["plotly_mobile_map"] = {
+    "responsive": True,
+    "displayModeBar": True,
+    "displaylogo": False,
+    "scrollZoom": True,
+    "doubleClick": "reset",
+    "showTips": False,
+    "modeBarButtonsToRemove": [
+        "lasso2d",
+        "select2d",
+        "hoverClosestGeo",
+        "toImage",
+    ],
+}
+
 
 def plot_county_heatmap(
     data: pl.DataFrame,
@@ -824,7 +940,7 @@ def plot_county_heatmap(
     )
 
     fig = go.FigureWidget(fig)
-    fig._config = fig._config | config["plotly_mobile"]
+    fig._config = fig._config | config["plotly_mobile_map"]
 
     return fig
 
@@ -852,6 +968,118 @@ app_ui = ui.page_fillable(
         ui.tags.meta(name="viewport", content="width=device-width, initial-scale=1.0"),
     ),
     ui.page_navbar(
+        ui.nav_panel(
+            "Start Here",
+            ui.row(
+                ui.h1(
+                    ui.span(
+                        HTML("Start with what affects your life, not with campaign noise."),
+                        style="color:rgba(255,255,255,0.9)",
+                    )
+                )
+            ),
+            ui.row(
+                ui.p(
+                    "Pick the pressure point that already feels real to you. The goal is to make local voting legible before asking for any civic commitment.",
+                    style="color:rgba(255,255,255,0.75); font-size:1.05rem;",
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(
+                        ui.h3("1. Start with your concern"),
+                        ui.input_radio_buttons(
+                            id="start_here_concern",
+                            label=None,
+                            choices={
+                                "rent": "Rent / housing",
+                                "school": "Kid's school",
+                                "healthcare": "Healthcare stress",
+                                "energy": "Utility / transport costs",
+                            },
+                            selected="school",
+                        ),
+                        ui.output_ui("start_here_personal_impact"),
+                    ),
+                    ui.card(
+                        ui.h3("2. Read measures by issue"),
+                        ui.input_select(
+                            id="issue_guide",
+                            label=None,
+                            choices={
+                                "schools": "Schools and family support",
+                                "cost": "Cost of living",
+                                "safety": "Safety and justice",
+                                "environment": "Energy and environment",
+                            },
+                            selected="schools",
+                        ),
+                        ui.output_ui("start_here_issue_guide"),
+                    ),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(
+                        ui.h3("3. Plain-language ballot explainer"),
+                        ui.input_radio_buttons(
+                            id="ballot_measure",
+                            label=None,
+                            choices={
+                                "ll": "Prop LL",
+                                "mm": "Prop MM",
+                            },
+                            selected="ll",
+                            inline=True,
+                        ),
+                        ui.output_ui("start_here_ballot_explainer"),
+                    ),
+                    ui.card(
+                        ui.h3("4. Vote power calculator"),
+                        ui.p(
+                            "If a local race or measure is decided by a small margin, only half that many voters switching sides changes the result.",
+                            style="color:rgba(255,255,255,0.75);",
+                        ),
+                        ui.input_slider(
+                            id="vote_margin",
+                            label="Past margin of victory",
+                            min=2,
+                            max=500,
+                            value=47,
+                            step=1,
+                        ),
+                        ui.output_ui("start_here_vote_power"),
+                    ),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                )
+            ),
+            ui.row(
+                ui.layout_columns(
+                    ui.card(
+                        ui.h3("5. What changed after past votes"),
+                        ui.p(
+                            "This is the anti-cynicism section: not promises, but visible examples of what a passed measure can turn into.",
+                            style="color:rgba(255,255,255,0.75);",
+                        ),
+                        ui.output_ui("start_here_outcomes_ledger"),
+                    ),
+                    ui.card(
+                        ui.h3("Last mile"),
+                        ui.markdown(
+                            """
+                            **Do these three things only after the issue feels real:**
+
+                            1. Check whether this measure or race is actually on your ballot.
+                            2. Check your registration and polling details on your state's election site.
+                            3. Set a reminder tied to the issue you care about, not to a generic election date.
+                            """
+                        ),
+                    ),
+                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (8, 4)},
+                )
+            ),
+        ),
         # --------------------------------------------------------------------------------------------------
         # Economy
         # --------------------------------------------------------------------------------------------------
@@ -927,9 +1155,9 @@ app_ui = ui.page_fillable(
                 ui.layout_columns(
                     ui.card(output_widget("plot_economy_timeseries_income_taxes")),
                     col_widths={
-                        "xs": (12, 12),
-                        "sm": (12, 12),
-                        "md": (6, 6),
+                        "xs": (12,),
+                        "sm": (12,),
+                        "md": (12,),
                     },  # Stack on mobile, side-by-side on desktop
                 )
             ),
@@ -1052,7 +1280,7 @@ app_ui = ui.page_fillable(
                 ui.layout_columns(
                     ui.card(output_widget("plot_healthcare_suicide_rates")),
                     # ui.card(output_widget("plot_healthcare_suicide_rates")),
-                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                    col_widths={"xs": (12,), "sm": (12,), "md": (12,)},
                 )
             ),
         ),
@@ -1097,7 +1325,7 @@ app_ui = ui.page_fillable(
                 ui.layout_columns(
                     ui.card(output_widget("plot_electricity_cost")),
                     # ui.card(output_widget("plot_black_jail")),
-                    col_widths={"xs": (12, 12), "sm": (12, 12), "md": (6, 6)},
+                    col_widths={"xs": (12,), "sm": (12,), "md": (12,)},
                     # Stack on mobile, side-by-side on desktop
                 )
             ),
@@ -1267,7 +1495,8 @@ app_ui = ui.page_fillable(
         """
         /* Your existing styles */
         .leaflet-popup-content {
-            width: 600px !important;
+            width: min(600px, calc(100vw - 32px)) !important;
+            max-width: calc(100vw - 32px) !important;
         }
         .leaflet-div-icon {
             background: transparent !important;
@@ -1308,6 +1537,16 @@ app_ui = ui.page_fillable(
                 text-align: center;
             }
 
+            .navbar-nav .nav-link {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+                white-space: nowrap;
+            }
+
+            .navbar-collapse {
+                overflow-x: auto;
+            }
+
             /* Make plots responsive */
             .js-plotly-plot {
                 width: 100% !important;
@@ -1335,6 +1574,84 @@ app_ui = ui.page_fillable(
 
 
 def server(input, output, session):
+    @output
+    @render.ui
+    def start_here_personal_impact():
+        concern = START_HERE_CONCERNS[input.start_here_concern()]
+        return ui.markdown(
+            f"""
+            **Why this is worth your attention:** {concern["impact"]}
+
+            **What to look for on the ballot:** {concern["ballot_hook"]}
+
+            **Best next step:** {concern["next_step"]}
+            """
+        )
+
+    @output
+    @render.ui
+    def start_here_issue_guide():
+        issue = ISSUE_GUIDES[input.issue_guide()]
+        questions = "\n".join([f"- {question}" for question in issue["questions"]])
+        return ui.markdown(
+            f"""
+            **{issue["title"]}**
+
+            {issue["summary"]}
+
+            **Use these questions:**
+            {questions}
+            """
+        )
+
+    @output
+    @render.ui
+    def start_here_ballot_explainer():
+        measure = BALLOT_EXPLAINERS[input.ballot_measure()]
+        return ui.markdown(
+            f"""
+            **{measure["title"]}**
+
+            **What changes:** {measure["what_changes"]}
+
+            **Who is affected first:** {measure["who_is_affected"]}
+
+            **What it means in daily life:** {measure["daily_life"]}
+
+            **How to think about it:** {measure["decision_frame"]}
+            """
+        )
+
+    @output
+    @render.ui
+    def start_here_vote_power():
+        margin = input.vote_margin()
+        flip_count = int(np.floor(margin / 2) + 1)
+        return ui.markdown(
+            f"""
+            **If the margin was {margin} votes, only {flip_count} voters switching sides would change the result.**
+
+            That is the local-election math most people miss. Small-margin races are not moved by “everyone.” They are moved by one apartment building, one block, one friend group, or one school pickup line deciding to act.
+            """
+        )
+
+    @output
+    @render.ui
+    def start_here_outcomes_ledger():
+        cards = []
+        for item in OUTCOMES_LEDGER:
+            cards.append(
+                ui.div(
+                    ui.h4(item["title"]),
+                    ui.p(item["what_happened"], style="margin-bottom:0.35rem;"),
+                    ui.p(
+                        item["why_it_matters"],
+                        style="color:rgba(255,255,255,0.75); margin-bottom:1rem;",
+                    ),
+                )
+            )
+        return ui.div(*cards)
+
     @output
     @render_widget
     def plot_economy_timeseries_income():
