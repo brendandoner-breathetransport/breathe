@@ -37,6 +37,7 @@ from data.justice_outcomes_upward_mobility_jail import outcomes_upward_mobility_
 from data.economy_house_purchase_cost_as_percent_of_income_state_level import (
     house_purchase_cost_as_percent_of_income_state_level,
 )
+from data.economy_income_irs_states import income_irs_states
 
 # ---------------------------------------------------------------------------
 # One-time data prep
@@ -1219,6 +1220,79 @@ def make_state_home_affordability(state: str, dark_mode: str) -> go.Figure:
     return fig
 
 
+# State-level income distribution (IRS SOI AGI Percentile data)
+def make_state_income(state: str, dark_mode: str, income_level: str) -> go.Figure:
+    income_col = INCOME_LEVELS[income_level]
+    state_data = income_irs_states.filter(
+        (pl.col("state") == state) & (pl.col("state") != "US")
+    ).sort("year")
+    irs_us_data = income_irs_states.filter(pl.col("state") == "US").sort("year")
+    wid_us_data = shares_wid.filter(pl.col("country") == "usa").sort("year")
+    state_name = _ABBREV_TO_STATE.get(state, state)
+
+    accent = COLOR_LIGHT_DARK[dark_mode]
+    gray = "rgba(255,255,255,0.35)" if dark_mode == "dark" else "rgba(0,0,0,0.2)"
+    wid_color = "rgba(230, 155, 50, 0.85)"
+    hover = (
+        "<b>%{fullData.name}</b><br>Year: %{x} | average pay: $%{y:,.0f}<extra></extra>"
+    )
+
+    fig = go.Figure(
+        data=[
+            go.Scatter(
+                name=state_name,
+                x=state_data["year"],
+                y=state_data[income_col],
+                mode="markers+lines",
+                line=dict(color=accent, width=3),
+                hovertemplate=hover,
+            ),
+            go.Scatter(
+                name="U.S. Avg — IRS (1997–2022)",
+                x=irs_us_data["year"],
+                y=irs_us_data[income_col],
+                mode="lines",
+                line=dict(color=gray, width=2, dash="dash"),
+                hovertemplate=hover,
+            ),
+            go.Scatter(
+                name="U.S. National — WID (historical)",
+                x=wid_us_data["year"],
+                y=wid_us_data[income_col],
+                mode="lines",
+                line=dict(color=wid_color, width=2),
+                hovertemplate=hover,
+            ),
+        ]
+    )
+    all_y = np.concatenate(
+        [
+            state_data[income_col].to_numpy(),
+            irs_us_data[income_col].to_numpy(),
+            wid_us_data[income_col].drop_nulls().to_numpy(),
+        ]
+    )
+    ymin, ymax = get_yaxis_range(y_data=all_y)
+    fig.update_layout(
+        title=_title_dict(main="Average Income by Income Group", subtitle=state_name),
+        title_x=0.5,
+        yaxis_title=AXIS_TITLE_INCOME,
+        yaxis=dict(
+            range=[ymin, ymax],
+            tickformat=AXIS_TITLE_INCOME_FORMAT,
+            fixedrange=True,
+        ),
+        xaxis=dict(fixedrange=True),
+        showlegend=True,
+        template=get_color_template(dark_mode),
+        plot_bgcolor=get_background_color(dark_mode),
+        paper_bgcolor=get_background_color(dark_mode),
+        margin=PLOT_MARGIN,
+        legend=dict(x=0.01, y=0.99, xanchor="left", yanchor="top"),
+    )
+    return fig
+
+
 # ---------------------------------------------------------------------------
 # FastAPI app
 # ---------------------------------------------------------------------------
@@ -1312,6 +1386,7 @@ _FUNC_DISPLAY: dict[str, str] = {
     "make_justice_jail": "Justice — Incarceration",
     "make_electricity_cost": "Electricity Cost",
     "make_state_home_affordability": "State Home Affordability",
+    "make_state_income": "State Income Distribution",
     "Additional": "Additional Sources",
     "co_ballot_2025": "Colorado 2025 — Healthy School Meals for All",
 }
@@ -1373,6 +1448,9 @@ _FUNC_CHARTS: dict[str, list[str]] = {
     ],
     "make_state_home_affordability": [
         "Percent of Income to Purchase a Home (by State)",
+    ],
+    "make_state_income": [
+        "Average Income by Income Group",
     ],
     "co_ballot_2025": [
         "Colorado 2025 Ballot — Proposition LL & MM",
@@ -1516,8 +1594,325 @@ def _parse_sources_md() -> dict:
     return {"popup": popup, "page": "\n".join(page_lines)}
 
 
-# Parsed once at startup; restart server after editing sources.md
-_SOURCES_CACHE: dict = _parse_sources_md()
+# Populated after BALLOT_SOURCES and _build_ballot_sources_html are defined below.
+_SOURCES_CACHE: dict = {}
+
+
+# ---------------------------------------------------------------------------
+# Ballot sources — structured by (area, year, issue_id)
+#
+# Keying convention:
+#   area     = state abbreviation or "US" for federal measures
+#   year     = ballot election year (int)
+#   issue_id = short slug; None means "all issues for this ballot cycle"
+#
+# To add a new ballot cycle: add a new entry to BALLOT_SOURCES below.
+# ---------------------------------------------------------------------------
+
+_BallotSourceEntry = dict  # {title, url, note}  (url and note are optional)
+
+
+def _s(title: str, url: str = "", note: str = "") -> _BallotSourceEntry:
+    """Convenience constructor for a ballot source entry."""
+    return {"title": title, "url": url, "note": note}
+
+
+BALLOT_SOURCES: dict[tuple, list[dict]] = {
+    # ── Colorado 2025 — Healthy School Meals for All ───────────────────────
+    # area="CO", year=2025, issue_id=None  ← covers all issues in this cycle
+    ("CO", 2025, None): [
+        # Ballot Measures & Program Data
+        {
+            "section": "Ballot Measures & Program Data",
+            "sources": [
+                _s(
+                    "Colorado 2025 Blue Book",
+                    "https://leg.colorado.gov/bluebook",
+                    "Colorado Secretary of State, 2025 State Ballot Information Booklet — Official measure text, fiscal notes, and vote language for Prop LL and Prop MM",
+                ),
+                _s(
+                    "Proposition LL Fiscal Note",
+                    "",
+                    "Colorado Legislative Council Staff, Fiscal Note: Proposition LL (2025) — TABOR retention of $12.4M already collected; no new taxes",
+                ),
+                _s(
+                    "Proposition MM Fiscal Note",
+                    "",
+                    "Colorado Legislative Council Staff, Fiscal Note: Proposition MM (2025) — Income tax deduction limit change raising ~$95M/year for school meals and SNAP",
+                ),
+                _s(
+                    "Colorado 2023-24 Attendance Data",
+                    "https://cde.state.co.us/communications/newsrelease082224-attendance",
+                    "CDE News Release (August 2024) — Chronic absenteeism fell 3.4 pp (31.1% → 27.7%) in first year; 70% of districts improved",
+                ),
+                _s(
+                    "Colorado Healthy School Meals for All Program",
+                    "https://ed.cde.state.co.us/nutrition/nutrition-programs/healthy-school-meals-for-all-program",
+                    "CDE — Program structure, eligibility, and participation data",
+                ),
+            ],
+        },
+        # Evidence: Attendance & Chronic Absenteeism
+        {
+            "section": "Evidence on Attendance & Chronic Absenteeism",
+            "sources": [
+                _s(
+                    "Schwartz & Trajkovski (2023) — NYC Kindergarteners",
+                    "https://surface.syr.edu/lerner/208/",
+                    "Exposure to Free School Meals in Kindergarten Has Lasting Positive Effects on Students' Attendance, Syracuse University Lerner Center — Chronic absenteeism fell 5.4 pp; 1.8 additional school days/year",
+                ),
+                _s(
+                    "Vercammen et al. (2024) — Systematic Review",
+                    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11316229/",
+                    "Universal Free School Meals and School and Student Outcomes: A Systematic Review, JAMA Network Open — Attendance 'did not change or modestly improved' across 6 studies; certainty of evidence rated low",
+                ),
+                _s(
+                    "Massachusetts Attendance (2024)",
+                    "https://www.mass.gov/news/healey-driscoll-administration-celebrates-massachusetts-schools-with-biggest-drop-in-chronic-absenteeism",
+                    "Healey-Driscoll Administration — Chronic absenteeism fell 4.9 pp in year 2; largest single-year decline in state history",
+                ),
+                _s(
+                    "Minnesota First Year (2024)",
+                    "https://education.mn.gov/mdeprod/idcplg?IdcService=GET_FILE&dDocName=PROD085180&RevisionSelectionMethod=latestReleased&Rendition=primary",
+                    "Minnesota Department of Education, Free School Meals: First Year Preliminary Summary — Chronic absenteeism down 1 pp; breakfast +40%, lunch +15%",
+                ),
+                _s(
+                    "California Trends",
+                    "https://edpolicyinca.org/publications/unpacking-californias-chronic-absence-crisis-through-2023-24",
+                    "PACE, Unpacking California's Chronic Absence Crisis Through 2023-24 — Chronic absenteeism fell from 30% (2022) to 20.4% (2024)",
+                ),
+            ],
+        },
+        # Evidence: Test Scores & Academic Performance
+        {
+            "section": "Evidence on Test Scores & Academic Performance",
+            "sources": [
+                _s(
+                    "Gordanier et al. (2020) — CEP South Carolina",
+                    "https://www.sciencedirect.com/science/article/abs/pii/S0272775719307605",
+                    "Free Lunch for All! The Effect of the Community Eligibility Provision on Academic Outcomes, Economics of Education Review — Math scores +0.06 SD in elementary schools",
+                ),
+                _s(
+                    "Ruffini (2022) — CEP National",
+                    "https://jhr.uwpress.org/content/57/3/776",
+                    "Universal Access to Free School Meals and Student Achievement: Evidence from the CEP, Journal of Human Resources Vol. 57(3) — Effects concentrated in districts with low baseline free-meal eligibility",
+                ),
+                _s(
+                    "Imberman & Kugler (2014) — Classroom Breakfast",
+                    "",
+                    "The Effect of Providing Breakfast on Student Performance, Journal of Policy Analysis and Management — Math and reading +0.10 SD vs. cafeteria breakfast",
+                ),
+                _s(
+                    "UC ANR Nutrition Policy Institute (2024–25)",
+                    "https://ucanr.edu/program/nutrition-policy-institute/article/evaluation-universal-school-meals-california",
+                    "Evaluation of Universal School Meals in California — Multi-year longitudinal evaluation ongoing; no test score data published yet",
+                ),
+                _s(
+                    "Systematic Review — Nutrients (2021)",
+                    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8000006/",
+                    "Universal School Meals and Associations with Student Participation, Attendance, Academic Performance, Diet Quality, Food Security, and BMI — 12 studies; mixed results",
+                ),
+            ],
+        },
+        # Evidence: Food Insecurity & Mental Health
+        {
+            "section": "Evidence on Food Insecurity & Mental Health",
+            "sources": [
+                _s(
+                    "AJPM (2025) — Food Insecurity & State Meal Policies",
+                    "https://www.ajpmonline.org/article/S0749-3797(25)00433-7/fulltext",
+                    "Statewide Universal School Meal Policies and Food Insecurity in Households With Children — States with universal meal policies had significantly lower household food insecurity rates",
+                ),
+                _s(
+                    "Gundersen & Ziliak (2015) — Food Insecurity & Health",
+                    "",
+                    "Food Insecurity and Health Outcomes, Health Affairs — Food-insecure children are ~2x as likely to experience anxiety, depression, and behavioral problems; review of 22 studies",
+                ),
+                _s(
+                    "Mani et al. (2013) — Cognitive Tax of Scarcity",
+                    "",
+                    "Poverty Impedes Cognitive Function, Science — Financial scarcity imposes a cognitive bandwidth tax; note: specific magnitude has failed pre-registered replication (see Limitations section)",
+                ),
+                _s(
+                    "Shanafelt et al. (2016) — Food Insecurity & Behavioral Problems",
+                    "",
+                    "Food Insecurity and Child Behavioral Problems in Fragile Families, Maternal and Child Health Journal",
+                ),
+                _s(
+                    "Rosen et al. (2019) — Stigma & School Belonging",
+                    "",
+                    "Removing Stigma from School Meals, Journal of School Health — Economic stigma of free lunch receipt negatively affects self-concept and school engagement",
+                ),
+            ],
+        },
+        # Downstream Effects
+        {
+            "section": "Downstream Effects — Why These Outcomes Matter",
+            "sources": [
+                _s(
+                    "Chang & Romero (2008) — Early Grades Attendance",
+                    "",
+                    "Present, Engaged, and Accounted For, National Center for Children in Poverty — Chronic absence in K–3 predicts 3rd grade reading; students not reading proficiently by 3rd grade are 4x more likely to drop out",
+                ),
+                _s(
+                    "Balfanz & Byrnes (2012) — Middle School Dropout",
+                    "",
+                    "Chronic Absenteeism: Summarizing What We Know, Johns Hopkins University — Students chronically absent in 6th grade are 3x more likely to drop out",
+                ),
+                _s(
+                    "Rouse (2007) — Dropout & Lifetime Earnings",
+                    "",
+                    "The Labor Market Consequences of an Inadequate Education, Princeton University — Dropouts earn $300,000–$400,000 less than graduates over their lifetimes",
+                ),
+                _s(
+                    "Hattie (2009) — Effect Size Benchmarks",
+                    "",
+                    "Visible Learning: A Synthesis of Over 800 Meta-Analyses — 0.10 SD gain ≈ 3–4 months of additional learning",
+                ),
+                _s(
+                    "Chetty, Friedman & Rockoff (2014) — Test Scores & Earnings",
+                    "",
+                    "Measuring the Impacts of Teachers II, American Economic Review — 1 SD improvement in test scores raises lifetime earnings by ~$39,000",
+                ),
+                _s(
+                    "Hanushek & Woessmann (2008) — Test Scores & GDP",
+                    "",
+                    "The Role of Cognitive Skills in Economic Development, Journal of Economic Literature — Student test scores are the strongest single predictor of long-run GDP growth",
+                ),
+            ],
+        },
+        # Program Cost vs. Societal Return
+        {
+            "section": "Program Cost vs. Societal Return",
+            "sources": [
+                _s(
+                    "Belfield & Levin (2007) — Cost of a Dropout",
+                    "",
+                    "The Price We Pay, Brookings Institution Press — Each dropout costs society an estimated $260,000–$290,000 (note: selection bias concerns; see Limitations)",
+                ),
+                _s(
+                    "Lochner & Moretti (2004) — Education & Crime",
+                    "",
+                    "The Effect of Education on Crime, American Economic Review — Graduation reduces male arrest rates 10–20%",
+                ),
+                _s(
+                    "USDA FNS — School Meal Reimbursement Rates (2023-24)",
+                    "",
+                    "National School Lunch Program: Reimbursement Rates — ~$3.91/meal for free lunches; combined federal + state cost ~$500–$700/student/year",
+                ),
+                _s(
+                    "Hanushek & Woessmann (2015) — Knowledge Capital of Nations",
+                    "",
+                    "The Knowledge Capital of Nations: Education and the Economics of Growth, MIT Press — Test scores are the single strongest predictor of long-run GDP growth",
+                ),
+                _s(
+                    "OECD PISA 2022 Results",
+                    "",
+                    "U.S. ranked ~26th in math out of 37 OECD countries; declined from 2018 to 2022",
+                ),
+                _s(
+                    "McKinsey Global Institute (2009) — Achievement Gap & GDP",
+                    "",
+                    "The Economic Impact of the Achievement Gap in America's Schools — Closing the international achievement gap could add $1.3–$2.3T to GDP",
+                ),
+            ],
+        },
+        # Limitations
+        {
+            "section": "Limitations & Evidence Quality",
+            "sources": [
+                _s(
+                    "State attendance trends are descriptive, not causal",
+                    "",
+                    "No study isolates the meal effect from COVID recovery and concurrent policies. All state trend data is multi-causal. Needed: quasi-experimental studies with district-level controls.",
+                ),
+                _s(
+                    "$260K dropout cost — selection bias concern",
+                    "",
+                    "Belfield & Levin (2007) aggregates outcomes without fully controlling for pre-existing disadvantage. Actual causal effect is likely lower ($100K–$150K). Needed: instrumental variable estimates.",
+                ),
+                _s(
+                    "CEP research may not generalize to statewide universal programs",
+                    "",
+                    "Ruffini (2022) found effects concentrate in low-participation districts. States with already-high uptake may see smaller marginal effects. CA UC ANR study forthcoming.",
+                ),
+                _s(
+                    "Cognitive tax of scarcity (Mani et al. 2013) — replication failure",
+                    "",
+                    "The '13 IQ point' finding was not reproduced in a 2021 pre-registered replication. Directional claim (stress impairs cognition) holds; specific magnitude is contested.",
+                ),
+                _s(
+                    "Mental health causal chain established in parts, not end-to-end",
+                    "",
+                    "No single study measures the full path from universal meals to clinical mental health outcomes to academic improvement.",
+                ),
+                _s(
+                    "U.S. competitiveness — inferential chain too long for direct attribution",
+                    "",
+                    "Hanushek & Woessmann operate at national level over decades. Appropriate as broad educational investment context, not a direct attribution to this program.",
+                ),
+            ],
+        },
+    ],
+}
+
+
+def _build_ballot_sources_html(area: str, year: int) -> str:
+    """Build sources popup HTML for a given ballot area + year."""
+    key = (area.upper(), year, None)
+    sections = BALLOT_SOURCES.get(key)
+    if not sections:
+        return ""
+    parts: list[str] = []
+    for sec in sections:
+        parts.append(f'<p class="sources-subhead">{sec["section"]}</p>')
+        parts.append("<ul>")
+        for src in sec["sources"]:
+            title = src["title"]
+            url = src.get("url", "")
+            note = src.get("note", "")
+            if url:
+                linked = f'<a href="{url}" target="_blank">{title}</a>'
+            else:
+                linked = f"<strong>{title}</strong>"
+            if note:
+                parts.append(f"  <li>{linked} — {note}</li>")
+            else:
+                parts.append(f"  <li>{linked}</li>")
+        parts.append("</ul>")
+    return "\n".join(parts)
+
+
+@app.get("/api/ballot/sources/{area}/{year}")
+async def api_ballot_sources(area: str, year: int):
+    """Return structured sources for a ballot area + year.
+
+    Response shape:
+      { sections: [ { section: str, sources: [ {title, url, note} ] } ] }
+    """
+    key = (area.upper(), year, None)
+    sections = BALLOT_SOURCES.get(key)
+    if sections is None:
+        return JSONResponse({"sections": []})
+    return JSONResponse({"sections": sections})
+
+
+# ---------------------------------------------------------------------------
+# Build sources cache — after BALLOT_SOURCES + _build_ballot_sources_html exist
+# ---------------------------------------------------------------------------
+def _init_sources_cache() -> dict:
+    """Parse sources.md and inject ballot popup HTML from BALLOT_SOURCES."""
+    cache = _parse_sources_md()
+    # Inject ballot sources so popup always works, independent of sources.md parsing.
+    for area, year, _issue_id in BALLOT_SOURCES:
+        key = f"{area.lower()}_ballot_{year}"
+        html = _build_ballot_sources_html(area, year)
+        if html:
+            cache["popup"][key] = html
+    return cache
+
+
+_SOURCES_CACHE.update(_init_sources_cache())
 
 
 @app.get("/api/sources")
@@ -1723,6 +2118,19 @@ async def api_state_home_affordability(
     )
 
 
+@app.get("/api/economy/state-income")
+async def api_state_income(
+    state: str = Query("CO"),
+    dark_mode: str = Query("light"),
+    income_level: str = Query("Bottom 50%"),
+):
+    return fig_to_json(
+        fig=make_state_income(
+            state=state, dark_mode=dark_mode, income_level=income_level
+        )
+    )
+
+
 # --- Environment ---
 
 
@@ -1895,3 +2303,9 @@ async def csv_state_home_affordability(state: StateCode = "CO"):
         pl.col("state") == state
     ).sort("date")
     return _csv(df, f"home_affordability_{state}")
+
+
+@app.get("/api/csv/state-income")
+async def csv_state_income(state: str = Query("CO")):
+    df = income_irs_states.filter(pl.col("state") == state).sort("year")
+    return _csv(df, f"income_distribution_{state}")
