@@ -9,3 +9,4 @@ app.py
 civic_affordability_pg/
 rsconnect-python/
 *.md
+!sources.md
