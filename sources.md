@@ -15,6 +15,29 @@
 ### Internal Notes
 * Pipeline located in breathe/notebooks/pipeline_economy.ipynb
 
+## make_state_income
+### Sources
+* **AGI Percentile Data by State (2013–2022)**: [IRS Statistics of Income — Adjusted Gross Income (AGI) Percentile Data by State](https://www.irs.gov/statistics/soi-tax-stats-agi-percentile-data-by-state). Tax years 2013–2022. Files named `{YY}instateshares.csv`. Provides counts and total AGI for the top 1% and top 50% of filers by state, used to derive average income for Bottom 50%, Upper 51–99%, and Top 1% brackets directly by subtraction.
+* **Historic Table 2 by State (1997–2012)**: [IRS Statistics of Income — Historic Table 2](https://www.irs.gov/statistics/soi-tax-stats-historic-table-2). Tax years 1997–2012. Files named `{YY}in54cm.xls[x]` (XLS) and `12in54cmcsv.csv` (CSV). Provides counts and total AGI by fixed AGI size bracket (not percentile), requiring bracket interpolation to estimate Bottom 50%, Upper 51–99%, and Top 1% averages. All dollar amounts are in thousands of dollars as stated in each file's header.
+* **U.S. National Historical (WID)**: [World Inequality Database](https://wid.world/country/usa/). Long-run U.S. national income series covering 1820–2023, used as a third comparison line extending before and after the IRS state data window.
+
+### Steps
+1. Go to the [IRS Statistics of Income — AGI Percentile Data by State](https://www.irs.gov/statistics/soi-tax-stats-agi-percentile-data-by-state) page and download the CSV file for each tax year 2013–2022.
+2. Go to the [IRS SOI Historic Table 2](https://www.irs.gov/statistics/soi-tax-stats-historic-table-2) page and download the XLS/CSV file for each tax year 1997–2012. File names follow the pattern `{YY}in54cm.xls`.
+3. **For 2013–2022 (percentile format):** The IRS reports cumulative top-percentile slices (top 50% and top 1%). Derive the three brackets by subtraction: Bottom 50% = all filers minus top 50%; Upper 51–99% = top 50% minus top 1%; Top 1% = top 1% directly. Caution: 2014, 2016, and 2017 files publish AGI in full dollars (not thousands) — detect this by checking if the U.S. national total AGI exceeds $1 trillion, then divide by 1,000 to normalize.
+4. **For 1997–2012 (bracket format):** The data is organized by fixed AGI size brackets (e.g., Under $50k, $50k–$75k, …, $1M+). Use uniform-within-bracket interpolation to find the 50th and 99th percentile boundaries: walk brackets from lowest to highest, accumulating return counts until you reach 50% of total returns (for the Bottom 50% cutpoint); repeat from the top to find the Top 1% cutpoint. The Upper 51–99% AGI is the remainder.
+5. Divide each bracket's total AGI (in $000s) by its return count to get average income per return in nominal dollars. Note these are per tax return, not per person — a married couple filing jointly counts as one return.
+6. Concatenate the 1997–2012 interpolated results with the 2013–2022 direct calculations into a single dataset.
+7. The WID long-run U.S. series is already processed (see `make_economy_income` pipeline) and is plotted as-is alongside the IRS state data to provide historical context.
+
+### Internal Notes
+* **2013–2022 data:** All AGI columns are in thousands of dollars for most years; 2014, 2016, and 2017 files are in full dollars — the pipeline normalizes this automatically by checking the U.S. national row magnitude.
+* **1997–2012 data:** Five distinct file formats exist across these years (14-col vertical, stacked, wide stride-6, wide stride-10, and machine-readable CSV). Each requires a different parser; see `notebooks/pipeline_state_income_historic.ipynb` for details.
+* **Accuracy caveat (2004–2009):** The 2004–2009 Historic Table 2 files have only 5 AGI brackets with the entire bottom of the distribution in "Under $50,000". Bottom 50% estimates for those years equal the mean of that bracket, which tends to overestimate the true value by ~$3–6k.
+* The IRS `US` row (state == 'US') is used as the short-run U.S. comparison line; the WID data provides the long-run U.S. line.
+* Pipeline for 2013–2022: `notebooks/pipeline_state_income.ipynb`
+* Pipeline for 1997–2012: `notebooks/pipeline_state_income_historic.ipynb`
+
 ## make_economy_house_purchase
 ### Sources
 * **House Purchase Cost**: [Zillow](https://www.zillow.com/research/data/). Select "ZHVI All Homes (SFR, Condo/Co-op) Time Series, Smoothed, Seasonally Adjusted ($)" for Geography of "Metro & U.S.".
@@ -66,6 +89,11 @@
 * **Cost of Energy**: [Lazard’s Levelized Cost of Energy Analysis](https://www.lazard.com/media/xemfey0k/lazards-lcoeplus-june-2024-_vf.pdf).
 
 # Ballot
+<!-- Live ballot sources are served from BALLOT_SOURCES in breathe_fastapi/main.py.
+     This section documents the same sources for human reference.
+     To add a new ballot cycle: add a new (area, year, None) entry to BALLOT_SOURCES.
+     Naming convention: {area_lower}_ballot_{year}  (e.g. co_ballot_2025, mt_ballot_2026) -->
+
 ## co_ballot_2025
 ### Notes
 Colorado 2025 statewide ballot measures — Healthy School Meals for All (Proposition LL and Proposition MM). Analysis covers ballot measure details from the Colorado Blue Book, peer-reviewed research on student outcomes, downstream effects of attendance and academic gains, program cost-benefit analysis, and limitations of the evidence. See docs/co_ballot_2025_analysis.md for full methodology, evidence-strength ratings, and areas needing further research.
