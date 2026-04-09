@@ -1568,8 +1568,19 @@
 
         <!-- State-specific view (shown when a state is selected) -->
         <div id="state-economy" style="display: none">
-          <h1 id="state-economy-title">Affordability</h1>
+          <h1 id="state-economy-title">State Economy</h1>
+          <div class="controls">
+            <div class="control-group">
+              <div class="control-label">Income Level</div>
+              <div class="radio-group income-level-group" id="incomeLevelGroupState">
+                <label class="checked"><input type="radio" name="income_level" value="Bottom 50%" checked /><span>Bottom 50%</span></label>
+                <label><input type="radio" name="income_level" value="Upper 51-99%" /><span>Upper 51-99%</span></label>
+                <label><input type="radio" name="income_level" value="Top 1%" /><span>Top 1%</span></label>
+              </div>
+            </div>
+          </div>
           <div class="chart-grid">
+            <div class="chart-card" id="card-state-income"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openCardSources(this.closest('.chart-card').id)">Sources</button><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
             <div class="chart-card" id="card-state-affordability"><div class="chart-loading">Loading…</div><div class="chart-btn-group"><button class="explain-btn" onclick="openCardSources(this.closest('.chart-card').id)">Sources</button><button class="explain-btn" onclick="openExplainModal('soon')">Explain</button><button class="download-btn" onclick="downloadChartCSV(this.closest('.chart-card').id)">Download</button></div></div>
           </div>
         </div>
@@ -1581,7 +1592,7 @@
           <div class="controls">
             <div class="control-group">
               <div class="control-label">Income Level</div>
-              <div class="radio-group" id="incomeLevelGroup">
+              <div class="radio-group income-level-group" id="incomeLevelGroup">
                 <label class="checked"><input type="radio" name="income_level" value="Bottom 50%" checked /><span>Bottom 50%</span></label>
                 <label><input type="radio" name="income_level" value="Upper 51-99%" /><span>Upper 51-99%</span></label>
                 <label><input type="radio" name="income_level" value="Top 1%" /><span>Top 1%</span></label>
@@ -2112,12 +2123,16 @@ function showStateEconomy(abbrev) {
     for (const id of ids) showPlaceholder(id, stateName);
   }
 
-  // Load the state affordability chart
-  const card = document.getElementById('card-state-affordability');
-  card.querySelector('.state-placeholder')?.remove();
-  const loader = card.querySelector('.chart-loading');
-  if (loader) loader.style.display = 'flex';
-  loadChart('card-state-affordability', `/api/economy/state-home-affordability?state=${abbrev}&dark_mode=${dm()}`);
+  // Load state economy charts
+  for (const cardId of ['card-state-income', 'card-state-affordability']) {
+    const card = document.getElementById(cardId);
+    card.querySelector('.state-placeholder')?.remove();
+    const loader = card.querySelector('.chart-loading');
+    if (loader) loader.style.display = 'flex';
+    const url = CHARTS[cardId] ? CHARTS[cardId]()
+      : `/api/economy/state-home-affordability?state=${abbrev}&dark_mode=${dm()}`;
+    loadChart(cardId, url);
+  }
 }
 
 function showNationalEconomy() {
@@ -2166,8 +2181,8 @@ function restoreCharts() {
 
 function reloadStateChart() {
   if (state.selectedArea !== 'United States') {
-    loadChart('card-state-affordability',
-      `/api/economy/state-home-affordability?state=${state.selectedArea}&dark_mode=${dm()}`);
+    loadChart('card-state-income',        CHARTS['card-state-income']());
+    loadChart('card-state-affordability', `/api/economy/state-home-affordability?state=${enc(state.selectedArea)}&dark_mode=${dm()}`);
   }
 }
 
@@ -2231,6 +2246,7 @@ const CARD_TO_FUNC = {
   'card-jail-white':  'make_justice_jail',
   'card-jail-black':  'make_justice_jail',
   'card-electricity': 'make_electricity_cost',
+  'card-state-income':        'make_state_income',
   'card-state-affordability': 'make_state_home_affordability',
   'card-co-ballot-2025':      'co_ballot_2025',
 };
@@ -2340,6 +2356,7 @@ const CHARTS = {
   "card-jail-white": () => `/api/justice/jail?dark_mode=${dm()}&race=white`,
   "card-jail-black": () => `/api/justice/jail?dark_mode=${dm()}&race=black`,
   "card-electricity":() => `/api/environment/electricity-cost?dark_mode=${dm()}`,
+  "card-state-income": () => `/api/economy/state-income?state=${enc(state.selectedArea)}&dark_mode=${dm()}&income_level=${enc(state.incomeLevel)}`,
 };
 
 const TAB_CHARTS = {
@@ -2353,6 +2370,7 @@ const TAB_CHARTS = {
 
 const INCOME_CHARTS = [
   "card-income","card-barchart","card-house-purchase","card-f150",
+  "card-state-income",
 ];
 
 function loadTabCharts(tab) {
@@ -2360,7 +2378,10 @@ function loadTabCharts(tab) {
 }
 
 function reloadIncomeCharts() {
-  for (const id of INCOME_CHARTS) loadChart(id, CHARTS[id]());
+  for (const id of INCOME_CHARTS) {
+    if (id === 'card-state-income' && state.selectedArea === 'United States') continue;
+    loadChart(id, CHARTS[id]());
+  }
 }
 
 function reloadAllLoaded() {
@@ -2410,14 +2431,20 @@ document.querySelectorAll("#sub-tabs .tab-btn").forEach(btn => {
   });
 });
 
-document.getElementById("incomeLevelGroup").addEventListener("change", e => {
-  if (e.target.type === "radio") {
-    state.incomeLevel = e.target.value;
-    document.querySelectorAll("#incomeLevelGroup label").forEach(l => {
-      l.classList.toggle("checked", l.querySelector("input").value === state.incomeLevel);
-    });
-    reloadIncomeCharts();
-  }
+function syncIncomeLevelGroups(value) {
+  document.querySelectorAll(".income-level-group label").forEach(l => {
+    l.classList.toggle("checked", l.querySelector("input").value === value);
+  });
+}
+
+document.querySelectorAll(".income-level-group").forEach(group => {
+  group.addEventListener("change", e => {
+    if (e.target.type === "radio") {
+      state.incomeLevel = e.target.value;
+      syncIncomeLevelGroups(e.target.value);
+      reloadIncomeCharts();
+    }
+  });
 });
 
 document.getElementById("countrySelect").addEventListener("change", e => {
@@ -2633,6 +2660,7 @@ function downloadChartCSV(cardId) {
     'card-jail-white':            `/api/csv/jail?race=white`,
     'card-jail-black':            `/api/csv/jail?race=black`,
     'card-electricity':           `/api/csv/electricity-cost`,
+    'card-state-income':          `/api/csv/state-income?state=${selectedState}`,
     'card-state-affordability':   `/api/csv/state-home-affordability?state=${selectedState}`,
     'card-mt-income':             `/api/csv/income?income_level=${encodeURIComponent('Bottom 50%')}&country=canada`,
     'card-mt-income-france':      `/api/csv/income?income_level=${encodeURIComponent('Bottom 50%')}&country=france`,
@@ -3377,7 +3405,7 @@ function openLearnMorePopup() {
   `;
   const footerBtn = document.getElementById('sources-footer-btn');
   footerBtn.textContent = 'Sources';
-  footerBtn.onclick = function() { openCardSources('card-co-ballot-2025'); };
+  footerBtn.onclick = function() { openBallotAllSources('CO', 2025); };
   footerBtn.style.display = '';
   document.getElementById('sources-overlay').classList.add('open');
 }
@@ -3434,6 +3462,37 @@ function openBallotStateMapPopup(abbr) {
   }
   document.getElementById('sources-overlay').classList.add('open');
   if (s.chartData) renderStateBallotCharts([s]);
+}
+
+async function openBallotAllSources(area, year) {
+  document.getElementById('sources-modal-body').innerHTML = '<p style="color:var(--muted)">Loading sources\u2026</p>';
+  document.getElementById('sources-footer-btn').style.display = 'none';
+  document.getElementById('sources-overlay').classList.add('open');
+  try {
+    const res = await fetch(`/api/ballot/sources/${area}/${year}`);
+    const data = await res.json();
+    if (!data.sections || !data.sections.length) {
+      document.getElementById('sources-modal-body').innerHTML =
+        '<p style="color:var(--text-body)">No sources found for this ballot.</p>';
+      return;
+    }
+    const parts = [];
+    for (const sec of data.sections) {
+      parts.push(`<p class="sources-subhead">${sec.section}</p><ul>`);
+      for (const src of sec.sources) {
+        const linked = src.url
+          ? `<a href="${src.url}" target="_blank" rel="noopener">${src.title}</a>`
+          : `<strong>${src.title}</strong>`;
+        const note = src.note ? ` \u2014 ${src.note}` : '';
+        parts.push(`  <li>${linked}${note}</li>`);
+      }
+      parts.push('</ul>');
+    }
+    document.getElementById('sources-modal-body').innerHTML = parts.join('\n');
+  } catch(e) {
+    document.getElementById('sources-modal-body').innerHTML =
+      '<p style="color:var(--text-body)">Failed to load sources.</p>';
+  }
 }
 
 function openBallotStateSources(abbr, year) {
